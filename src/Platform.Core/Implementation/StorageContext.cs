@@ -10,7 +10,7 @@ public class StorageContext : IStorageContext
 {
     private readonly ICompanyContext _companyContext;
     private readonly IFacilityContext _facilityContext;
-    private static readonly Regex InvalidPathChars = new Regex(@"[<>:""\|?*\\/]|\.\.","Compiled);
+    private static readonly Regex InvalidPathChars = new Regex(@"[<>:""\|?*\\/]|\.\.", RegexOptions.Compiled);
 
     public StorageContext(ICompanyContext companyContext, IFacilityContext facilityContext)
     {

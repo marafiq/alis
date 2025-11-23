@@ -38,7 +38,7 @@ public class FacilityContext : IFacilityContext
     public bool IsAvailable => _context.Value != null;
 
     /// <inheritdoc />
-    public async Task SwitchFacilityAsync(Guid facilityId)
+    public Task SwitchFacilityAsync(Guid facilityId)
     {
         var contextData = GetContextData();
         if (contextData == null)
@@ -69,10 +69,12 @@ public class FacilityContext : IFacilityContext
         {
             session.SetString("ActiveFacilityId", facilityId.ToString());
         }
+
+        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public async Task SwitchToAllFacilitiesAsync()
+    public Task SwitchToAllFacilitiesAsync()
     {
         var contextData = GetContextData();
         if (contextData == null)
@@ -87,6 +89,8 @@ public class FacilityContext : IFacilityContext
         {
             session.Remove("ActiveFacilityId");
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
