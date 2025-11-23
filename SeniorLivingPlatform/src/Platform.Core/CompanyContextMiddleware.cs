@@ -28,19 +28,42 @@ public class CompanyContextMiddleware : IMiddleware
         try
         {
             Company? company = null;
+            bool usedClaims = false;
 
             // Try to resolve from JWT claims first (for API requests)
             if (context.User.Identity?.IsAuthenticated == true)
             {
                 var companyIdClaim = context.User.FindFirst("companyId")?.Value;
-                if (!string.IsNullOrEmpty(companyIdClaim) && Guid.TryParse(companyIdClaim, out var companyId))
+
+                if (!string.IsNullOrEmpty(companyIdClaim))
                 {
+                    // Validate GUID format
+                    if (!Guid.TryParse(companyIdClaim, out var companyId))
+                    {
+                        context.Response.StatusCode = 400; // Bad Request - invalid GUID
+                        return;
+                    }
+
                     company = await _companyRepository.GetByIdAsync(companyId);
+                    usedClaims = true;
+
+                    // If claims were provided but company not found, return 403
+                    if (company == null)
+                    {
+                        context.Response.StatusCode = 403; // Forbidden - company doesn't exist
+                        return;
+                    }
+                }
+                else
+                {
+                    // Authenticated user but no companyId claim - invalid token
+                    context.Response.StatusCode = 401; // Unauthorized - missing required claim
+                    return;
                 }
             }
 
-            // If not found via claims, try subdomain resolution (for web requests)
-            if (company == null)
+            // If not authenticated or no claims, try subdomain resolution (for web requests)
+            if (company == null && !usedClaims)
             {
                 var subdomain = ExtractSubdomain(context.Request.Host);
 
@@ -51,25 +74,28 @@ public class CompanyContextMiddleware : IMiddleware
                 }
 
                 company = await _companyRepository.GetBySubdomainAsync(subdomain);
-            }
 
-            // Validate company found
-            if (company == null)
-            {
-                context.Response.StatusCode = 404; // Not Found
-                return;
+                // For subdomain resolution, not found returns 404
+                if (company == null)
+                {
+                    context.Response.StatusCode = 404; // Not Found
+                    return;
+                }
             }
 
             // Validate company is active
-            if (!company.IsActive)
+            if (company != null && !company.IsActive)
             {
-                context.Response.StatusCode = 403; // Forbidden
+                context.Response.StatusCode = 403; // Forbidden - company disabled
                 return;
             }
 
             // Set company context
-            CompanyContext.SetContext(company);
-            context.Items["CompanyContext"] = new CompanyContext();
+            if (company != null)
+            {
+                CompanyContext.SetContext(company);
+                context.Items["CompanyContext"] = new CompanyContext();
+            }
 
             // Continue pipeline
             await next(context);
