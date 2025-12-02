@@ -119,7 +119,7 @@ test.describe('Advanced Hooks (Modal, Toast, Grid)', () => {
 
     await page.route('**/api/users', async route => {
       if (route.request().method() === 'POST') {
-        // Parse URL-encoded or JSON body
+        // Parse the body - now FormData (multipart)
         const postData = route.request().postData() || '';
         let name = 'Unknown';
         let email = '';
@@ -129,6 +129,12 @@ test.describe('Advanced Hooks (Modal, Toast, Grid)', () => {
           const body = JSON.parse(postData);
           name = body.name;
           email = body.email;
+        } else if (contentType.includes('multipart/form-data')) {
+          // Parse FormData - extract name from multipart body
+          const nameMatch = postData.match(/name="name"\r\n\r\n([^\r\n]+)/);
+          const emailMatch = postData.match(/name="email"\r\n\r\n([^\r\n]+)/);
+          name = nameMatch ? nameMatch[1] : 'Unknown';
+          email = emailMatch ? emailMatch[1] : '';
         } else {
           // URL-encoded
           const params = new URLSearchParams(postData);

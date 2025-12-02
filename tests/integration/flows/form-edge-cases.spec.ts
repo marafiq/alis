@@ -1,12 +1,60 @@
 import { test, expect } from '@playwright/test';
 
+/**
+ * Helper to parse FormData from multipart request body
+ * FormData boundary looks like: ------WebKitFormBoundaryXXX
+ */
+function parseFormData(body: string, contentType: string): Record<string, string | string[]> {
+  const result: Record<string, string | string[]> = {};
+  
+  // Extract boundary from content-type
+  const boundaryMatch = contentType.match(/boundary=(.+)/);
+  if (!boundaryMatch) return result;
+  
+  const boundary = boundaryMatch[1];
+  const parts = body.split(`--${boundary}`);
+  
+  for (const part of parts) {
+    // Skip empty parts and closing boundary
+    if (!part.trim() || part.trim() === '--') continue;
+    
+    // Parse Content-Disposition header
+    const nameMatch = part.match(/name="([^"]+)"/);
+    if (!nameMatch) continue;
+    
+    const name = nameMatch[1];
+    
+    // Extract value (after double newline)
+    const valueMatch = part.split('\r\n\r\n')[1];
+    if (valueMatch === undefined) continue;
+    
+    const value = valueMatch.replace(/\r\n$/, '');
+    
+    // Handle multiple values with same name
+    if (name in result) {
+      const existing = result[name];
+      if (Array.isArray(existing)) {
+        existing.push(value);
+      } else {
+        result[name] = [existing, value];
+      }
+    } else {
+      result[name] = value;
+    }
+  }
+  
+  return result;
+}
+
 test.describe('Form Edge Cases', () => {
-  test('empty form submits with empty object', async ({ page }) => {
+  test('empty form submits with FormData', async ({ page }) => {
     await page.goto('/demos/form-submit/index.html');
     
     let capturedBody = '';
+    let capturedContentType = '';
     await page.route('**/api/submit', async route => {
       capturedBody = route.request().postData() || '';
+      capturedContentType = route.request().headers()['content-type'] || '';
       await route.fulfill({ status: 200, body: 'OK', contentType: 'text/plain' });
     });
 
@@ -20,8 +68,9 @@ test.describe('Form Edge Cases', () => {
     await page.click('form button[type="submit"]');
     await expect(page.locator('#result')).toHaveText('OK');
     
-    // Should send empty object or object with empty values
-    const body = JSON.parse(capturedBody);
+    // Forms now send FormData
+    expect(capturedContentType).toContain('multipart/form-data');
+    const body = parseFormData(capturedBody, capturedContentType);
     expect(body).toBeDefined();
   });
 
@@ -29,8 +78,10 @@ test.describe('Form Edge Cases', () => {
     await page.goto('/demos/form-submit/index.html');
     
     let capturedBody = '';
+    let capturedContentType = '';
     await page.route('**/api/submit', async route => {
       capturedBody = route.request().postData() || '';
+      capturedContentType = route.request().headers()['content-type'] || '';
       await route.fulfill({ status: 200, body: 'OK', contentType: 'text/plain' });
     });
 
@@ -45,7 +96,7 @@ test.describe('Form Edge Cases', () => {
     await page.click('form button[type="submit"]');
     await expect(page.locator('#result')).toHaveText('OK');
     
-    const body = JSON.parse(capturedBody);
+    const body = parseFormData(capturedBody, capturedContentType);
     expect(body.name).toBeUndefined();
   });
 
@@ -53,8 +104,10 @@ test.describe('Form Edge Cases', () => {
     await page.goto('/demos/form-submit/index.html');
     
     let capturedBody = '';
+    let capturedContentType = '';
     await page.route('**/api/submit', async route => {
       capturedBody = route.request().postData() || '';
+      capturedContentType = route.request().headers()['content-type'] || '';
       await route.fulfill({ status: 200, body: 'OK', contentType: 'text/plain' });
     });
 
@@ -71,7 +124,7 @@ test.describe('Form Edge Cases', () => {
     await page.click('form button[type="submit"]');
     await expect(page.locator('#result')).toHaveText('OK');
     
-    const body = JSON.parse(capturedBody);
+    const body = parseFormData(capturedBody, capturedContentType);
     // Checkboxes without explicit value send "on" when checked
     expect(body.agree).toBe('on');
   });
@@ -80,8 +133,10 @@ test.describe('Form Edge Cases', () => {
     await page.goto('/demos/form-submit/index.html');
     
     let capturedBody = '';
+    let capturedContentType = '';
     await page.route('**/api/submit', async route => {
       capturedBody = route.request().postData() || '';
+      capturedContentType = route.request().headers()['content-type'] || '';
       await route.fulfill({ status: 200, body: 'OK', contentType: 'text/plain' });
     });
 
@@ -97,7 +152,7 @@ test.describe('Form Edge Cases', () => {
     await page.click('form button[type="submit"]');
     await expect(page.locator('#result')).toHaveText('OK');
     
-    const body = JSON.parse(capturedBody);
+    const body = parseFormData(capturedBody, capturedContentType);
     expect(body.agree).toBeUndefined();
   });
 
@@ -105,8 +160,10 @@ test.describe('Form Edge Cases', () => {
     await page.goto('/demos/form-submit/index.html');
     
     let capturedBody = '';
+    let capturedContentType = '';
     await page.route('**/api/submit', async route => {
       capturedBody = route.request().postData() || '';
+      capturedContentType = route.request().headers()['content-type'] || '';
       await route.fulfill({ status: 200, body: 'OK', contentType: 'text/plain' });
     });
 
@@ -121,7 +178,7 @@ test.describe('Form Edge Cases', () => {
     await page.click('form button[type="submit"]');
     await expect(page.locator('#result')).toHaveText('OK');
     
-    const body = JSON.parse(capturedBody);
+    const body = parseFormData(capturedBody, capturedContentType);
     expect(body.country).toBe('uk');
   });
 
@@ -129,8 +186,10 @@ test.describe('Form Edge Cases', () => {
     await page.goto('/demos/form-submit/index.html');
     
     let capturedBody = '';
+    let capturedContentType = '';
     await page.route('**/api/submit', async route => {
       capturedBody = route.request().postData() || '';
+      capturedContentType = route.request().headers()['content-type'] || '';
       await route.fulfill({ status: 200, body: 'OK', contentType: 'text/plain' });
     });
 
@@ -145,7 +204,7 @@ test.describe('Form Edge Cases', () => {
     await page.click('form button[type="submit"]');
     await expect(page.locator('#result')).toHaveText('OK');
     
-    const body = JSON.parse(capturedBody);
+    const body = parseFormData(capturedBody, capturedContentType);
     expect(body.message).toBe('Hello World');
   });
 
@@ -153,8 +212,10 @@ test.describe('Form Edge Cases', () => {
     await page.goto('/demos/form-submit/index.html');
     
     let capturedBody = '';
+    let capturedContentType = '';
     await page.route('**/api/submit', async route => {
       capturedBody = route.request().postData() || '';
+      capturedContentType = route.request().headers()['content-type'] || '';
       await route.fulfill({ status: 200, body: 'OK', contentType: 'text/plain' });
     });
 
@@ -173,8 +234,7 @@ test.describe('Form Edge Cases', () => {
     await page.click('form button[type="submit"]');
     await expect(page.locator('#result')).toHaveText('OK');
     
-    const body = JSON.parse(capturedBody);
+    const body = parseFormData(capturedBody, capturedContentType);
     expect(body.colors).toEqual(['red', 'green']);
   });
 });
-

@@ -33,7 +33,11 @@ export function requestBuildStep(ctx) {
         finalUrl = appendQuery(finalUrl, query);
       }
     } else {
-      const serializerName = typeof ctx.config.serialize === 'string' ? ctx.config.serialize : 'json';
+      // Form elements default to FormData (matches jQuery Unobtrusive, works with ASP.NET model binding)
+      // Non-form elements default to JSON (API-style requests)
+      const isFormElement = ctx.element instanceof HTMLFormElement;
+      const defaultSerializer = isFormElement ? 'formdata' : 'json';
+      const serializerName = typeof ctx.config.serialize === 'string' ? ctx.config.serialize : defaultSerializer;
       const serializer = getSerializer(serializerName);
       const serialized = serializer(payload);
       body = serialized.body;

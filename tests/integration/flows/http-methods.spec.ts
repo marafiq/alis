@@ -26,7 +26,7 @@ test.describe('HTTP Methods', () => {
     expect(capturedUrl).not.toContain('?name=TestUser?'); // No double ?
   });
 
-  test('POST sends JSON body by default', async ({ page }) => {
+  test('POST sends FormData body by default for forms', async ({ page }) => {
     await page.goto('/demos/form-submit/index.html');
     
     let capturedBody = '';
@@ -37,12 +37,15 @@ test.describe('HTTP Methods', () => {
       await route.fulfill({ status: 200, body: 'OK', contentType: 'text/plain' });
     });
 
-    await page.fill('form input[name="name"]', 'JsonTest');
+    await page.fill('form input[name="name"]', 'FormDataTest');
     await page.click('form button[type="submit"]');
     
     await expect(page.locator('#result')).toHaveText('OK');
-    expect(capturedContentType).toContain('application/json');
-    expect(JSON.parse(capturedBody)).toEqual({ name: 'JsonTest' });
+    // Forms now default to FormData (multipart/form-data)
+    expect(capturedContentType).toContain('multipart/form-data');
+    // FormData body contains the field
+    expect(capturedBody).toContain('name');
+    expect(capturedBody).toContain('FormDataTest');
   });
 
   test('PUT method works', async ({ page }) => {
