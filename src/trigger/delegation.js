@@ -1,4 +1,5 @@
 import { findTriggerElement, getTriggerConfig } from './finder.js';
+import { FORCE_TRIGGER_EVENT } from './constants.js';
 
 const LISTENERS = new Map();
 /** @type {Map<Element, { timeout: number | null; lastCall: number }>} */
@@ -13,11 +14,32 @@ const DEBOUNCE_STATE = new Map();
  * @param {string[]} events
  * @param {(element: Element, event: Event, triggerElement: Element | null, options?: TriggerOptions) => void} onTrigger
  */
-export function setupDelegation(events = ['click', 'submit', 'change', 'input', 'scroll'], onTrigger) {
+export function setupDelegation(events = ['click', 'submit', 'change', 'input', 'scroll', FORCE_TRIGGER_EVENT], onTrigger) {
   events.forEach(eventType => {
     if (LISTENERS.has(eventType)) return;
     const handler = /** @type {(event: Event) => void} */ (event => {
+      // Debug logging - ALWAYS log for input events to diagnose Syncfusion issues
+      const DEBUG = typeof window !== 'undefined' && window.ALIS_DEBUG;
+      if (eventType === 'input' || eventType === 'change') {
+        const t = event.target;
+        console.log('[ALIS] Event handler called - type:', eventType, 
+          'targetTag:', t instanceof Element ? t.tagName : 'not element',
+          'targetId:', t instanceof Element ? t.id : '',
+          'hasAlisGet:', t instanceof Element ? t.hasAttribute('data-alis-get') : false);
+      }
+      
       const target = findTriggerElement(event);
+      
+      if (DEBUG && (eventType === 'input' || eventType === 'change')) {
+        if (target) {
+          console.log('[ALIS DEBUG] findTriggerElement result - tagName:', target.tagName,
+            'id:', target.id,
+            'hasAlisGet:', target.hasAttribute('data-alis-get'));
+        } else {
+          console.log('[ALIS DEBUG] findTriggerElement result: null');
+        }
+      }
+      
       if (!target) return;
       
       // Get trigger config for debounce/throttle
@@ -44,7 +66,9 @@ export function setupDelegation(events = ['click', 'submit', 'change', 'input', 
       }
       executeHandler(target, event, onTrigger, {});
     });
-    const useCapture = eventType === 'submit';
+    // Use capture phase for submit (to intercept before form submission)
+    // and for input/change events (Syncfusion may stop propagation in bubble phase)
+    const useCapture = eventType === 'submit' || eventType === 'input' || eventType === 'change';
     document.addEventListener(eventType, handler, useCapture);
     LISTENERS.set(eventType, handler);
   });

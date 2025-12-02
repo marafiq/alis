@@ -8,10 +8,10 @@
 
 // Initialize ALIS when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize ALIS
+    // Initialize ALIS with debug telemetry to diagnose Syncfusion integration issues
     if (typeof ALIS !== 'undefined') {
         ALIS.init({
-            telemetry: { level: 'info' }
+            telemetry: { level: 'debug' }  // Enable debug level for diagnosing issues
         });
 
         // Register a custom confirm handler for delete operations
@@ -78,6 +78,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('ALIS not found! Make sure alis.js is loaded.');
     }
 
+    // Initialize ALIS-Syncfusion Bridge
+    if (typeof ALIS_SF !== 'undefined') {
+        ALIS_SF.init({ debug: true }); // Enable debug during development
+        console.log('ALIS-Syncfusion Bridge initialized');
+    }
+
     // Update clock
     updateClock();
     setInterval(updateClock, 1000);
@@ -113,6 +119,13 @@ window.initSyncfusionControls = function(ctx) {
         // Replace old script with new one to trigger execution
         oldScript.parentNode.replaceChild(newScript, oldScript);
     });
+
+    // Reinitialize ALIS-Syncfusion Bridge for newly created controls
+    if (typeof ALIS_SF !== 'undefined') {
+        setTimeout(function() {
+            ALIS_SF.reinit(target);
+        }, 100);
+    }
 };
 
 /**

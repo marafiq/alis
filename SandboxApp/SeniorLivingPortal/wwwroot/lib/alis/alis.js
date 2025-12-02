@@ -1166,7 +1166,7 @@ var ALISBundle = (function (exports) {
   /**
    * Syncfusion wrapper class names that indicate a component wrapper.
    */
-  const SYNCFUSION_WRAPPER_CLASSES$1 = [
+  const SYNCFUSION_WRAPPER_CLASSES$2 = [
     'e-input-group',
     'e-control-wrapper',
     'e-checkbox-wrapper',
@@ -1251,7 +1251,7 @@ var ALISBundle = (function (exports) {
     let parent = element.parentElement;
     
     while (parent) {
-      const hasSyncfusionClass = SYNCFUSION_WRAPPER_CLASSES$1.some(cls => 
+      const hasSyncfusionClass = SYNCFUSION_WRAPPER_CLASSES$2.some(cls => 
         parent?.classList.contains(cls)
       );
       
@@ -1333,7 +1333,7 @@ var ALISBundle = (function (exports) {
   /**
    * Syncfusion wrapper class names.
    */
-  const SYNCFUSION_WRAPPER_CLASSES = [
+  const SYNCFUSION_WRAPPER_CLASSES$1 = [
     'e-input-group',
     'e-control-wrapper',
     'e-checkbox-wrapper'
@@ -1455,7 +1455,7 @@ var ALISBundle = (function (exports) {
       let parent = input.parentElement;
       
       while (parent) {
-        const hasWrapperClass = SYNCFUSION_WRAPPER_CLASSES.some(cls => 
+        const hasWrapperClass = SYNCFUSION_WRAPPER_CLASSES$1.some(cls => 
           parent?.classList.contains(cls)
         );
         
@@ -3719,16 +3719,136 @@ var ALISBundle = (function (exports) {
   }
 
   /**
+   * Custom event name for programmatic triggering from external code (e.g., Syncfusion change handlers)
+   * Usage: element.dispatchEvent(new CustomEvent('alis:trigger'))
+   */
+  const FORCE_TRIGGER_EVENT = 'alis:trigger';
+
+  /**
+   * Syncfusion control class patterns - visible input elements created by Syncfusion
+   */
+  const SYNCFUSION_INPUT_CLASSES = ['e-input', 'e-dropdownlist', 'e-numerictextbox', 'e-datepicker'];
+
+  /**
+   * Syncfusion wrapper class patterns - these wrap actual input elements
+   */
+  const SYNCFUSION_WRAPPER_CLASSES = [
+    'e-input-group',
+    'e-control-wrapper', 
+    'e-ddl',
+    'e-numerictextbox',
+    'e-datepicker',
+    'e-checkbox-wrapper'
+  ];
+
+  /**
+   * Check if element is a Syncfusion wrapper that contains the event target
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function isSyncfusionWrapper(element) {
+    return SYNCFUSION_WRAPPER_CLASSES.some(cls => element.classList.contains(cls));
+  }
+
+  /**
+   * Check if element is a Syncfusion-created input (the visible one, not the original)
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function isSyncfusionInput(element) {
+    return SYNCFUSION_INPUT_CLASSES.some(cls => element.classList.contains(cls));
+  }
+
+  /**
+   * Find the original ALIS element for a Syncfusion control.
+   * Syncfusion's appendTo() transforms the original element, but the original
+   * element (with ALIS attributes) can be found via the wrapper's ID or
+   * by looking for elements with ej2_instances.
+   * @param {Element} target - The event target (Syncfusion's visible input)
+   * @returns {Element | null}
+   */
+  function findSyncfusionAlisElement(target) {
+    // Look for the closest Syncfusion wrapper
+    const wrapper = target.closest('.e-input-group, .e-control-wrapper, .e-ddl');
+    if (!wrapper) return null;
+    
+    // The wrapper might have an ID that matches the original element
+    // Or there might be a hidden input with the ID and ALIS attributes
+    const wrapperId = wrapper.id;
+    if (wrapperId) {
+      const original = document.getElementById(wrapperId);
+      if (original && isAlisElement(original)) {
+        return original;
+      }
+    }
+    
+    // Look for any element with ej2_instances inside the wrapper that has ALIS attrs
+    const elementsWithInstances = wrapper.querySelectorAll('[id]');
+    for (const el of elementsWithInstances) {
+      if (/** @type {any} */ (el).ej2_instances && isAlisElement(el)) {
+        return el;
+      }
+    }
+    
+    // Check if the wrapper itself has ALIS attributes
+    if (isAlisElement(wrapper)) {
+      return wrapper;
+    }
+    
+    return null;
+  }
+
+  /**
    * @param {Event} event
    */
   function findTriggerElement(event) {
     let node = /** @type {Element | null} */ (event.target instanceof Element ? event.target : null);
+    
+    // Debug logging for Syncfusion integration troubleshooting
+    const DEBUG = typeof window !== 'undefined' && window.ALIS_DEBUG;
+    if (DEBUG && (event.type === 'input' || event.type === 'change')) {
+      console.log('[ALIS DEBUG] findTriggerElement - eventType:', event.type,
+        'target:', node?.tagName,
+        'targetId:', node?.id,
+        'targetClass:', node?.className,
+        'hasAlisGet:', node?.hasAttribute('data-alis-get'),
+        'hasAlisTrigger:', node?.hasAttribute('data-alis-trigger'));
+    }
+    
+    // Special handling for Syncfusion controls:
+    // When user types in a Syncfusion TextBox, the event fires on the visible e-input,
+    // but ALIS attributes are on the original hidden input that Syncfusion transformed.
+    if (node && isSyncfusionInput(node) && !isAlisElement(node)) {
+      const alisElement = findSyncfusionAlisElement(node);
+      if (DEBUG && (event.type === 'input' || event.type === 'change')) {
+        console.log('[ALIS DEBUG] Syncfusion input detected, found ALIS element:', 
+          alisElement?.tagName, alisElement?.id);
+      }
+      if (alisElement && shouldHandleEvent(alisElement, event)) {
+        return alisElement;
+      }
+    }
+    
     while (node && node !== document.body) {
       if (isAlisElement(node)) {
+        if (DEBUG && (event.type === 'input' || event.type === 'change')) {
+          console.log('[ALIS DEBUG] Found ALIS element - tagName:', node.tagName,
+            'id:', node.id,
+            'trigger:', node.getAttribute('data-alis-trigger'));
+        }
+        // For Syncfusion wrappers, check if there's an explicit trigger attribute
+        // that matches the event, even if the default trigger wouldn't match
         if (shouldHandleEvent(node, event)) {
+          if (DEBUG && (event.type === 'input' || event.type === 'change')) {
+            console.log('[ALIS DEBUG] shouldHandleEvent returned true');
+          }
           return node;
         }
-        break;
+        if (DEBUG && (event.type === 'input' || event.type === 'change')) {
+          console.log('[ALIS DEBUG] shouldHandleEvent returned false, continuing...');
+        }
+        // Don't break early - continue looking up the tree for other ALIS elements
+        // This handles cases where a form contains ALIS-enabled inputs
       }
       node = node.parentElement;
     }
@@ -3752,9 +3872,27 @@ var ALISBundle = (function (exports) {
    * @param {Event} event
    */
   function shouldHandleEvent(element, event) {
+    // Force trigger event always matches - this is used for Syncfusion integration
+    // where Syncfusion's change handler calls ALIS.forceTrigger(element)
+    if (event.type === FORCE_TRIGGER_EVENT) {
+      return true;
+    }
+    
+    // If element has explicit trigger, use that
     if (element.hasAttribute('data-alis-trigger')) {
       return matchesTrigger(element, event);
     }
+    
+    // For Syncfusion wrappers, also accept input/change events from inner elements
+    // since the wrapper contains the actual input but ALIS attrs are on the wrapper
+    if (isSyncfusionWrapper(element)) {
+      const eventType = normalizeEvent(event.type);
+      // Accept input, change, blur events for Syncfusion wrappers
+      if (['input', 'change', 'blur', 'focus'].includes(eventType)) {
+        return true;
+      }
+    }
+    
     const defaultTrigger = getDefaultTrigger(element);
     return normalizeEvent(event.type) === defaultTrigger;
   }
@@ -3799,11 +3937,32 @@ var ALISBundle = (function (exports) {
    * @param {string[]} events
    * @param {(element: Element, event: Event, triggerElement: Element | null, options?: TriggerOptions) => void} onTrigger
    */
-  function setupDelegation(events = ['click', 'submit', 'change', 'input', 'scroll'], onTrigger) {
+  function setupDelegation(events = ['click', 'submit', 'change', 'input', 'scroll', FORCE_TRIGGER_EVENT], onTrigger) {
     events.forEach(eventType => {
       if (LISTENERS.has(eventType)) return;
       const handler = /** @type {(event: Event) => void} */ (event => {
+        // Debug logging - ALWAYS log for input events to diagnose Syncfusion issues
+        const DEBUG = typeof window !== 'undefined' && window.ALIS_DEBUG;
+        if (eventType === 'input' || eventType === 'change') {
+          const t = event.target;
+          console.log('[ALIS] Event handler called - type:', eventType, 
+            'targetTag:', t instanceof Element ? t.tagName : 'not element',
+            'targetId:', t instanceof Element ? t.id : '',
+            'hasAlisGet:', t instanceof Element ? t.hasAttribute('data-alis-get') : false);
+        }
+        
         const target = findTriggerElement(event);
+        
+        if (DEBUG && (eventType === 'input' || eventType === 'change')) {
+          if (target) {
+            console.log('[ALIS DEBUG] findTriggerElement result - tagName:', target.tagName,
+              'id:', target.id,
+              'hasAlisGet:', target.hasAttribute('data-alis-get'));
+          } else {
+            console.log('[ALIS DEBUG] findTriggerElement result: null');
+          }
+        }
+        
         if (!target) return;
         
         // Get trigger config for debounce/throttle
@@ -3830,7 +3989,9 @@ var ALISBundle = (function (exports) {
         }
         executeHandler(target, event, onTrigger, {});
       });
-      const useCapture = eventType === 'submit';
+      // Use capture phase for submit (to intercept before form submission)
+      // and for input/change events (Syncfusion may stop propagation in bubble phase)
+      const useCapture = eventType === 'submit' || eventType === 'input' || eventType === 'change';
       document.addEventListener(eventType, handler, useCapture);
       LISTENERS.set(eventType, handler);
     });
@@ -3971,6 +4132,31 @@ var ALISBundle = (function (exports) {
   // Create validation API instance
   const validationAPI = createValidationAPI();
 
+  /**
+   * Programmatically trigger an ALIS request on an element.
+   * Use this from Syncfusion change handlers to bridge Syncfusion events to ALIS.
+   * 
+   * @example
+   * // In Syncfusion change handler:
+   * function onDropdownChange(args) {
+   *   ALIS.forceTrigger(document.getElementById('myDropdown'));
+   * }
+   * 
+   * @param {Element | string} elementOrSelector - Element or CSS selector
+   */
+  function forceTrigger(elementOrSelector) {
+    const element = typeof elementOrSelector === 'string' 
+      ? document.querySelector(elementOrSelector)
+      : elementOrSelector;
+      
+    if (!element) {
+      console.warn('[ALIS] forceTrigger: element not found');
+      return;
+    }
+    
+    element.dispatchEvent(new CustomEvent(FORCE_TRIGGER_EVENT, { bubbles: true }));
+  }
+
   const ALIS = {
     version: VERSION,
     init(config = {}) {
@@ -3997,6 +4183,7 @@ var ALISBundle = (function (exports) {
     trigger: handleTrigger,
     request: handleRequest,
     from: handleFrom,
+    forceTrigger,
     confirm: {
       register: registerConfirm
     },

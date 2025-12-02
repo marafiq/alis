@@ -2,6 +2,7 @@ import { request as requestApi } from './api/request.js';
 import { trigger as triggerApi } from './api/trigger.js';
 import { from as fromApi } from './api/from.js';
 import { setupDelegation } from './trigger/delegation.js';
+import { FORCE_TRIGGER_EVENT } from './trigger/constants.js';
 import { registerConfirm } from './confirm/registry.js';
 import { createValidationAPI } from './validation/integration/alis-integration.js';
 
@@ -34,6 +35,31 @@ function handleFrom(element) {
 // Create validation API instance
 const validationAPI = createValidationAPI();
 
+/**
+ * Programmatically trigger an ALIS request on an element.
+ * Use this from Syncfusion change handlers to bridge Syncfusion events to ALIS.
+ * 
+ * @example
+ * // In Syncfusion change handler:
+ * function onDropdownChange(args) {
+ *   ALIS.forceTrigger(document.getElementById('myDropdown'));
+ * }
+ * 
+ * @param {Element | string} elementOrSelector - Element or CSS selector
+ */
+function forceTrigger(elementOrSelector) {
+  const element = typeof elementOrSelector === 'string' 
+    ? document.querySelector(elementOrSelector)
+    : elementOrSelector;
+    
+  if (!element) {
+    console.warn('[ALIS] forceTrigger: element not found');
+    return;
+  }
+  
+  element.dispatchEvent(new CustomEvent(FORCE_TRIGGER_EVENT, { bubbles: true }));
+}
+
 const ALIS = {
   version: VERSION,
   init(config = {}) {
@@ -60,6 +86,7 @@ const ALIS = {
   trigger: handleTrigger,
   request: handleRequest,
   from: handleFrom,
+  forceTrigger,
   confirm: {
     register: registerConfirm
   },

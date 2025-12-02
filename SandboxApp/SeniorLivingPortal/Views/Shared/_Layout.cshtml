@@ -39,6 +39,9 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Demos">ALIS Demos</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-warning" asp-controller="Home" asp-action="SyncfusionTest">🧪 SF Test</a>
+                        </li>
                     </ul>
                     <span class="navbar-text text-light">
                         <span id="current-time"></span>
@@ -67,6 +70,9 @@
     
     <!-- ALIS Framework -->
     <script src="~/lib/alis/alis.js"></script>
+    
+    <!-- ALIS-Syncfusion Bridge -->
+    <script src="~/js/alis-syncfusion-bridge.js" asp-append-version="true"></script>
     
     <!-- Site JavaScript -->
     <script src="~/js/site.js" asp-append-version="true"></script>

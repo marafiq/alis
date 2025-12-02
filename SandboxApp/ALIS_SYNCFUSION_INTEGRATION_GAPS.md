@@ -2,6 +2,38 @@
 
 This document captures the integration points between ALIS framework and Syncfusion Essential JS 2 controls that need attention for smooth operation.
 
+## ✅ RESOLVED: Event Delegation for TextBox (December 2025)
+
+### The Problem
+
+Syncfusion controls were not triggering ALIS requests because:
+1. Syncfusion's event handlers call `event.stopPropagation()` in the **bubble phase**
+2. ALIS was listening for events in the bubble phase
+3. Events never reached ALIS's document-level listener
+
+### The Solution
+
+**ALIS now uses capture phase for `input` and `change` events** (in addition to `submit`).
+
+```javascript
+// src/trigger/delegation.js
+const useCapture = eventType === 'submit' || eventType === 'input' || eventType === 'change';
+document.addEventListener(eventType, handler, useCapture);
+```
+
+This allows ALIS to intercept events **before** Syncfusion's handlers can stop propagation.
+
+### Verified Working
+
+The following Syncfusion controls now work with ALIS:
+- ✅ **TextBox** with `data-alis-trigger="input delay:500ms"` (debounced search)
+- ✅ **DropDownList** with `data-alis-trigger="alis:trigger"` (via ALIS-SF Bridge)
+- ✅ **Button** with `data-alis-get` (click triggers)
+
+### Test Page
+
+A test page is available at `/Home/SyncfusionTest` to verify Syncfusion integration.
+
 ## Key Finding: `<ejs-scripts>` in Partial Views
 
 **Issue:** When partial views containing Syncfusion controls are rendered (either on initial page load or via ALIS swap), they need `<ejs-scripts>` to initialize the controls. However:

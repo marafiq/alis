@@ -1,0 +1,42 @@
+@* Test Partial View with Syncfusion Controls *@
+@* This is loaded via ALIS to test dynamic Syncfusion initialization *@
+
+<div class="alert alert-info mb-3">
+    <strong>Partial View Loaded!</strong> at @DateTime.Now.ToString("HH:mm:ss")
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Dynamic TextBox</label>
+        <ejs-textbox id="dynamicTextBox"
+                     name="dynamicText"
+                     placeholder="This TextBox was loaded dynamically">
+        </ejs-textbox>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Dynamic DropDown</label>
+        <ejs-dropdownlist id="dynamicDropdown"
+                          name="dynamicSelect"
+                          placeholder="Select an option">
+            <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+            <e-data-manager json="@(new[] { 
+                new { Text = "Dynamic Option 1", Value = "d1" },
+                new { Text = "Dynamic Option 2", Value = "d2" },
+                new { Text = "Dynamic Option 3", Value = "d3" }
+            })"></e-data-manager>
+        </ejs-dropdownlist>
+    </div>
+</div>
+
+<ejs-button id="dynamicButton" 
+            cssClass="e-success" 
+            content="Dynamic Button - Click Me"
+            data-alis-get="/Home/TestButtonClick"
+            data-alis-target="#dynamicResult">
+</ejs-button>
+
+<div id="dynamicResult" class="mt-2 p-2 border bg-white">Click the button above</div>
+
+<!-- Syncfusion scripts for this partial - CRITICAL for ALIS-loaded content -->
+<ejs-scripts></ejs-scripts>
+

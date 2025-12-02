@@ -1,0 +1,14 @@
+
+
+{
+  "mcpServers": {
+    "syncfusion-aspnetcore-assistant": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@syncfusion/aspnetcore-assistant@latest"],
+      "env": {
+        "Syncfusion_API_Key": "Mgo+DSMBPh8sVXJzS0d+WFlPd11dXmJWd1p/THNYflR1fV9DaUwxOX1dQl9nSH9Rc0RjWH9bcHZTT2k="
+      }
+    }
+  }
+}

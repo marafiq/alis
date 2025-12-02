@@ -1,0 +1,326 @@
+@{
+    ViewData["Title"] = "Syncfusion + ALIS Integration Test";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-0">Syncfusion + ALIS Integration Test</h2>
+        <p class="text-muted">Test page for diagnosing Syncfusion control integration with ALIS framework</p>
+    </div>
+</div>
+
+<!-- Test 1: TextBox with Input Trigger (Debounced) -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Test 1: TextBox with Input Trigger (Debounced)</strong>
+        <span class="badge bg-warning">Known Issue: Event delegation</span>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Type to trigger debounced search. Check console for ALIS telemetry.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label">Syncfusion TextBox (ejs-textbox)</label>
+                <ejs-textbox id="testTextBox1"
+                             name="query"
+                             placeholder="Type here to search..."
+                             showClearButton="true"
+                             data-alis-get="/Home/TestSearch"
+                             data-alis-trigger="input delay:500ms"
+                             data-alis-target="#test1-result"
+                             data-alis-collect="self">
+                </ejs-textbox>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Native Input (for comparison)</label>
+                <input type="text" 
+                       class="e-input" 
+                       name="query2"
+                       placeholder="Type here to search..."
+                       data-alis-get="/Home/TestSearch"
+                       data-alis-trigger="input delay:500ms"
+                       data-alis-target="#test1-result-native"
+                       data-alis-collect="self" />
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div id="test1-result" class="border p-2 bg-light">Syncfusion result will appear here</div>
+            </div>
+            <div class="col-md-6">
+                <div id="test1-result-native" class="border p-2 bg-light">Native result will appear here</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test 2: DropDownList with Change Trigger -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Test 2: DropDownList with Change Trigger</strong>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Select an option to trigger ALIS request.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label">Syncfusion DropDownList</label>
+                <ejs-dropdownlist id="testDropdown1"
+                                  name="buildingId"
+                                  placeholder="Select Building"
+                                  index="0"
+                                  data-alis-get="/Home/TestDropdownChange"
+                                  data-alis-trigger="alis:trigger"
+                                  data-alis-target="#test2-result"
+                                  data-alis-collect="self">
+                    <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                    <e-data-manager json="@(new[] { 
+                        new { Text = "-- Select --", Value = "" },
+                        new { Text = "Building A", Value = "1" },
+                        new { Text = "Building B", Value = "2" },
+                        new { Text = "Building C", Value = "3" }
+                    })"></e-data-manager>
+                </ejs-dropdownlist>
+            </div>
+            <div class="col-md-6">
+                <div id="test2-result" class="border p-2 bg-light">Result will appear here</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test 3: Form with Validation -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Test 3: Form with Client-Side Validation</strong>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Test client-side validation with Syncfusion controls. Errors should clear on input.</p>
+        
+        <form id="testForm3"
+              data-alis-post="/Home/TestFormSubmit"
+              data-alis-validate="true"
+              data-alis-target="#test3-result"
+              data-alis-swap="innerHTML">
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">First Name <span class="text-danger">*</span></label>
+                    <ejs-textbox id="testFirstName"
+                                 name="FirstName"
+                                 placeholder="Enter first name"
+                                 data-val="true"
+                                 data-val-required="First name is required"
+                                 data-val-minlength="Minimum 2 characters"
+                                 data-val-minlength-min="2">
+                    </ejs-textbox>
+                    <span data-valmsg-for="FirstName" class="field-validation-valid text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                    <ejs-textbox id="testEmail"
+                                 name="Email"
+                                 placeholder="Enter email"
+                                 data-val="true"
+                                 data-val-required="Email is required"
+                                 data-val-email="Invalid email format">
+                    </ejs-textbox>
+                    <span data-valmsg-for="Email" class="field-validation-valid text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Age <span class="text-danger">*</span></label>
+                    <ejs-numerictextbox id="testAge"
+                                        name="Age"
+                                        min="1"
+                                        max="150"
+                                        step="1"
+                                        format="n0"
+                                        placeholder="Enter age"
+                                        data-val="true"
+                                        data-val-required="Age is required"
+                                        data-val-range="Age must be between 1 and 150"
+                                        data-val-range-min="1"
+                                        data-val-range-max="150">
+                    </ejs-numerictextbox>
+                    <span data-valmsg-for="Age" class="field-validation-valid text-danger"></span>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Category <span class="text-danger">*</span></label>
+                    <ejs-dropdownlist id="testCategory"
+                                      name="Category"
+                                      placeholder="Select category"
+                                      data-val="true"
+                                      data-val-required="Category is required">
+                        <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                        <e-data-manager json="@(new[] { 
+                            new { Text = "Option 1", Value = "1" },
+                            new { Text = "Option 2", Value = "2" },
+                            new { Text = "Option 3", Value = "3" }
+                        })"></e-data-manager>
+                    </ejs-dropdownlist>
+                    <span data-valmsg-for="Category" class="field-validation-valid text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Birth Date <span class="text-danger">*</span></label>
+                    <ejs-datepicker id="testBirthDate"
+                                    name="BirthDate"
+                                    placeholder="Select date"
+                                    format="MM/dd/yyyy"
+                                    data-val="true"
+                                    data-val-required="Birth date is required">
+                    </ejs-datepicker>
+                    <span data-valmsg-for="BirthDate" class="field-validation-valid text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3 d-flex align-items-end">
+                    <ejs-checkbox id="testAgree"
+                                  name="Agree"
+                                  label="I agree to terms"
+                                  data-val="true"
+                                  data-val-required="You must agree">
+                    </ejs-checkbox>
+                    <span data-valmsg-for="Agree" class="field-validation-valid text-danger ms-2"></span>
+                </div>
+            </div>
+            
+            <ejs-button id="testSubmitBtn" type="submit" cssClass="e-primary" isPrimary="true" content="Submit Form">
+            </ejs-button>
+        </form>
+        
+        <div id="test3-result" class="mt-3 border p-2 bg-light">Form result will appear here</div>
+    </div>
+</div>
+
+<!-- Test 4: Button Click Trigger -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Test 4: Button Click Trigger</strong>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Click button to trigger ALIS request.</p>
+        
+        <div class="d-flex gap-2">
+            <ejs-button id="testButton1"
+                        cssClass="e-primary"
+                        content="Load Data"
+                        data-alis-get="/Home/TestButtonClick"
+                        data-alis-target="#test4-result"
+                        data-alis-indicator="is-loading">
+            </ejs-button>
+            
+            <div id="test4-result" class="border p-2 bg-light flex-grow-1">Result will appear here</div>
+        </div>
+    </div>
+</div>
+
+<!-- Test 5: Dynamic Content Swap with Syncfusion Controls -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Test 5: Dynamic Content Swap (Partial View with Syncfusion)</strong>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Click to load partial view with Syncfusion controls. Scripts should auto-execute.</p>
+        
+        <ejs-button id="testLoadPartial"
+                    cssClass="e-info"
+                    content="Load Partial View"
+                    data-alis-get="/Home/TestPartialView"
+                    data-alis-target="#test5-result"
+                    data-alis-on-after="initSyncfusionControls">
+        </ejs-button>
+        
+        <div id="test5-result" class="mt-3 border p-3 bg-light">Partial view will be loaded here</div>
+    </div>
+</div>
+
+<!-- Console Log Panel -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>ALIS Telemetry Log</strong>
+        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('logPanel').innerHTML = ''">Clear</button>
+    </div>
+    <div class="card-body">
+        <pre id="logPanel" style="max-height: 300px; overflow-y: auto; font-size: 12px; background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 4px;"></pre>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Enable ALIS debug mode for this page
+        window.ALIS_DEBUG = true;
+        
+        // Comprehensive event diagnostic
+        document.addEventListener('DOMContentLoaded', function() {
+            const logPanel = document.getElementById('logPanel');
+            function log(msg) {
+                const time = new Date().toLocaleTimeString();
+                logPanel.innerHTML += `[${time}] ${msg}\n`;
+                logPanel.scrollTop = logPanel.scrollHeight;
+                console.log(msg);
+            }
+            
+            // Monitor ALL input and change events at document level
+            ['input', 'change', 'blur', 'focus'].forEach(eventType => {
+                document.addEventListener(eventType, function(e) {
+                    const t = e.target;
+                    if (t instanceof Element) {
+                        const hasAlisGet = t.hasAttribute('data-alis-get');
+                        const hasAlisTrigger = t.hasAttribute('data-alis-trigger');
+                        log(`📡 ${eventType.toUpperCase()} event - tag: ${t.tagName}, id: ${t.id || 'none'}, class: ${t.className.substring(0,50)}..., hasAlisGet: ${hasAlisGet}, hasAlisTrigger: ${hasAlisTrigger}`);
+                    }
+                }, true); // Use capture phase
+            });
+            
+            // Check the actual DOM structure of testTextBox1
+            setTimeout(function() {
+                const el = document.getElementById('testTextBox1');
+                if (el) {
+                    log('--- testTextBox1 Analysis ---');
+                    log(`tagName: ${el.tagName}`);
+                    log(`className: ${el.className}`);
+                    log(`data-alis-get: ${el.getAttribute('data-alis-get')}`);
+                    log(`data-alis-trigger: ${el.getAttribute('data-alis-trigger')}`);
+                    log(`parent: ${el.parentElement?.className}`);
+                    
+                    // Check if Syncfusion instance exists
+                    if (el.ej2_instances) {
+                        log(`ej2_instances: YES (${el.ej2_instances.length} instance(s))`);
+                    } else {
+                        log('ej2_instances: NO');
+                    }
+                }
+                
+                const dd = document.getElementById('testDropdown1');
+                if (dd) {
+                    log('--- testDropdown1 Analysis ---');
+                    log(`tagName: ${dd.tagName}`);
+                    log(`className: ${dd.className}`);
+                    log(`data-alis-get: ${dd.getAttribute('data-alis-get')}`);
+                    log(`data-alis-trigger: ${dd.getAttribute('data-alis-trigger')}`);
+                    log(`parent: ${dd.parentElement?.className}`);
+                    
+                    // Check for hidden select
+                    const hidden = document.getElementById('testDropdown1_hidden');
+                    if (hidden) {
+                        log(`Hidden select found: ${hidden.tagName}, data-alis-get: ${hidden.getAttribute('data-alis-get')}`);
+                    }
+                    
+                    if (dd.ej2_instances) {
+                        log(`ej2_instances: YES (${dd.ej2_instances.length} instance(s))`);
+                        // Try to hook into Syncfusion's change event
+                        const sfInstance = dd.ej2_instances[0];
+                        if (sfInstance && sfInstance.change) {
+                            log('Syncfusion change event handler exists');
+                        }
+                    }
+                }
+                
+                log('--- Ready for testing ---');
+            }, 500);
+        });
+    </script>
+}
+
