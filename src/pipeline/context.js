@@ -12,12 +12,14 @@ let contextCounter = 0;
  * @property {Element | null} element
  * @property {Record<string, unknown>} config
  * @property {string} trigger
- * @property {{ attempts: number; aborted: boolean; startTime: number | null; endTime: number | null }} state
- * @property {Request | null} request
+ * @property {{ attempts: number; aborted: boolean; startTime: number | null; endTime: number | null; duration: number | null }} state
+ * @property {{ url: string; method: string; headers: Record<string, string>; body: any } | null} request
  * @property {Response | null} response
- * @property {unknown} validation
+ * @property {unknown} body
+ * @property {Record<string, unknown> | null} validation
  * @property {Error | null} error
  * @property {{ source: Element | null; data: unknown } | null} collect
+ * @property {boolean} success
  */
 
 /**
@@ -40,13 +42,16 @@ export function createContext(element, overrides = {}) {
       attempts: 0,
       aborted: false,
       startTime: null,
-      endTime: null
+      endTime: null,
+      duration: null
     },
     request: null,
     response: null,
+    body: null,
     validation: null,
     error: null,
-    collect: null
+    collect: null,
+    success: false
   };
 }
 

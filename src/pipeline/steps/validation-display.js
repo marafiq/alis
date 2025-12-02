@@ -1,0 +1,34 @@
+import { clearErrors, displayErrors } from '../../validation/display.js';
+
+/**
+ * @param {import('../context.js').PipelineContext} ctx
+ */
+export function validationDisplayStep(ctx) {
+  const form = resolveForm(ctx.element);
+  if (!form) {
+    return ctx;
+  }
+
+  if (!ctx.validation) {
+    clearErrors(form);
+    return ctx;
+  }
+
+  clearErrors(form);
+  displayErrors(form, ctx.validation);
+  return ctx;
+}
+
+/**
+ * @param {Element | null} element
+ */
+function resolveForm(element) {
+  if (!element) {
+    return null;
+  }
+  if (element instanceof HTMLFormElement) {
+    return element;
+  }
+  return element.closest('form');
+}
+
