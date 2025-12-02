@@ -17,6 +17,7 @@ let contextCounter = 0;
  * @property {Response | null} response
  * @property {unknown} validation
  * @property {Error | null} error
+ * @property {{ source: Element | null; data: unknown } | null} collect
  */
 
 /**
@@ -44,7 +45,8 @@ export function createContext(element, overrides = {}) {
     request: null,
     response: null,
     validation: null,
-    error: null
+    error: null,
+    collect: null
   };
 }
 

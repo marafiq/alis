@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { runPipeline } from '../../../src/pipeline/runner.js';
 import { createContext } from '../../../src/pipeline/context.js';
-import type { PipelineContext } from '../../../src/pipeline/context.js';
-
+type PipelineContext = ReturnType<typeof createContext>;
 describe('pipeline/runner', () => {
   it('executes steps sequentially', async () => {
     const element = document.createElement('div');
