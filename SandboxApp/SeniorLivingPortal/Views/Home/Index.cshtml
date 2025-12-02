@@ -1,0 +1,132 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-0">Dashboard</h2>
+        <p class="text-muted">Welcome to Senior Living Portal</p>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card primary">
+            <div class="stat-value">@ViewBag.TotalResidents</div>
+            <div class="stat-label">Total Residents</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card danger">
+            <div class="stat-value">@ViewBag.CriticalAlerts</div>
+            <div class="stat-label">Critical Alerts</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="stat-value">@ViewBag.WarningAlerts</div>
+            <div class="stat-label">Warning Alerts</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="stat-value">98%</div>
+            <div class="stat-label">Occupancy Rate</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Quick Actions</span>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-controller="Residents" asp-action="Index" class="btn btn-outline-primary">
+                        👥 Manage Residents
+                    </a>
+                    <a asp-controller="Vitals" asp-action="Index" class="btn btn-outline-primary">
+                        ❤️ Record Vitals
+                    </a>
+                    <a asp-controller="Home" asp-action="Demos" class="btn btn-outline-secondary">
+                        🔧 ALIS Demos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Alerts -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Alerts</span>
+                <button class="btn btn-sm btn-outline-primary"
+                        data-alis-get="/Vitals/Alerts"
+                        data-alis-target="#alerts-container"
+                        data-alis-indicator="is-loading, #alerts-spinner">
+                    <span class="spinner" id="alerts-spinner"></span>
+                    Refresh
+                </button>
+            </div>
+            <div class="card-body" id="alerts-container">
+                @if (ViewBag.CriticalAlerts > 0 || ViewBag.WarningAlerts > 0)
+                {
+                    <div class="alert-item critical">
+                        <span class="badge bg-danger me-2">CRITICAL</span>
+                        <span>@ViewBag.CriticalAlerts resident(s) with critical vitals</span>
+                    </div>
+                    <div class="alert-item warning">
+                        <span class="badge bg-warning me-2">WARNING</span>
+                        <span>@ViewBag.WarningAlerts resident(s) need attention</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✓</div>
+                        <p>No alerts at this time</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ALIS Feature Highlight -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <span>🚀 Powered by ALIS Framework</span>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    This portal demonstrates the <strong>ALIS (AJAX-Like Intelligent System)</strong> framework 
+                    for building modern, interactive web applications with ASP.NET Core MVC.
+                </p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>✨ Declarative AJAX</h6>
+                        <p class="text-muted small">Use data-alis-* attributes for seamless partial updates</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>⚡ Client-Side Validation</h6>
+                        <p class="text-muted small">Syncfusion adapter for rich control validation</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>🔄 Real-time Updates</h6>
+                        <p class="text-muted small">Debounced search and auto-refresh capabilities</p>
+                    </div>
+                </div>
+                <a asp-controller="Home" asp-action="Demos" class="btn btn-primary mt-2">
+                    Explore ALIS Demos →
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

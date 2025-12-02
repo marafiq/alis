@@ -1,0 +1,97 @@
+@model IEnumerable<Vitals>
+@{
+    var resident = ViewBag.Resident as Resident;
+    var days = ViewBag.Days as int? ?? 7;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h6 class="text-muted mb-1">Vitals History for:</h6>
+        <h5 class="mb-0">@resident?.FullName</h5>
+    </div>
+    <div class="btn-group">
+        <button class="btn btn-sm @(days == 7 ? "btn-primary" : "btn-outline-primary")"
+                data-alis-get="/Vitals/History?residentId=@resident?.Id&days=7"
+                data-alis-target="#vitalsModalBody">
+            7 Days
+        </button>
+        <button class="btn btn-sm @(days == 14 ? "btn-primary" : "btn-outline-primary")"
+                data-alis-get="/Vitals/History?residentId=@resident?.Id&days=14"
+                data-alis-target="#vitalsModalBody">
+            14 Days
+        </button>
+        <button class="btn btn-sm @(days == 30 ? "btn-primary" : "btn-outline-primary")"
+                data-alis-get="/Vitals/History?residentId=@resident?.Id&days=30"
+                data-alis-target="#vitalsModalBody">
+            30 Days
+        </button>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Date/Time</th>
+                    <th>BP</th>
+                    <th>HR</th>
+                    <th>Temp</th>
+                    <th>SpO2</th>
+                    <th>By</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var vitals in Model)
+                {
+                    <tr>
+                        <td>@vitals.RecordedAt.ToString("MMM d, h:mm tt")</td>
+                        <td>
+                            <span class="badge @(vitals.BloodPressureStatus == VitalStatus.Critical ? "bg-danger" : vitals.BloodPressureStatus == VitalStatus.Warning ? "bg-warning text-dark" : "bg-success")">
+                                @vitals.BloodPressureDisplay
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge @(vitals.HeartRateStatus == VitalStatus.Critical ? "bg-danger" : vitals.HeartRateStatus == VitalStatus.Warning ? "bg-warning text-dark" : "bg-success")">
+                                @vitals.HeartRate
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge @(vitals.TemperatureStatus == VitalStatus.Critical ? "bg-danger" : vitals.TemperatureStatus == VitalStatus.Warning ? "bg-warning text-dark" : "bg-success")">
+                                @vitals.Temperature°
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge @(vitals.OxygenStatus == VitalStatus.Critical ? "bg-danger" : vitals.OxygenStatus == VitalStatus.Warning ? "bg-warning text-dark" : "bg-success")">
+                                @vitals.OxygenSaturation%
+                            </span>
+                        </td>
+                        <td class="text-muted">@vitals.RecordedBy</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    
+    <p class="text-muted text-center mt-3">
+        Showing @Model.Count() records from the last @days days
+    </p>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <h5>No Records</h5>
+        <p class="text-muted">No vitals recorded in the selected period</p>
+    </div>
+}
+
+<div class="mt-4 text-center">
+    <button class="btn btn-primary"
+            data-alis-get="/Vitals/Record?residentId=@resident?.Id"
+            data-alis-target="#vitalsModalBody">
+        ➕ Record New Vitals
+    </button>
+</div>
+

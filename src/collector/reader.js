@@ -28,6 +28,20 @@ export function readValue(element) {
     }
   }
 
+  // Check for Syncfusion component (ej2_instances array)
+  const ej2Instances = /** @type {any} */ (element)['ej2_instances'];
+  if (Array.isArray(ej2Instances) && ej2Instances.length > 0) {
+    const instance = ej2Instances[0];
+    // CheckBox uses 'checked' property
+    if ('checked' in instance) {
+      return instance.checked ? { name, value: 'true' } : null;
+    }
+    // Most components use 'value' property
+    if ('value' in instance) {
+      return { name, value: instance.value };
+    }
+  }
+
   if (element instanceof HTMLInputElement) {
     if (element.type === 'checkbox') {
       return element.checked ? { name, value: element.value || 'on' } : null;

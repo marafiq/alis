@@ -1,0 +1,69 @@
+@model IEnumerable<VitalsSummary>
+@{
+    ViewData["Title"] = "Vitals Dashboard";
+}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2 class="mb-0">Vitals Dashboard</h2>
+        <p class="text-muted">Monitor resident health status in real-time</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <button class="btn btn-primary"
+                data-alis-get="/Vitals/Dashboard"
+                data-alis-target="#vitals-dashboard"
+                data-alis-indicator="is-loading, #refresh-spinner">
+            <span class="spinner" id="refresh-spinner"></span>
+            🔄 Refresh Dashboard
+        </button>
+    </div>
+</div>
+
+<!-- Alert Summary -->
+@{
+    var criticalCount = Model.Count(s => s.HasCriticalAlerts);
+    var warningCount = Model.Count(s => s.HasWarningAlerts && !s.HasCriticalAlerts);
+}
+
+@if (criticalCount > 0 || warningCount > 0)
+{
+    <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+        <span class="me-3" style="font-size: 1.5rem;">⚠️</span>
+        <div>
+            <strong>Attention Required!</strong>
+            @if (criticalCount > 0)
+            {
+                <span class="badge bg-danger ms-2">@criticalCount Critical</span>
+            }
+            @if (warningCount > 0)
+            {
+                <span class="badge bg-warning text-dark ms-2">@warningCount Warning</span>
+            }
+        </div>
+    </div>
+}
+
+<div id="vitals-dashboard">
+    @await Html.PartialAsync("_VitalsDashboard", Model)
+</div>
+
+<!-- Record Vitals Modal -->
+<div class="modal fade" id="vitalsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Vitals</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="vitalsModalBody">
+                <!-- Content loaded via ALIS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // showVitalsModal is defined in site.js as a window function
+    </script>
+}

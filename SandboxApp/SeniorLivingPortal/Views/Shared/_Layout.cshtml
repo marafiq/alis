@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Senior Living Portal</title>
+    
+    <!-- Syncfusion Essential JS 2 -->
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-base/styles/material.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-buttons/styles/material.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-inputs/styles/material.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-popups/styles/material.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-lists/styles/material.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-dropdowns/styles/material.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-calendars/styles/material.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-grids/styles/material.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/ej2/31.2.16/ej2-notifications/styles/material.css" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">
+                    <span class="fw-bold">🏠 Senior Living Portal</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Residents" asp-action="Index">Residents</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Vitals" asp-action="Index">Vitals</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Demos">ALIS Demos</a>
+                        </li>
+                    </ul>
+                    <span class="navbar-text text-light">
+                        <span id="current-time"></span>
+                    </span>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container-fluid py-3">
+        @RenderBody()
+    </div>
+
+    <footer class="border-top footer text-muted py-3">
+        <div class="container text-center">
+            &copy; @DateTime.Now.Year - Senior Living Portal | Powered by <strong>ALIS</strong>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Syncfusion Essential JS 2 -->
+    <script src="https://cdn.syncfusion.com/ej2/31.2.16/dist/ej2.min.js"></script>
+    
+    <!-- ALIS Framework -->
+    <script src="~/lib/alis/alis.js"></script>
+    
+    <!-- Site JavaScript -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

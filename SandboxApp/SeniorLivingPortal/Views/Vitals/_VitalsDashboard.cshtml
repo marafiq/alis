@@ -1,0 +1,98 @@
+@model IEnumerable<VitalsSummary>
+
+<div class="row">
+    @foreach (var summary in Model)
+    {
+        var cardClass = summary.HasCriticalAlerts ? "border-danger" : 
+                        summary.HasWarningAlerts ? "border-warning" : "";
+        var headerClass = summary.HasCriticalAlerts ? "bg-danger text-white" : 
+                          summary.HasWarningAlerts ? "bg-warning" : "bg-light";
+        
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card @cardClass">
+                <div class="card-header @headerClass d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@summary.ResidentName</strong>
+                        <small class="d-block">Room @summary.RoomNumber</small>
+                    </div>
+                    @if (summary.HasCriticalAlerts)
+                    {
+                        <span class="badge bg-danger">CRITICAL</span>
+                    }
+                    else if (summary.HasWarningAlerts)
+                    {
+                        <span class="badge bg-warning text-dark">WARNING</span>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (summary.LatestVitals != null)
+                    {
+                        var vitals = summary.LatestVitals;
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="vital-card @vitals.BloodPressureStatus.ToString().ToLower()">
+                                    <div class="vital-value">@vitals.BloodPressureDisplay</div>
+                                    <div class="vital-label">Blood Pressure</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="vital-card @vitals.HeartRateStatus.ToString().ToLower()">
+                                    <div class="vital-value">@vitals.HeartRate</div>
+                                    <div class="vital-label">Heart Rate</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="vital-card @vitals.TemperatureStatus.ToString().ToLower()">
+                                    <div class="vital-value">@vitals.Temperature°</div>
+                                    <div class="vital-label">Temperature</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="vital-card @vitals.OxygenStatus.ToString().ToLower()">
+                                    <div class="vital-value">@vitals.OxygenSaturation%</div>
+                                    <div class="vital-label">SpO2</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <small class="text-muted d-block mb-2">
+                            Last recorded: @vitals.RecordedAt.ToString("MMM d, h:mm tt") by @vitals.RecordedBy
+                        </small>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-3">
+                            <p class="mb-0">No vitals recorded</p>
+                        </div>
+                    }
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-primary flex-fill"
+                                data-alis-get="/Vitals/Record?residentId=@summary.ResidentId"
+                                data-alis-target="#vitalsModalBody"
+                                data-alis-on-after="showVitalsModal">
+                            ➕ Record
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary flex-fill"
+                                data-alis-get="/Vitals/History?residentId=@summary.ResidentId"
+                                data-alis-target="#vitalsModalBody"
+                                data-alis-on-after="showVitalsModal">
+                            📊 History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">❤️</div>
+        <h5>No Residents</h5>
+        <p class="text-muted">Add residents to start tracking vitals</p>
+    </div>
+}
+

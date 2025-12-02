@@ -1,0 +1,42 @@
+@model IEnumerable<VitalsSummary>
+
+@if (Model.Any())
+{
+    foreach (var alert in Model.OrderByDescending(a => a.HasCriticalAlerts))
+    {
+        var alertClass = alert.HasCriticalAlerts ? "critical" : "warning";
+        var badgeClass = alert.HasCriticalAlerts ? "bg-danger" : "bg-warning text-dark";
+        var badgeText = alert.HasCriticalAlerts ? "CRITICAL" : "WARNING";
+        
+        <div class="alert-item @alertClass">
+            <span class="badge @badgeClass me-2">@badgeText</span>
+            <div class="flex-grow-1">
+                <strong>@alert.ResidentName</strong>
+                <small class="text-muted ms-2">Room @alert.RoomNumber</small>
+                @if (alert.LatestVitals != null)
+                {
+                    <div class="small text-muted">
+                        BP: @alert.LatestVitals.BloodPressureDisplay |
+                        HR: @alert.LatestVitals.HeartRate |
+                        Temp: @alert.LatestVitals.Temperature° |
+                        SpO2: @alert.LatestVitals.OxygenSaturation%
+                    </div>
+                }
+            </div>
+            <button class="btn btn-sm btn-outline-primary"
+                    data-alis-get="/Vitals/Record?residentId=@alert.ResidentId"
+                    data-alis-target="#vitalsModalBody"
+                    data-alis-on-after="showVitalsModal">
+                Record
+            </button>
+        </div>
+    }
+}
+else
+{
+    <div class="empty-state py-3">
+        <div class="empty-state-icon">✓</div>
+        <p class="mb-0">No alerts at this time</p>
+    </div>
+}
+

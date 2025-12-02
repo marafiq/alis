@@ -1,0 +1,43 @@
+@model Vitals
+
+@if (Model != null)
+{
+    <div class="vital-summary p-3 bg-light rounded">
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="vital-card @Model.BloodPressureStatus.ToString().ToLower()">
+                    <div class="vital-value">@Model.BloodPressureDisplay</div>
+                    <div class="vital-label">BP</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="vital-card @Model.HeartRateStatus.ToString().ToLower()">
+                    <div class="vital-value">@Model.HeartRate</div>
+                    <div class="vital-label">HR</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="vital-card @Model.TemperatureStatus.ToString().ToLower()">
+                    <div class="vital-value">@Model.Temperature°</div>
+                    <div class="vital-label">Temp</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="vital-card @Model.OxygenStatus.ToString().ToLower()">
+                    <div class="vital-value">@Model.OxygenSaturation%</div>
+                    <div class="vital-label">SpO2</div>
+                </div>
+            </div>
+        </div>
+        <small class="text-muted d-block mt-2 text-center">
+            @Model.RecordedAt.ToString("MMM d, h:mm tt")
+        </small>
+    </div>
+}
+else
+{
+    <div class="text-center text-muted p-3">
+        <p class="mb-0">No vitals recorded</p>
+    </div>
+}
+

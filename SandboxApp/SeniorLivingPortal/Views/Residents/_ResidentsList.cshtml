@@ -1,0 +1,82 @@
+@model IEnumerable<Resident>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon">👥</div>
+        <h5>No Residents Found</h5>
+        <p class="text-muted">Try adjusting your search or filters</p>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var resident in Model)
+        {
+            var careLevelClass = resident.CareLevel switch
+            {
+                CareLevel.IndependentLiving => "care-level-independent",
+                CareLevel.AssistedLiving => "care-level-assisted",
+                CareLevel.MemoryCare => "care-level-memory",
+                CareLevel.SkilledNursing => "care-level-skilled",
+                CareLevel.Hospice => "care-level-hospice",
+                _ => ""
+            };
+            
+            var careLevelText = resident.CareLevel switch
+            {
+                CareLevel.IndependentLiving => "Independent",
+                CareLevel.AssistedLiving => "Assisted",
+                CareLevel.MemoryCare => "Memory Care",
+                CareLevel.SkilledNursing => "Skilled Nursing",
+                CareLevel.Hospice => "Hospice",
+                _ => ""
+            };
+
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="resident-card">
+                    <div class="resident-avatar">
+                        @resident.FirstName[0]@resident.LastName[0]
+                    </div>
+                    <div class="resident-info">
+                        <div class="resident-name">@resident.FullName</div>
+                        <div class="resident-meta">
+                            <span class="me-2">🚪 @resident.RoomNumber</span>
+                            <span>🎂 @resident.Age yrs</span>
+                        </div>
+                        <span class="care-level @careLevelClass mt-1 d-inline-block">@careLevelText</span>
+                    </div>
+                    <div class="resident-actions">
+                        <button class="btn btn-sm btn-outline-primary btn-icon"
+                                title="View Details"
+                                data-alis-get="/Residents/Details/@resident.Id"
+                                data-alis-target="#modalBody"
+                                data-alis-on-after="showResidentModal">
+                            👁️
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary btn-icon"
+                                title="Edit"
+                                data-alis-get="/Residents/Edit/@resident.Id"
+                                data-alis-target="#modalBody"
+                                data-alis-on-after="showResidentModal">
+                            ✏️
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-icon"
+                                title="Delete"
+                                data-alis-delete="/Residents/Delete/@resident.Id"
+                                data-alis-confirm="deleteConfirm"
+                                data-alis-confirm-message="Are you sure you want to remove @resident.FullName from the system?"
+                                data-alis-target="#residents-list">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    
+    <div class="text-muted text-center mt-3">
+        Showing @Model.Count() resident(s)
+    </div>
+}
+
