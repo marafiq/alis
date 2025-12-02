@@ -628,6 +628,147 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
       </div>
     `);
   },
+
+  // Cascading selects - States by country
+  "GET /api/states": async (req, url) => {
+    await delay(200);
+    const country = url.searchParams.get("country");
+    
+    const statesByCountry: Record<string, Array<{value: string, label: string}>> = {
+      US: [
+        { value: "CA", label: "🌴 California" },
+        { value: "NY", label: "🗽 New York" },
+        { value: "TX", label: "🤠 Texas" },
+        { value: "FL", label: "🌊 Florida" },
+        { value: "WA", label: "🌲 Washington" },
+      ],
+      CA: [
+        { value: "ON", label: "🍁 Ontario" },
+        { value: "BC", label: "🏔️ British Columbia" },
+        { value: "QC", label: "⚜️ Quebec" },
+        { value: "AB", label: "🛢️ Alberta" },
+      ],
+      UK: [
+        { value: "ENG", label: "🏴󠁧󠁢󠁥󠁮󠁧󠁿 England" },
+        { value: "SCO", label: "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland" },
+        { value: "WAL", label: "🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales" },
+        { value: "NIR", label: "☘️ Northern Ireland" },
+      ],
+      AU: [
+        { value: "NSW", label: "🦘 New South Wales" },
+        { value: "VIC", label: "🏏 Victoria" },
+        { value: "QLD", label: "🐨 Queensland" },
+        { value: "WA", label: "🏜️ Western Australia" },
+      ],
+    };
+    
+    const states = statesByCountry[country || ""] || [];
+    
+    if (!country || states.length === 0) {
+      return htmlResponse(`<option value="">Select country first...</option>`);
+    }
+    
+    const options = states.map(s => `<option value="${s.value}">${s.label}</option>`).join("");
+    return htmlResponse(`<option value="">Select a state...</option>${options}`);
+  },
+
+  // Cascading selects - Cities by state
+  "GET /api/cities": async (req, url) => {
+    await delay(200);
+    const state = url.searchParams.get("state");
+    
+    const citiesByState: Record<string, Array<{value: string, label: string}>> = {
+      // US States
+      CA: [
+        { value: "LA", label: "🌴 Los Angeles" },
+        { value: "SF", label: "🌉 San Francisco" },
+        { value: "SD", label: "☀️ San Diego" },
+        { value: "SJ", label: "💻 San Jose" },
+      ],
+      NY: [
+        { value: "NYC", label: "🗽 New York City" },
+        { value: "BUF", label: "🦬 Buffalo" },
+        { value: "ALB", label: "🏛️ Albany" },
+      ],
+      TX: [
+        { value: "HOU", label: "🚀 Houston" },
+        { value: "DAL", label: "🤠 Dallas" },
+        { value: "AUS", label: "🎸 Austin" },
+        { value: "SA", label: "🌮 San Antonio" },
+      ],
+      FL: [
+        { value: "MIA", label: "🌴 Miami" },
+        { value: "ORL", label: "🏰 Orlando" },
+        { value: "TAM", label: "⚡ Tampa" },
+      ],
+      WA: [
+        { value: "SEA", label: "☕ Seattle" },
+        { value: "TAC", label: "🌲 Tacoma" },
+        { value: "SPO", label: "🏔️ Spokane" },
+      ],
+      // Canada
+      ON: [
+        { value: "TOR", label: "🏙️ Toronto" },
+        { value: "OTT", label: "🏛️ Ottawa" },
+        { value: "HAM", label: "🏭 Hamilton" },
+      ],
+      BC: [
+        { value: "VAN", label: "🌲 Vancouver" },
+        { value: "VIC", label: "🏛️ Victoria" },
+        { value: "KEL", label: "🍷 Kelowna" },
+      ],
+      QC: [
+        { value: "MTL", label: "🥐 Montreal" },
+        { value: "QUE", label: "🏰 Quebec City" },
+      ],
+      AB: [
+        { value: "CAL", label: "🤠 Calgary" },
+        { value: "EDM", label: "🛢️ Edmonton" },
+      ],
+      // UK
+      ENG: [
+        { value: "LON", label: "🎡 London" },
+        { value: "MAN", label: "⚽ Manchester" },
+        { value: "BIR", label: "🏭 Birmingham" },
+        { value: "LIV", label: "🎸 Liverpool" },
+      ],
+      SCO: [
+        { value: "EDI", label: "🏰 Edinburgh" },
+        { value: "GLA", label: "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Glasgow" },
+      ],
+      WAL: [
+        { value: "CAR", label: "🏴󠁧󠁢󠁷󠁬󠁳󠁿 Cardiff" },
+        { value: "SWA", label: "🌊 Swansea" },
+      ],
+      NIR: [
+        { value: "BEL", label: "🏛️ Belfast" },
+        { value: "DER", label: "☘️ Derry" },
+      ],
+      // Australia
+      NSW: [
+        { value: "SYD", label: "🌉 Sydney" },
+        { value: "NEW", label: "🏖️ Newcastle" },
+      ],
+      VIC: [
+        { value: "MEL", label: "☕ Melbourne" },
+        { value: "GEE", label: "🏖️ Geelong" },
+      ],
+      QLD: [
+        { value: "BRI", label: "🌴 Brisbane" },
+        { value: "GC", label: "🏄 Gold Coast" },
+      ],
+      // Note: WA is both US state and AU state, using AU cities
+    };
+    
+    const cities = citiesByState[state || ""] || [];
+    
+    if (!state || cities.length === 0) {
+      return htmlResponse(`<option value="">Select state first...</option>`);
+    }
+    
+    const options = cities.map(c => `<option value="${c.value}">${c.label}</option>`).join("");
+    return htmlResponse(`<option value="">Select a city...</option>${options}`);
+  },
 };
 
 // Static file serving

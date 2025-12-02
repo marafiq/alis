@@ -74,6 +74,10 @@
           <span class="nav-icon">⚡</span>
           <span>Parallel Requests</span>
         </a>
+        <a href="#cascading" class="nav-item">
+          <span class="nav-icon">🔗</span>
+          <span>Cascading Selects</span>
+        </a>
       </div>
       
       <div class="nav-section">
@@ -570,6 +574,78 @@
                 🚀 Fire All Parallel
               </button>
               <span class="parallel-hint">Watch the request counter - all 4 fire at once!</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cascading Selects Section -->
+      <section id="cascading" class="section">
+        <div class="section-header">
+          <div class="section-icon">🔗</div>
+          <div>
+            <h2 class="section-title">Cascading Selects</h2>
+            <p class="section-desc">Dependent dropdowns that load options based on parent selection. Country → State → City pattern.</p>
+          </div>
+        </div>
+        
+        <div class="demo-card">
+          <div class="code-preview">
+            <code>data-alis-trigger="change" data-alis-collect="self" → loads child options</code>
+          </div>
+          
+          <div class="cascading-demo">
+            <div class="cascading-row">
+              <div class="cascading-field">
+                <label>🌍 Country</label>
+                <select id="country-select" 
+                        name="country"
+                        class="input"
+                        data-alis-get="/api/states"
+                        data-alis-trigger="change"
+                        data-alis-collect="self"
+                        data-alis-target="#state-select"
+                        data-alis-swap="innerHTML"
+                        data-alis-on-after="onCountryChanged">
+                  <option value="">Select a country...</option>
+                  <option value="US">🇺🇸 United States</option>
+                  <option value="CA">🇨🇦 Canada</option>
+                  <option value="UK">🇬🇧 United Kingdom</option>
+                  <option value="AU">🇦🇺 Australia</option>
+                </select>
+              </div>
+              
+              <div class="cascading-field">
+                <label>🏛️ State/Province</label>
+                <select id="state-select" 
+                        name="state"
+                        class="input"
+                        data-alis-get="/api/cities"
+                        data-alis-trigger="change"
+                        data-alis-collect="self"
+                        data-alis-target="#city-select"
+                        data-alis-swap="innerHTML"
+                        data-alis-on-after="onStateChanged"
+                        disabled>
+                  <option value="">Select country first...</option>
+                </select>
+              </div>
+              
+              <div class="cascading-field">
+                <label>🏙️ City</label>
+                <select id="city-select" 
+                        name="city"
+                        class="input"
+                        onchange="updateSelectedLocation()"
+                        disabled>
+                  <option value="">Select state first...</option>
+                </select>
+              </div>
+            </div>
+            
+            <div id="cascading-result" class="cascading-result">
+              <span class="cascading-label">Selected Location:</span>
+              <span id="selected-location" class="cascading-value">None selected</span>
             </div>
           </div>
         </div>

@@ -26,7 +26,9 @@ export function restoreState(element, state) {
 
   element.className = state.classList.join(' ');
 
-  if (element instanceof HTMLElement) {
+  // Only restore textContent for button elements, NOT for selects/inputs
+  // Setting textContent on a <select> would destroy all its options!
+  if (element instanceof HTMLButtonElement) {
     element.textContent = state.textContent || '';
   }
 }

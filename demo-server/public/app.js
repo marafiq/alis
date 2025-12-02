@@ -423,6 +423,74 @@ window.fireAllParallel = function() {
 };
 
 // ========================================
+// Cascading Selects Demo
+// ========================================
+
+// Called after country selection loads states
+window.onCountryChanged = function(ctx) {
+  const stateSelect = document.getElementById('state-select');
+  const citySelect = document.getElementById('city-select');
+  // ctx.element is the country select that triggered the request
+  const countrySelect = ctx.element || document.getElementById('country-select');
+  
+  console.log('[Cascading] Country changed, ctx.success:', ctx.success, 'country value:', countrySelect?.value, 'element:', ctx.element);
+  
+  // Enable state select if country has value
+  if (stateSelect) {
+    stateSelect.disabled = !countrySelect?.value;
+  }
+  
+  // Reset city select
+  if (citySelect) {
+    citySelect.innerHTML = '<option value="">Select state first...</option>';
+    citySelect.disabled = true;
+  }
+  
+  updateSelectedLocation();
+};
+
+// Called after state selection loads cities
+window.onStateChanged = function(ctx) {
+  const citySelect = document.getElementById('city-select');
+  const stateSelect = document.getElementById('state-select');
+  
+  console.log('[Cascading] State changed, ctx.success:', ctx.success, 'state value:', stateSelect?.value);
+  
+  // Enable city select if state has value
+  if (citySelect) {
+    citySelect.disabled = !stateSelect?.value;
+  }
+  
+  updateSelectedLocation();
+};
+
+// Update selected location display
+window.updateSelectedLocation = function() {
+  const country = document.getElementById('country-select');
+  const state = document.getElementById('state-select');
+  const city = document.getElementById('city-select');
+  const display = document.getElementById('selected-location');
+  
+  if (!display) return;
+  
+  const parts = [];
+  if (city?.value) {
+    const cityText = city.options[city.selectedIndex]?.text || '';
+    parts.push(cityText);
+  }
+  if (state?.value) {
+    const stateText = state.options[state.selectedIndex]?.text || '';
+    parts.push(stateText);
+  }
+  if (country?.value) {
+    const countryText = country.options[country.selectedIndex]?.text || '';
+    parts.push(countryText);
+  }
+  
+  display.textContent = parts.length > 0 ? parts.join(' → ') : 'None selected';
+};
+
+// ========================================
 // Console Banner
 // ========================================
 
