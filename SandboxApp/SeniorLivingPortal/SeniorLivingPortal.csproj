@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
-    <PackageReference Include="Syncfusion.EJ2.AspNet.Core" Version="31.2.16" />
+    <PackageReference Include="Syncfusion.EJ2.AspNet.Core" Version="27.1.48" />
   </ItemGroup>
 
 </Project>

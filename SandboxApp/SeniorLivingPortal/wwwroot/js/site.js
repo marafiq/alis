@@ -84,6 +84,38 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
+ * Syncfusion Control Re-initialization
+ * When ALIS swaps content containing <ejs-scripts>, the inline scripts don't auto-execute.
+ * This function finds and executes those scripts to initialize Syncfusion controls.
+ */
+window.initSyncfusionControls = function(ctx) {
+    // Get the target element where content was swapped
+    const targetSelector = ctx?.target || ctx?.element?.getAttribute('data-alis-target');
+    if (!targetSelector) return;
+    
+    const target = document.querySelector(targetSelector);
+    if (!target) return;
+    
+    // Find all script tags in the swapped content and execute them
+    const scripts = target.querySelectorAll('script');
+    scripts.forEach(function(oldScript) {
+        // Create a new script element to force execution
+        const newScript = document.createElement('script');
+        
+        // Copy attributes
+        Array.from(oldScript.attributes).forEach(function(attr) {
+            newScript.setAttribute(attr.name, attr.value);
+        });
+        
+        // Copy content
+        newScript.textContent = oldScript.textContent;
+        
+        // Replace old script with new one to trigger execution
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+};
+
+/**
  * ALIS Hooks - Window functions called by name from data-alis-on-after attributes
  * Format: data-alis-on-after="handleSuccess, closeModal"
  */
@@ -127,6 +159,27 @@ window.handleResidentFormResult = function(ctx) {
     refreshResidentsList();
 };
 
+// Combined handler for vitals form - only close modal and refresh on success
+window.handleVitalsFormResult = function(ctx) {
+    // ctx.error is set by ALIS for any failure
+    if (ctx.error) {
+        return; // Don't close modal or refresh on error
+    }
+    
+    // Success - close modal and refresh
+    showToast(ctx.body?.message || 'Vitals recorded successfully', 'success');
+    
+    // Close modal
+    const modal = document.querySelector('.modal.show');
+    if (modal) {
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) bsModal.hide();
+    }
+    
+    // Refresh vitals dashboard
+    refreshVitalsDashboard();
+};
+
 // Error handler
 window.handleError = function(ctx) {
     if (ctx.error) {
@@ -162,7 +215,11 @@ window.clearForm = function(ctx) {
 };
 
 // Show resident modal (for create/edit/details)
-window.showResidentModal = function() {
+// Also initializes Syncfusion controls in the loaded content
+window.showResidentModal = function(ctx) {
+    // Initialize Syncfusion controls in the modal body
+    initSyncfusionControls({ target: '#modalBody' });
+    
     const modalEl = document.getElementById('residentModal');
     if (modalEl) {
         let modal = bootstrap.Modal.getInstance(modalEl);
@@ -174,7 +231,11 @@ window.showResidentModal = function() {
 };
 
 // Show vitals modal
-window.showVitalsModal = function() {
+// Also initializes Syncfusion controls in the loaded content
+window.showVitalsModal = function(ctx) {
+    // Initialize Syncfusion controls in the modal body
+    initSyncfusionControls({ target: '#vitalsModalBody' });
+    
     const modalEl = document.getElementById('vitalsModal');
     if (modalEl) {
         let modal = bootstrap.Modal.getInstance(modalEl);
@@ -256,7 +317,11 @@ function refreshResidentsList() {
             url: '/Residents/Search',
             method: 'GET',
             target: '#residents-list',
-            swap: 'innerHTML'
+            swap: 'innerHTML',
+            onAfter: function() {
+                // Initialize Syncfusion controls after swap
+                initSyncfusionControls({ target: '#residents-list' });
+            }
         });
     }
 }
@@ -271,7 +336,11 @@ function refreshVitalsDashboard() {
             url: '/Vitals/Dashboard',
             method: 'GET',
             target: '#vitals-dashboard',
-            swap: 'innerHTML'
+            swap: 'innerHTML',
+            onAfter: function() {
+                // Initialize Syncfusion controls after swap
+                initSyncfusionControls({ target: '#vitals-dashboard' });
+            }
         });
     }
 }

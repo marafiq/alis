@@ -68,18 +68,21 @@
                     }
                     
                     <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-primary flex-fill"
-                                data-alis-get="/Vitals/Record?residentId=@summary.ResidentId"
-                                data-alis-target="#vitalsModalBody"
-                                data-alis-on-after="showVitalsModal">
-                            ➕ Record
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary flex-fill"
-                                data-alis-get="/Vitals/History?residentId=@summary.ResidentId"
-                                data-alis-target="#vitalsModalBody"
-                                data-alis-on-after="showVitalsModal">
-                            📊 History
-                        </button>
+                        <!-- ALIS-REVIEW: Using ejs-button for consistency with Syncfusion controls -->
+                        <ejs-button id="recordBtn-@summary.ResidentId"
+                                    cssClass="e-small e-primary flex-fill"
+                                    content="➕ Record"
+                                    data-alis-get="/Vitals/Record?residentId=@summary.ResidentId"
+                                    data-alis-target="#vitalsModalBody"
+                                    data-alis-on-after="showVitalsModal">
+                        </ejs-button>
+                        <ejs-button id="historyBtn-@summary.ResidentId"
+                                    cssClass="e-small e-outline flex-fill"
+                                    content="📊 History"
+                                    data-alis-get="/Vitals/History?residentId=@summary.ResidentId"
+                                    data-alis-target="#vitalsModalBody"
+                                    data-alis-on-after="showVitalsModal">
+                        </ejs-button>
                     </div>
                 </div>
             </div>
@@ -96,3 +99,6 @@
     </div>
 }
 
+<!-- Syncfusion controls initialization for ALIS-loaded partial views -->
+<!-- When ALIS swaps this content, ejs-scripts ensures Syncfusion controls are initialized -->
+<ejs-scripts></ejs-scripts>

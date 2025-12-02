@@ -9,13 +9,15 @@
         <p class="text-muted">Monitor resident health status in real-time</p>
     </div>
     <div class="col-md-6 text-end">
-        <button class="btn btn-primary"
-                data-alis-get="/Vitals/Dashboard"
-                data-alis-target="#vitals-dashboard"
-                data-alis-indicator="is-loading, #refresh-spinner">
-            <span class="spinner" id="refresh-spinner"></span>
-            🔄 Refresh Dashboard
-        </button>
+        <!-- ALIS-REVIEW: ejs-button works well with ALIS attributes for refresh -->
+        <ejs-button id="refreshDashboardBtn"
+                    cssClass="e-primary"
+                    iconCss="e-icons e-refresh"
+                    content="Refresh Dashboard"
+                    data-alis-get="/Vitals/Dashboard"
+                    data-alis-target="#vitals-dashboard"
+                    data-alis-indicator="is-loading">
+        </ejs-button>
     </div>
 </div>
 
@@ -48,6 +50,7 @@
 </div>
 
 <!-- Record Vitals Modal -->
+<!-- ALIS-REVIEW: Bootstrap modal works fine - ALIS loads content into #vitalsModalBody -->
 <div class="modal fade" id="vitalsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -62,8 +65,4 @@
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        // showVitalsModal is defined in site.js as a window function
-    </script>
-}
+<!-- Note: Syncfusion scripts are loaded via <ejs-scripts> in _Layout.cshtml -->

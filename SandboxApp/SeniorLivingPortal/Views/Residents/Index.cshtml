@@ -1,6 +1,7 @@
 @model IEnumerable<Resident>
 @{
     ViewData["Title"] = "Residents";
+    var buildings = ViewBag.Buildings as IEnumerable<DropdownItem> ?? Enumerable.Empty<DropdownItem>();
 }
 
 <div class="row mb-4">
@@ -9,12 +10,15 @@
         <p class="text-muted">Manage resident information and care details</p>
     </div>
     <div class="col-md-6 text-end">
-        <button class="btn btn-primary"
-                data-alis-get="/Residents/Create"
-                data-alis-target="#modalBody"
-                data-alis-on-after="showResidentModal">
-            ➕ Add Resident
-        </button>
+        <!-- ALIS-REVIEW: ejs-button with ALIS attributes works well for triggering requests -->
+        <ejs-button id="addResidentBtn"
+                    cssClass="e-primary"
+                    iconCss="e-icons e-plus"
+                    content="Add Resident"
+                    data-alis-get="/Residents/Create"
+                    data-alis-target="#modalBody"
+                    data-alis-on-after="showResidentModal">
+        </ejs-button>
     </div>
 </div>
 
@@ -24,53 +28,69 @@
         <div class="row g-3">
             <div class="col-md-4">
                 <div class="search-container">
-                    <input type="text" 
-                           class="form-control" 
-                           placeholder="Search by name or room..."
-                           name="query"
-                           data-alis-get="/Residents/Search"
-                           data-alis-trigger="input delay:300ms"
-                           data-alis-target="#residents-list"
-                           data-alis-indicator="is-loading, #search-spinner" />
+                    <!-- ALIS-REVIEW: ejs-textbox with data-alis-trigger="input delay:300ms" works for debounced search -->
+                    <ejs-textbox id="searchTextBox"
+                                 name="query"
+                                 placeholder="Search by name or room..."
+                                 showClearButton="true"
+                                 data-alis-get="/Residents/Search"
+                                 data-alis-trigger="input delay:300ms"
+                                 data-alis-target="#residents-list"
+                                 data-alis-collect="self"
+                                 data-alis-indicator="is-loading, #search-spinner">
+                    </ejs-textbox>
                     <span class="spinner" id="search-spinner"></span>
                 </div>
             </div>
             <div class="col-md-3">
-                <select class="form-select"
-                        name="careLevel"
-                        data-alis-get="/Residents/Search"
-                        data-alis-trigger="change"
-                        data-alis-target="#residents-list"
-                        data-alis-collect="closest .card-body">
-                    <option value="">All Care Levels</option>
-                    <option value="1">Independent Living</option>
-                    <option value="2">Assisted Living</option>
-                    <option value="3">Memory Care</option>
-                    <option value="4">Skilled Nursing</option>
-                    <option value="5">Hospice</option>
-                </select>
+                <!-- ALIS-REVIEW: ejs-dropdownlist with data-alis-trigger="change" for filter dropdowns -->
+                <!-- ALIS-GAP: data-alis-collect="closest .card-body" needs to work with Syncfusion controls -->
+                <ejs-dropdownlist id="careLevelFilter"
+                                  name="careLevel"
+                                  placeholder="All Care Levels"
+                                  index="0"
+                                  data-alis-get="/Residents/Search"
+                                  data-alis-trigger="change"
+                                  data-alis-target="#residents-list"
+                                  data-alis-collect="closest .card-body">
+                    <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                    <e-data-manager json="@(new[] { 
+                        new { Text = "All Care Levels", Value = "" },
+                        new { Text = "Independent Living", Value = "1" },
+                        new { Text = "Assisted Living", Value = "2" },
+                        new { Text = "Memory Care", Value = "3" },
+                        new { Text = "Skilled Nursing", Value = "4" },
+                        new { Text = "Hospice", Value = "5" }
+                    })"></e-data-manager>
+                </ejs-dropdownlist>
             </div>
             <div class="col-md-3">
-                <select class="form-select"
-                        name="buildingId"
-                        data-alis-get="/Residents/Search"
-                        data-alis-trigger="change"
-                        data-alis-target="#residents-list"
-                        data-alis-collect="closest .card-body">
-                    <option value="">All Buildings</option>
-                    @foreach (var building in (IEnumerable<DropdownItem>)ViewBag.Buildings)
-                    {
-                        <option value="@building.Value">@building.Text</option>
-                    }
-                </select>
+                @{
+                    var buildingOptions = new[] { new { Text = "All Buildings", Value = "" } }
+                        .Concat(buildings.Select(b => new { Text = b.Text, Value = b.Value.ToString() }))
+                        .ToArray();
+                }
+                <ejs-dropdownlist id="buildingFilter"
+                                  name="buildingId"
+                                  placeholder="All Buildings"
+                                  index="0"
+                                  data-alis-get="/Residents/Search"
+                                  data-alis-trigger="change"
+                                  data-alis-target="#residents-list"
+                                  data-alis-collect="closest .card-body">
+                    <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                    <e-data-manager json="@buildingOptions"></e-data-manager>
+                </ejs-dropdownlist>
             </div>
             <div class="col-md-2">
-                <button class="btn btn-outline-secondary w-100"
-                        data-alis-get="/Residents/Search"
-                        data-alis-target="#residents-list"
-                        data-alis-indicator="is-loading">
-                    🔄 Refresh
-                </button>
+                <ejs-button id="refreshBtn"
+                            cssClass="e-outline w-100"
+                            iconCss="e-icons e-refresh"
+                            content="Refresh"
+                            data-alis-get="/Residents/Search"
+                            data-alis-target="#residents-list"
+                            data-alis-indicator="is-loading">
+                </ejs-button>
             </div>
         </div>
     </div>
@@ -82,6 +102,7 @@
 </div>
 
 <!-- Modal for Create/Edit -->
+<!-- ALIS-REVIEW: Bootstrap modal works fine - ALIS loads content into #modalBody, hook shows the modal -->
 <div class="modal fade" id="residentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -96,10 +117,4 @@
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        // Hooks are already defined in site.js as window functions
-        // showResidentModal, closeModal, handleSuccess, refreshResidents are all available
-    </script>
-}
-
+<!-- Note: Syncfusion scripts are loaded via <ejs-scripts> in _Layout.cshtml -->

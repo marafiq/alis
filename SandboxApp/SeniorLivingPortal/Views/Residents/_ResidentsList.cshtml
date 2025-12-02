@@ -47,28 +47,33 @@ else
                         <span class="care-level @careLevelClass mt-1 d-inline-block">@careLevelText</span>
                     </div>
                     <div class="resident-actions">
-                        <button class="btn btn-sm btn-outline-primary btn-icon"
-                                title="View Details"
-                                data-alis-get="/Residents/Details/@resident.Id"
-                                data-alis-target="#modalBody"
-                                data-alis-on-after="showResidentModal">
-                            👁️
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary btn-icon"
-                                title="Edit"
-                                data-alis-get="/Residents/Edit/@resident.Id"
-                                data-alis-target="#modalBody"
-                                data-alis-on-after="showResidentModal">
-                            ✏️
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger btn-icon"
-                                title="Delete"
-                                data-alis-delete="/Residents/Delete/@resident.Id"
-                                data-alis-confirm="deleteConfirm"
-                                data-alis-confirm-message="Are you sure you want to remove @resident.FullName from the system?"
-                                data-alis-target="#residents-list">
-                            🗑️
-                        </button>
+                        <!-- ALIS-REVIEW: Small icon buttons - using ejs-button for consistency -->
+                        <!-- ALIS-GAP: ejs-button iconCss alone doesn't work well for emoji icons, using content -->
+                        <ejs-button id="viewBtn-@resident.Id"
+                                    cssClass="e-small e-outline"
+                                    content="👁️"
+                                    title="View Details"
+                                    data-alis-get="/Residents/Details/@resident.Id"
+                                    data-alis-target="#modalBody"
+                                    data-alis-on-after="showResidentModal">
+                        </ejs-button>
+                        <ejs-button id="editBtn-@resident.Id"
+                                    cssClass="e-small e-outline"
+                                    content="✏️"
+                                    title="Edit"
+                                    data-alis-get="/Residents/Edit/@resident.Id"
+                                    data-alis-target="#modalBody"
+                                    data-alis-on-after="showResidentModal">
+                        </ejs-button>
+                        <ejs-button id="deleteBtn-@resident.Id"
+                                    cssClass="e-small e-outline e-danger"
+                                    content="🗑️"
+                                    title="Delete"
+                                    data-alis-delete="/Residents/Delete/@resident.Id"
+                                    data-alis-confirm="deleteConfirm"
+                                    data-alis-confirm-message="Are you sure you want to remove @resident.FullName from the system?"
+                                    data-alis-target="#residents-list">
+                        </ejs-button>
                     </div>
                 </div>
             </div>
@@ -80,3 +85,6 @@ else
     </div>
 }
 
+<!-- Syncfusion controls initialization for ALIS-loaded partial views -->
+<!-- When ALIS swaps this content, ejs-scripts ensures Syncfusion controls are initialized -->
+<ejs-scripts></ejs-scripts>

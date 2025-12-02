@@ -4,6 +4,10 @@
     var isEdit = Model.Id > 0;
     var buildings = ViewBag.Buildings as IEnumerable<DropdownItem>;
     var buildingsList = buildings?.ToList() ?? new List<DropdownItem>();
+    var floors = ViewBag.Floors as IEnumerable<DropdownItem>;
+    var floorsList = floors?.ToList() ?? new List<DropdownItem>();
+    var wings = ViewBag.Wings as IEnumerable<DropdownItem>;
+    var wingsList = wings?.ToList() ?? new List<DropdownItem>();
 }
 
 <form id="residentForm"
@@ -20,28 +24,32 @@
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label">First Name <span class="text-danger">*</span></label>
-            <input id="firstName" 
-                   type="text" 
-                   name="FirstName" 
-                   value="@Model.FirstName"
-                   data-val="true"
-                   data-val-required="First name is required"
-                   data-val-minlength="Minimum 2 characters"
-                   data-val-minlength-min="2"
-                   data-val-maxlength="Maximum 50 characters"
-                   data-val-maxlength-max="50" />
+            <ejs-textbox id="firstName" 
+                         name="FirstName" 
+                         value="@Model.FirstName"
+                         placeholder="Enter first name"
+                         floatLabelType="Auto"
+                         data-val="true"
+                         data-val-required="First name is required"
+                         data-val-minlength="Minimum 2 characters"
+                         data-val-minlength-min="2"
+                         data-val-maxlength="Maximum 50 characters"
+                         data-val-maxlength-max="50">
+            </ejs-textbox>
             <span data-valmsg-for="FirstName" class="field-validation-valid text-danger"></span>
         </div>
         <div class="col-md-6 mb-3">
             <label class="form-label">Last Name <span class="text-danger">*</span></label>
-            <input id="lastName"
-                   type="text" 
-                   name="LastName" 
-                   value="@Model.LastName"
-                   data-val="true"
-                   data-val-required="Last name is required"
-                   data-val-minlength="Minimum 2 characters"
-                   data-val-minlength-min="2" />
+            <ejs-textbox id="lastName"
+                         name="LastName" 
+                         value="@Model.LastName"
+                         placeholder="Enter last name"
+                         floatLabelType="Auto"
+                         data-val="true"
+                         data-val-required="Last name is required"
+                         data-val-minlength="Minimum 2 characters"
+                         data-val-minlength-min="2">
+            </ejs-textbox>
             <span data-valmsg-for="LastName" class="field-validation-valid text-danger"></span>
         </div>
     </div>
@@ -49,23 +57,29 @@
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
-            <input id="dateOfBirth"
-                   name="DateOfBirth" 
-                   data-val="true"
-                   data-val-required="Date of birth is required" />
+            <ejs-datepicker id="dateOfBirth"
+                            name="DateOfBirth" 
+                            value="@Model.DateOfBirth"
+                            placeholder="Select date of birth"
+                            format="MM/dd/yyyy"
+                            max="DateTime.Today"
+                            data-val="true"
+                            data-val-required="Date of birth is required">
+            </ejs-datepicker>
             <span data-valmsg-for="DateOfBirth" class="field-validation-valid text-danger"></span>
         </div>
         <div class="col-md-6 mb-3">
             <label class="form-label">Room Number <span class="text-danger">*</span></label>
-            <input id="roomNumber"
-                   type="text" 
-                   name="RoomNumber" 
-                   value="@Model.RoomNumber"
-                   placeholder="A123"
-                   data-val="true"
-                   data-val-required="Room number is required"
-                   data-val-regex="Format: A123 (letter + 3 digits)"
-                   data-val-regex-pattern="^[A-Z]\d{3}$" />
+            <ejs-textbox id="roomNumber"
+                         name="RoomNumber" 
+                         value="@Model.RoomNumber"
+                         placeholder="e.g., A123"
+                         floatLabelType="Auto"
+                         data-val="true"
+                         data-val-required="Room number is required"
+                         data-val-regex="Format: A123 (letter + 3 digits)"
+                         data-val-regex-pattern="^[A-Z]\d{3}$">
+            </ejs-textbox>
             <span data-valmsg-for="RoomNumber" class="field-validation-valid text-danger"></span>
         </div>
     </div>
@@ -74,10 +88,21 @@
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label">Care Level <span class="text-danger">*</span></label>
-            <input id="careLevel"
-                   name="CareLevel"
-                   data-val="true"
-                   data-val-required="Care level is required" />
+            <ejs-dropdownlist id="careLevel"
+                              name="CareLevel"
+                              placeholder="Select Care Level"
+                              value="@(Model.CareLevel.HasValue ? ((int)Model.CareLevel.Value).ToString() : "")"
+                              data-val="true"
+                              data-val-required="Care level is required">
+                <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                <e-data-manager json="@(new[] { 
+                    new { Text = "Independent Living", Value = "1" },
+                    new { Text = "Assisted Living", Value = "2" },
+                    new { Text = "Memory Care", Value = "3" },
+                    new { Text = "Skilled Nursing", Value = "4" },
+                    new { Text = "Hospice", Value = "5" }
+                })"></e-data-manager>
+            </ejs-dropdownlist>
             <span data-valmsg-for="CareLevel" class="field-validation-valid text-danger"></span>
         </div>
     </div>
@@ -85,37 +110,55 @@
     <div class="row">
         <div class="col-md-4 mb-3">
             <label class="form-label">Building <span class="text-danger">*</span></label>
-            <input id="buildingSelect"
-                   name="BuildingId"
-                   data-val="true"
-                   data-val-required="Building is required"
-                   data-alis-get="/Facility/Floors"
-                   data-alis-trigger="change"
-                   data-alis-target="#floorSelectContainer"
-                   data-alis-collect="self" />
+            <ejs-dropdownlist id="buildingSelect"
+                              name="BuildingId"
+                              placeholder="Select Building"
+                              value="@(Model.BuildingId?.ToString() ?? "")"
+                              dataSource="@buildingsList"
+                              data-val="true"
+                              data-val-required="Building is required"
+                              data-alis-get="/Facility/Floors"
+                              data-alis-trigger="change"
+                              data-alis-target="#floorSelectContainer"
+                              data-alis-collect="self"
+                              data-alis-on-after="clearWings">
+                <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+            </ejs-dropdownlist>
             <span data-valmsg-for="BuildingId" class="field-validation-valid text-danger"></span>
         </div>
         <div class="col-md-4 mb-3">
             <label class="form-label">Floor <span class="text-danger">*</span></label>
             <div id="floorSelectContainer">
-                <input id="floorSelect"
-                       name="FloorId"
-                       data-val="true"
-                       data-val-required="Floor is required"
-                       data-alis-get="/Facility/Wings"
-                       data-alis-trigger="change"
-                       data-alis-target="#wingSelectContainer"
-                       data-alis-collect="self" />
+                <ejs-dropdownlist id="floorSelect"
+                                  name="FloorId"
+                                  placeholder="Select Floor"
+                                  value="@(Model.FloorId?.ToString() ?? "")"
+                                  dataSource="@floorsList"
+                                  enabled="@(floorsList.Any())"
+                                  data-val="true"
+                                  data-val-required="Floor is required"
+                                  data-alis-get="/Facility/Wings"
+                                  data-alis-trigger="change"
+                                  data-alis-target="#wingSelectContainer"
+                                  data-alis-collect="self">
+                    <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                </ejs-dropdownlist>
             </div>
             <span data-valmsg-for="FloorId" class="field-validation-valid text-danger"></span>
         </div>
         <div class="col-md-4 mb-3">
             <label class="form-label">Wing <span class="text-danger">*</span></label>
             <div id="wingSelectContainer">
-                <input id="wingSelect"
-                       name="WingId"
-                       data-val="true"
-                       data-val-required="Wing is required" />
+                <ejs-dropdownlist id="wingSelect"
+                                  name="WingId"
+                                  placeholder="Select Wing"
+                                  value="@(Model.WingId?.ToString() ?? "")"
+                                  dataSource="@wingsList"
+                                  enabled="@(wingsList.Any())"
+                                  data-val="true"
+                                  data-val-required="Wing is required">
+                    <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                </ejs-dropdownlist>
             </div>
             <span data-valmsg-for="WingId" class="field-validation-valid text-danger"></span>
         </div>
@@ -125,30 +168,36 @@
     <div class="row">
         <div class="col-md-4 mb-3">
             <label class="form-label">Contact Name <span class="text-danger">*</span></label>
-            <input id="emergencyContactName"
-                   type="text" 
-                   name="EmergencyContactName" 
-                   value="@Model.EmergencyContactName"
-                   data-val="true"
-                   data-val-required="Emergency contact name is required" />
+            <ejs-textbox id="emergencyContactName"
+                         name="EmergencyContactName" 
+                         value="@Model.EmergencyContactName"
+                         placeholder="Enter contact name"
+                         floatLabelType="Auto"
+                         data-val="true"
+                         data-val-required="Emergency contact name is required">
+            </ejs-textbox>
             <span data-valmsg-for="EmergencyContactName" class="field-validation-valid text-danger"></span>
         </div>
         <div class="col-md-4 mb-3">
             <label class="form-label">Contact Phone</label>
-            <input id="emergencyContactPhone"
-                   type="text" 
-                   name="EmergencyContactPhone" 
-                   value="@Model.EmergencyContactPhone" />
+            <ejs-maskedtextbox id="emergencyContactPhone"
+                               name="EmergencyContactPhone" 
+                               value="@Model.EmergencyContactPhone"
+                               mask="(000) 000-0000"
+                               placeholder="Enter phone number">
+            </ejs-maskedtextbox>
             <span data-valmsg-for="EmergencyContactPhone" class="field-validation-valid text-danger"></span>
         </div>
         <div class="col-md-4 mb-3">
             <label class="form-label">Contact Email</label>
-            <input id="emergencyContactEmail"
-                   type="text" 
-                   name="EmergencyContactEmail" 
-                   value="@Model.EmergencyContactEmail"
-                   data-val="true"
-                   data-val-email="Please enter a valid email address" />
+            <ejs-textbox id="emergencyContactEmail"
+                         name="EmergencyContactEmail" 
+                         value="@Model.EmergencyContactEmail"
+                         placeholder="Enter email address"
+                         floatLabelType="Auto"
+                         data-val="true"
+                         data-val-email="Please enter a valid email address">
+            </ejs-textbox>
             <span data-valmsg-for="EmergencyContactEmail" class="field-validation-valid text-danger"></span>
         </div>
     </div>
@@ -156,153 +205,35 @@
     <h6 class="text-muted mb-3 mt-4">Additional Information</h6>
     <div class="mb-3">
         <label class="form-label">Medical Notes</label>
-        <textarea id="medicalNotes"
-                  name="MedicalNotes" 
-                  rows="3"
-                  data-val="true"
-                  data-val-maxlength="Maximum 2000 characters"
-                  data-val-maxlength-max="2000">@Model.MedicalNotes</textarea>
+        <ejs-textbox id="medicalNotes"
+                     name="MedicalNotes" 
+                     value="@Model.MedicalNotes"
+                     placeholder="Enter medical notes"
+                     floatLabelType="Auto"
+                     multiline="true"
+                     data-val="true"
+                     data-val-maxlength="Maximum 2000 characters"
+                     data-val-maxlength-max="2000">
+        </ejs-textbox>
         <span data-valmsg-for="MedicalNotes" class="field-validation-valid text-danger"></span>
     </div>
     
     <div class="mb-3">
-        <input id="isActive" 
-               name="IsActive" 
-               type="checkbox"
-               value="true" />
+        <ejs-checkbox id="isActive" 
+                      name="IsActive" 
+                      label="Active Resident"
+                      checked="@Model.IsActive">
+        </ejs-checkbox>
     </div>
     
     <div class="modal-footer px-0 pb-0">
+        <!-- ALIS-REVIEW: Using Bootstrap button for Cancel because ejs-button requires special handling for data-bs-dismiss -->
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button id="submitBtn" type="submit" class="e-btn e-primary">
-            <span class="spinner"></span>
-            @(isEdit ? "Update Resident" : "Create Resident")
-        </button>
+        <ejs-button id="submitBtn" type="submit" cssClass="e-primary" isPrimary="true" content="@(isEdit ? "Update Resident" : "Create Resident")">
+        </ejs-button>
     </div>
 </form>
 
-<script>
-    // Initialize Syncfusion controls after form is loaded
-    (function() {
-        // Check if Syncfusion is available
-        if (typeof ej === 'undefined') {
-            console.error('Syncfusion EJ2 not loaded');
-            return;
-        }
-
-        // Buildings data from server
-        var buildingsData = [
-            { text: '-- Select Building --', value: '' }
-            @foreach (var building in buildingsList)
-            {
-                @:,{ text: '@Html.Raw(building.Text.Replace("'", "\\'"))', value: '@building.Value' }
-            }
-        ];
-
-        // TextBox for First Name
-        new ej.inputs.TextBox({
-            placeholder: 'Enter first name',
-            floatLabelType: 'Auto'
-        }).appendTo('#firstName');
-
-        // TextBox for Last Name
-        new ej.inputs.TextBox({
-            placeholder: 'Enter last name',
-            floatLabelType: 'Auto'
-        }).appendTo('#lastName');
-
-        // DatePicker for Date of Birth
-        new ej.calendars.DatePicker({
-            placeholder: 'Select date of birth',
-            format: 'MM/dd/yyyy',
-            max: new Date(),
-            value: @(Model.DateOfBirth.HasValue ? $"new Date('{Model.DateOfBirth.Value:yyyy-MM-dd}')" : "null")
-        }).appendTo('#dateOfBirth');
-
-        // TextBox for Room Number
-        new ej.inputs.TextBox({
-            placeholder: 'e.g., A123',
-            floatLabelType: 'Auto'
-        }).appendTo('#roomNumber');
-
-        // DropDownList for Care Level
-        new ej.dropdowns.DropDownList({
-            dataSource: [
-                { text: '-- Select Care Level --', value: '' },
-                { text: 'Independent Living', value: '1' },
-                { text: 'Assisted Living', value: '2' },
-                { text: 'Memory Care', value: '3' },
-                { text: 'Skilled Nursing', value: '4' },
-                { text: 'Hospice', value: '5' }
-            ],
-            fields: { text: 'text', value: 'value' },
-            placeholder: 'Select Care Level',
-            value: '@(Model.CareLevel.HasValue ? ((int)Model.CareLevel.Value).ToString() : "")'
-        }).appendTo('#careLevel');
-
-        // DropDownList for Building
-        new ej.dropdowns.DropDownList({
-            dataSource: buildingsData,
-            fields: { text: 'text', value: 'value' },
-            placeholder: 'Select Building',
-            value: '@(Model.BuildingId?.ToString() ?? "")'
-        }).appendTo('#buildingSelect');
-
-        // DropDownList for Floor
-        new ej.dropdowns.DropDownList({
-            dataSource: [
-                { text: '-- Select Floor --', value: '' }
-            ],
-            fields: { text: 'text', value: 'value' },
-            placeholder: 'Select Floor',
-            enabled: false
-        }).appendTo('#floorSelect');
-
-        // DropDownList for Wing
-        new ej.dropdowns.DropDownList({
-            dataSource: [
-                { text: '-- Select Wing --', value: '' }
-            ],
-            fields: { text: 'text', value: 'value' },
-            placeholder: 'Select Wing',
-            enabled: false
-        }).appendTo('#wingSelect');
-
-        // TextBox for Emergency Contact Name
-        new ej.inputs.TextBox({
-            placeholder: 'Enter contact name',
-            floatLabelType: 'Auto'
-        }).appendTo('#emergencyContactName');
-
-        // MaskedTextBox for Phone
-        new ej.inputs.MaskedTextBox({
-            mask: '(000) 000-0000',
-            placeholder: 'Enter phone number'
-        }).appendTo('#emergencyContactPhone');
-
-        // TextBox for Email
-        new ej.inputs.TextBox({
-            placeholder: 'Enter email address',
-            floatLabelType: 'Auto'
-        }).appendTo('#emergencyContactEmail');
-
-        // TextBox for Medical Notes
-        new ej.inputs.TextBox({
-            placeholder: 'Enter medical notes',
-            floatLabelType: 'Auto',
-            multiline: true
-        }).appendTo('#medicalNotes');
-
-        // CheckBox for Active Status
-        new ej.buttons.CheckBox({
-            label: 'Active Resident',
-            checked: @(Model.IsActive ? "true" : "false")
-        }).appendTo('#isActive');
-
-        // Submit Button
-        new ej.buttons.Button({
-            cssClass: 'e-primary',
-            isPrimary: true
-        }).appendTo('#submitBtn');
-    })();
-</script>
+<!-- Syncfusion controls initialization for ALIS-loaded partial views -->
+<!-- When ALIS swaps this content, ejs-scripts ensures Syncfusion controls are initialized -->
+<ejs-scripts></ejs-scripts>

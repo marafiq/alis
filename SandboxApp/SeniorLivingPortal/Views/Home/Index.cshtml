@@ -46,15 +46,22 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a asp-controller="Residents" asp-action="Index" class="btn btn-outline-primary">
-                        👥 Manage Residents
-                    </a>
-                    <a asp-controller="Vitals" asp-action="Index" class="btn btn-outline-primary">
-                        ❤️ Record Vitals
-                    </a>
-                    <a asp-controller="Home" asp-action="Demos" class="btn btn-outline-secondary">
-                        🔧 ALIS Demos
-                    </a>
+                    <!-- ALIS-REVIEW: Standard links work fine, but could use ejs-button for consistency -->
+                    <ejs-button id="manageResidentsBtn"
+                                cssClass="e-outline e-primary w-100"
+                                content="👥 Manage Residents"
+                                onclick="window.location.href='/Residents'">
+                    </ejs-button>
+                    <ejs-button id="recordVitalsBtn"
+                                cssClass="e-outline e-primary w-100"
+                                content="❤️ Record Vitals"
+                                onclick="window.location.href='/Vitals'">
+                    </ejs-button>
+                    <ejs-button id="viewDemosBtn"
+                                cssClass="e-outline w-100"
+                                content="🔧 ALIS Demos"
+                                onclick="window.location.href='/Home/Demos'">
+                    </ejs-button>
                 </div>
             </div>
         </div>
@@ -65,13 +72,15 @@
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Recent Alerts</span>
-                <button class="btn btn-sm btn-outline-primary"
-                        data-alis-get="/Vitals/Alerts"
-                        data-alis-target="#alerts-container"
-                        data-alis-indicator="is-loading, #alerts-spinner">
-                    <span class="spinner" id="alerts-spinner"></span>
-                    Refresh
-                </button>
+                <!-- ALIS-REVIEW: ejs-button with ALIS attributes for refresh functionality -->
+                <ejs-button id="refreshAlertsBtn"
+                            cssClass="e-small e-outline"
+                            iconCss="e-icons e-refresh"
+                            content="Refresh"
+                            data-alis-get="/Vitals/Alerts"
+                            data-alis-target="#alerts-container"
+                            data-alis-indicator="is-loading">
+                </ejs-button>
             </div>
             <div class="card-body" id="alerts-container">
                 @if (ViewBag.CriticalAlerts > 0 || ViewBag.WarningAlerts > 0)
@@ -123,10 +132,14 @@
                         <p class="text-muted small">Debounced search and auto-refresh capabilities</p>
                     </div>
                 </div>
-                <a asp-controller="Home" asp-action="Demos" class="btn btn-primary mt-2">
-                    Explore ALIS Demos →
-                </a>
+                <ejs-button id="exploreDemosBtn"
+                            cssClass="e-primary mt-2"
+                            content="Explore ALIS Demos →"
+                            onclick="window.location.href='/Home/Demos'">
+                </ejs-button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Note: Syncfusion scripts are loaded via <ejs-scripts> in _Layout.cshtml -->
