@@ -582,6 +582,52 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     const count = Math.floor(Math.random() * 100) + 1;
     return htmlResponse(String(count));
   },
+
+  // Parallel requests demo endpoints
+  "GET /api/parallel/time": async () => {
+    await delay(800 + Math.random() * 400); // 800-1200ms
+    const now = new Date();
+    return htmlResponse(`
+      <strong>${now.toLocaleTimeString()}</strong>
+      <br><small>${now.toLocaleDateString()}</small>
+    `);
+  },
+
+  "GET /api/parallel/random": async () => {
+    await delay(500 + Math.random() * 500); // 500-1000ms
+    const num = Math.floor(Math.random() * 1000000);
+    return htmlResponse(`
+      <strong>${num.toLocaleString()}</strong>
+      <br><small>Random integer</small>
+    `);
+  },
+
+  "GET /api/parallel/quote": async () => {
+    await delay(1000 + Math.random() * 500); // 1000-1500ms
+    const quotes = [
+      "The best code is no code at all.",
+      "First, solve the problem. Then, write the code.",
+      "Code is like humor. When you have to explain it, it's bad.",
+      "Simplicity is the soul of efficiency.",
+      "Make it work, make it right, make it fast.",
+    ];
+    const quote = quotes[Math.floor(Math.random() * quotes.length)];
+    return htmlResponse(`
+      <em>"${quote}"</em>
+    `);
+  },
+
+  "GET /api/parallel/stats": async () => {
+    await delay(600 + Math.random() * 400); // 600-1000ms
+    const cpu = Math.floor(Math.random() * 100);
+    const mem = Math.floor(Math.random() * 100);
+    return htmlResponse(`
+      <div style="display: flex; gap: 16px; justify-content: center;">
+        <span>CPU: <strong>${cpu}%</strong></span>
+        <span>MEM: <strong>${mem}%</strong></span>
+      </div>
+    `);
+  },
 };
 
 // Static file serving

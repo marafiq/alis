@@ -410,6 +410,19 @@ document.getElementById('filter-status')?.addEventListener('change', () => {
 });
 
 // ========================================
+// Parallel Requests Demo
+// ========================================
+
+window.fireAllParallel = function() {
+  // Get all parallel demo buttons
+  const buttons = document.querySelectorAll('#parallel .parallel-item .btn');
+  
+  // Fire all clicks simultaneously
+  console.log('[Parallel Demo] Firing', buttons.length, 'requests simultaneously...');
+  buttons.forEach(btn => btn.click());
+};
+
+// ========================================
 // Console Banner
 // ========================================
 

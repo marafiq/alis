@@ -70,6 +70,10 @@
           <span class="nav-icon">🪝</span>
           <span>Hooks</span>
         </a>
+        <a href="#parallel" class="nav-item">
+          <span class="nav-icon">⚡</span>
+          <span>Parallel Requests</span>
+        </a>
       </div>
       
       <div class="nav-section">
@@ -496,6 +500,78 @@
             </div>
           </div>
           <div id="hooks-result" class="result-area"></div>
+        </div>
+      </section>
+
+      <!-- Parallel Requests Section -->
+      <section id="parallel" class="section">
+        <div class="section-header">
+          <div class="section-icon">⚡</div>
+          <div>
+            <h2 class="section-title">Parallel Requests</h2>
+            <p class="section-desc">Fire multiple independent requests simultaneously. Each updates its own target without blocking others.</p>
+          </div>
+        </div>
+        
+        <div class="demo-card">
+          <div class="code-preview">
+            <code>Click all buttons rapidly - each request runs independently!</code>
+          </div>
+          
+          <div class="parallel-demo">
+            <div class="parallel-grid">
+              <div class="parallel-item">
+                <h4>🕐 Server Time</h4>
+                <div id="parallel-time" class="parallel-result">Click to fetch</div>
+                <button class="btn btn-primary"
+                        data-alis-get="/api/parallel/time"
+                        data-alis-target="#parallel-time"
+                        data-alis-indicator="is-loading">
+                  Fetch Time
+                </button>
+              </div>
+              
+              <div class="parallel-item">
+                <h4>🎲 Random Number</h4>
+                <div id="parallel-random" class="parallel-result">Click to fetch</div>
+                <button class="btn btn-primary"
+                        data-alis-get="/api/parallel/random"
+                        data-alis-target="#parallel-random"
+                        data-alis-indicator="is-loading">
+                  Fetch Random
+                </button>
+              </div>
+              
+              <div class="parallel-item">
+                <h4>💬 Quote</h4>
+                <div id="parallel-quote" class="parallel-result">Click to fetch</div>
+                <button class="btn btn-primary"
+                        data-alis-get="/api/parallel/quote"
+                        data-alis-target="#parallel-quote"
+                        data-alis-indicator="is-loading">
+                  Fetch Quote
+                </button>
+              </div>
+              
+              <div class="parallel-item">
+                <h4>📊 Stats</h4>
+                <div id="parallel-stats" class="parallel-result">Click to fetch</div>
+                <button class="btn btn-primary"
+                        data-alis-get="/api/parallel/stats"
+                        data-alis-target="#parallel-stats"
+                        data-alis-indicator="is-loading">
+                  Fetch Stats
+                </button>
+              </div>
+            </div>
+            
+            <div class="parallel-actions">
+              <button class="btn btn-accent" onclick="fireAllParallel()">
+                🚀 Fire All Parallel
+              </button>
+              <span class="parallel-hint">Watch the request counter - all 4 fire at once!</span>
+            </div>
+          </div>
         </div>
       </section>
 
