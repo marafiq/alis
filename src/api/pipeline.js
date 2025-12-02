@@ -6,6 +6,7 @@ import { stateCaptureStep } from '../pipeline/steps/state-capture.js';
 import { stateApplyStep } from '../pipeline/steps/state-apply.js';
 import { hooksBeforeStep } from '../pipeline/steps/hooks-before.js';
 import { collectStep } from '../pipeline/steps/collect.js';
+import { clientValidationStep } from '../pipeline/steps/client-validation.js';
 import { requestBuildStep } from '../pipeline/steps/request-build.js';
 import { requestExecuteStep } from '../pipeline/steps/request-execute.js';
 import { responseParseStep } from '../pipeline/steps/response-parse.js';
@@ -24,6 +25,7 @@ export const DEFAULT_STEPS = [
   stateCaptureStep,
   stateApplyStep,
   hooksBeforeStep,
+  clientValidationStep, // Client-side validation after hooks-before, before request
   requestBuildStep,
   requestExecuteStep,
   responseParseStep,

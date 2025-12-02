@@ -3,6 +3,7 @@ import { trigger as triggerApi } from './api/trigger.js';
 import { from as fromApi } from './api/from.js';
 import { setupDelegation } from './trigger/delegation.js';
 import { registerConfirm } from './confirm/registry.js';
+import { createValidationAPI } from './validation/integration/alis-integration.js';
 
 const VERSION = '0.0.1';
 /** @type {Record<string, unknown>} */
@@ -30,6 +31,9 @@ function handleFrom(element) {
   return fromApi(element, globalConfig);
 }
 
+// Create validation API instance
+const validationAPI = createValidationAPI();
+
 const ALIS = {
   version: VERSION,
   init(config = {}) {
@@ -40,9 +44,11 @@ const ALIS = {
         originEvent: event,
         debounced: options?.debounced 
       }).catch(error => {
+        // eslint-disable-next-line no-console
         console.error('[ALIS] trigger failed', error);
       });
     });
+    
     return {
       config: structuredCloneSafe(globalConfig),
       initializedAt: Date.now()
@@ -56,7 +62,8 @@ const ALIS = {
   from: handleFrom,
   confirm: {
     register: registerConfirm
-  }
+  },
+  validation: validationAPI
 };
 
 /**

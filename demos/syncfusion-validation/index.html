@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALIS - Syncfusion Validation Demo</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+  <style>
+    .demo-section {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    
+    /* Syncfusion-like component styles */
+    .e-input-group {
+      position: relative;
+      display: flex;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .e-input-group:focus-within {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .e-input-group.e-error {
+      border-color: #e53e3e !important;
+      background-color: #fff5f5;
+    }
+    
+    .e-input {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      background: transparent;
+      font-size: 1rem;
+      outline: none;
+    }
+    
+    .e-input-group-icon {
+      padding: 0.75rem;
+      background: #f7fafc;
+      border-left: 1px solid #e0e0e0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    
+    /* Dropdown styles */
+    .sf-dropdown {
+      position: relative;
+    }
+    
+    .sf-dropdown-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 2px solid #667eea;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+    }
+    
+    .sf-dropdown-list.open {
+      display: block;
+    }
+    
+    .sf-dropdown-item {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .sf-dropdown-item:hover {
+      background: #f0f4ff;
+    }
+    
+    .sf-dropdown-item.selected {
+      background: #667eea;
+      color: white;
+    }
+    
+    /* Numeric input styles */
+    .sf-numeric {
+      display: flex;
+    }
+    
+    .sf-numeric-btn {
+      width: 40px;
+      border: none;
+      background: #f7fafc;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: background 0.2s;
+    }
+    
+    .sf-numeric-btn:hover {
+      background: #e2e8f0;
+    }
+    
+    .sf-numeric-btn:first-child {
+      border-radius: 8px 0 0 8px;
+      border-right: 1px solid #e0e0e0;
+    }
+    
+    .sf-numeric-btn:last-child {
+      border-radius: 0 8px 8px 0;
+      border-left: 1px solid #e0e0e0;
+    }
+    
+    /* DatePicker styles */
+    .sf-datepicker .e-input-group-icon::before {
+      content: '📅';
+    }
+    
+    /* Checkbox wrapper */
+    .e-checkbox-wrapper {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .e-checkbox-wrapper:hover {
+      background: #f7fafc;
+    }
+    
+    .e-checkbox-wrapper.e-error {
+      border-color: #e53e3e;
+      background: #fff5f5;
+    }
+    
+    .e-checkbox {
+      width: 20px;
+      height: 20px;
+      accent-color: #667eea;
+    }
+    
+    /* Validation styles */
+    .field-validation-error {
+      display: block;
+      color: #e53e3e;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      font-weight: 500;
+    }
+    
+    .field-validation-valid {
+      display: none;
+    }
+    
+    .btn {
+      padding: 0.875rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .result-box {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #f0fff4;
+      border: 2px solid #38a169;
+      border-radius: 12px;
+    }
+    
+    .result-box.error {
+      background: #fff5f5;
+      border-color: #e53e3e;
+    }
+    
+    h1 {
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: #718096;
+      margin-bottom: 2rem;
+    }
+    
+    .info-box {
+      background: #ebf8ff;
+      border: 1px solid #90cdf4;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .info-box h4 {
+      color: #2b6cb0;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .info-box p {
+      color: #4a5568;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+    
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-section">
+    <h1>🎨 Syncfusion Component Validation</h1>
+    <p class="subtitle">ALIS adapter pattern for third-party component libraries</p>
+    
+    <div class="info-box">
+      <h4>ℹ️ How it works</h4>
+      <p>
+        Syncfusion components render hidden inputs with <code>ej2_instances</code> array.
+        ALIS's SyncfusionAdapter extracts values and applies validation to the visible wrapper.
+        This demo simulates Syncfusion component behavior.
+      </p>
+    </div>
+    
+    <form id="sf-form" 
+          data-alis-post="/api/order" 
+          data-alis-validate="true"
+          data-alis-target="#form-result"
+          data-alis-on-after="handleOrderResult">
+      
+      <!-- Simulated Syncfusion DropDownList -->
+      <div class="form-group">
+        <label>Product Category</label>
+        <div class="sf-dropdown">
+          <div class="e-input-group" id="category-wrapper">
+            <!-- Hidden input that Syncfusion would create -->
+            <input type="hidden" 
+                   id="category" 
+                   name="Order.Category"
+                   data-val="true"
+                   data-val-required="Please select a category" />
+            <!-- Visible input -->
+            <input type="text" 
+                   class="e-input" 
+                   id="category-display" 
+                   placeholder="Select category..."
+                   readonly />
+            <span class="e-input-group-icon" onclick="toggleDropdown('category')">▼</span>
+          </div>
+          <div class="sf-dropdown-list" id="category-list">
+            <div class="sf-dropdown-item" data-value="electronics" onclick="selectDropdown('category', 'electronics', 'Electronics')">Electronics</div>
+            <div class="sf-dropdown-item" data-value="clothing" onclick="selectDropdown('category', 'clothing', 'Clothing')">Clothing</div>
+            <div class="sf-dropdown-item" data-value="books" onclick="selectDropdown('category', 'books', 'Books')">Books</div>
+            <div class="sf-dropdown-item" data-value="home" onclick="selectDropdown('category', 'home', 'Home & Garden')">Home & Garden</div>
+          </div>
+        </div>
+        <span data-valmsg-for="Order.Category" class="field-validation-valid"></span>
+      </div>
+      
+      <!-- Simulated Syncfusion NumericTextBox -->
+      <div class="form-group">
+        <label>Quantity</label>
+        <div class="e-input-group sf-numeric" id="quantity-wrapper">
+          <button type="button" class="sf-numeric-btn" onclick="changeNumeric('quantity', -1)">−</button>
+          <!-- Hidden input -->
+          <input type="hidden" 
+                 id="quantity" 
+                 name="Order.Quantity"
+                 value="1"
+                 data-val="true"
+                 data-val-required="Quantity is required"
+                 data-val-range="Quantity must be between 1 and 100"
+                 data-val-range-min="1"
+                 data-val-range-max="100" />
+          <!-- Visible input -->
+          <input type="text" 
+                 class="e-input" 
+                 id="quantity-display" 
+                 value="1"
+                 readonly 
+                 style="text-align: center;" />
+          <button type="button" class="sf-numeric-btn" onclick="changeNumeric('quantity', 1)">+</button>
+        </div>
+        <span data-valmsg-for="Order.Quantity" class="field-validation-valid"></span>
+      </div>
+      
+      <!-- Simulated Syncfusion DatePicker -->
+      <div class="form-group">
+        <label>Delivery Date</label>
+        <div class="e-input-group sf-datepicker" id="deliveryDate-wrapper">
+          <!-- Hidden input -->
+          <input type="hidden" 
+                 id="deliveryDate" 
+                 name="Order.DeliveryDate"
+                 data-val="true"
+                 data-val-required="Please select a delivery date" />
+          <!-- Visible input -->
+          <input type="date" 
+                 class="e-input" 
+                 id="deliveryDate-display"
+                 onchange="updateDatePicker('deliveryDate')" />
+          <span class="e-input-group-icon"></span>
+        </div>
+        <span data-valmsg-for="Order.DeliveryDate" class="field-validation-valid"></span>
+      </div>
+      
+      <div class="row">
+        <!-- Simulated Syncfusion TextBox with validation -->
+        <div class="form-group">
+          <label>Customer Name</label>
+          <div class="e-input-group" id="customerName-wrapper">
+            <input type="hidden" 
+                   id="customerName" 
+                   name="Order.CustomerName"
+                   data-val="true"
+                   data-val-required="Customer name is required"
+                   data-val-minlength="Name must be at least 3 characters"
+                   data-val-minlength-min="3" />
+            <input type="text" 
+                   class="e-input" 
+                   id="customerName-display"
+                   placeholder="Enter name..."
+                   oninput="updateTextBox('customerName')" />
+          </div>
+          <span data-valmsg-for="Order.CustomerName" class="field-validation-valid"></span>
+        </div>
+        
+        <!-- Simulated Syncfusion MaskedTextBox (Phone) -->
+        <div class="form-group">
+          <label>Phone Number</label>
+          <div class="e-input-group" id="phone-wrapper">
+            <input type="hidden" 
+                   id="phone" 
+                   name="Order.Phone"
+                   data-val="true"
+                   data-val-required="Phone number is required"
+                   data-val-regex="Please enter a valid phone number"
+                   data-val-regex-pattern="^\d{3}-\d{3}-\d{4}$" />
+            <input type="text" 
+                   class="e-input" 
+                   id="phone-display"
+                   placeholder="123-456-7890"
+                   oninput="updateMaskedTextBox('phone')" />
+          </div>
+          <span data-valmsg-for="Order.Phone" class="field-validation-valid"></span>
+        </div>
+      </div>
+      
+      <!-- Simulated Syncfusion CheckBox -->
+      <div class="form-group">
+        <label class="e-checkbox-wrapper" id="terms-wrapper">
+          <!-- Hidden input -->
+          <input type="hidden" 
+                 id="terms" 
+                 name="Order.AcceptTerms"
+                 value="false"
+                 data-val="true"
+                 data-val-required="You must accept the terms" />
+          <!-- Visible checkbox -->
+          <input type="checkbox" 
+                 class="e-checkbox" 
+                 id="terms-display"
+                 onchange="updateCheckBox('terms')" />
+          <span>I accept the terms and conditions</span>
+        </label>
+        <span data-valmsg-for="Order.AcceptTerms" class="field-validation-valid"></span>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">
+        Place Order
+      </button>
+    </form>
+    
+    <div id="form-result"></div>
+  </div>
+  
+  <script src="/dist/alis.js"></script>
+  <script>
+    // Simulate Syncfusion ej2_instances
+    function setupSyncfusionComponent(id, initialValue = null) {
+      const hiddenInput = document.getElementById(id);
+      if (hiddenInput) {
+        hiddenInput.ej2_instances = [{
+          get value() { return hiddenInput.value || null; },
+          set value(v) { hiddenInput.value = v; }
+        }];
+      }
+    }
+    
+    // Setup checkbox with 'checked' property
+    function setupSyncfusionCheckbox(id) {
+      const hiddenInput = document.getElementById(id);
+      if (hiddenInput) {
+        hiddenInput.ej2_instances = [{
+          get checked() { return hiddenInput.value === 'true'; },
+          set checked(v) { hiddenInput.value = v ? 'true' : 'false'; }
+        }];
+      }
+    }
+    
+    // Initialize all simulated Syncfusion components
+    setupSyncfusionComponent('category');
+    setupSyncfusionComponent('quantity', '1');
+    setupSyncfusionComponent('deliveryDate');
+    setupSyncfusionComponent('customerName');
+    setupSyncfusionComponent('phone');
+    setupSyncfusionCheckbox('terms');
+    
+    // Dropdown functions
+    function toggleDropdown(id) {
+      const list = document.getElementById(id + '-list');
+      list.classList.toggle('open');
+    }
+    
+    function selectDropdown(id, value, text) {
+      const hidden = document.getElementById(id);
+      const display = document.getElementById(id + '-display');
+      const list = document.getElementById(id + '-list');
+      
+      hidden.value = value;
+      hidden.ej2_instances[0].value = value;
+      display.value = text;
+      list.classList.remove('open');
+      
+      // Update selected state
+      list.querySelectorAll('.sf-dropdown-item').forEach(item => {
+        item.classList.toggle('selected', item.dataset.value === value);
+      });
+      
+      // Trigger validation on blur
+      hidden.dispatchEvent(new Event('blur', { bubbles: true }));
+    }
+    
+    // Numeric functions
+    function changeNumeric(id, delta) {
+      const hidden = document.getElementById(id);
+      const display = document.getElementById(id + '-display');
+      
+      let value = parseInt(hidden.value) || 0;
+      value = Math.max(0, value + delta);
+      
+      hidden.value = value;
+      hidden.ej2_instances[0].value = value;
+      display.value = value;
+      
+      // Trigger validation
+      hidden.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    
+    // DatePicker function
+    function updateDatePicker(id) {
+      const hidden = document.getElementById(id);
+      const display = document.getElementById(id + '-display');
+      
+      hidden.value = display.value;
+      hidden.ej2_instances[0].value = display.value;
+      
+      hidden.dispatchEvent(new Event('blur', { bubbles: true }));
+    }
+    
+    // TextBox function
+    function updateTextBox(id) {
+      const hidden = document.getElementById(id);
+      const display = document.getElementById(id + '-display');
+      
+      hidden.value = display.value;
+      hidden.ej2_instances[0].value = display.value;
+      
+      hidden.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    
+    // MaskedTextBox function
+    function updateMaskedTextBox(id) {
+      const hidden = document.getElementById(id);
+      const display = document.getElementById(id + '-display');
+      
+      // Simple phone mask
+      let value = display.value.replace(/\D/g, '');
+      if (value.length > 3 && value.length <= 6) {
+        value = value.slice(0, 3) + '-' + value.slice(3);
+      } else if (value.length > 6) {
+        value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+      }
+      display.value = value;
+      
+      hidden.value = value;
+      hidden.ej2_instances[0].value = value;
+      
+      hidden.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    
+    // CheckBox function
+    function updateCheckBox(id) {
+      const hidden = document.getElementById(id);
+      const display = document.getElementById(id + '-display');
+      
+      const checked = display.checked;
+      hidden.value = checked ? 'true' : 'false';
+      hidden.ej2_instances[0].checked = checked;
+      
+      hidden.dispatchEvent(new Event('blur', { bubbles: true }));
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.sf-dropdown')) {
+        document.querySelectorAll('.sf-dropdown-list').forEach(list => {
+          list.classList.remove('open');
+        });
+      }
+    });
+    
+    // Initialize ALIS
+    ALIS.init();
+    
+    // Handle form result
+    window.handleOrderResult = function(ctx) {
+      const resultDiv = document.getElementById('form-result');
+      
+      if (ctx.success) {
+        resultDiv.innerHTML = `
+          <div class="result-box">
+            <h3>✅ Order Placed Successfully!</h3>
+            <pre>${JSON.stringify(ctx.response, null, 2)}</pre>
+          </div>
+        `;
+      } else if (ctx.validation) {
+        resultDiv.innerHTML = `
+          <div class="result-box error">
+            <h3>❌ Validation Failed</h3>
+            <p>Please check the form for errors.</p>
+          </div>
+        `;
+      }
+    };
+  </script>
+</body>
+</html>
+

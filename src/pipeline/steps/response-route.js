@@ -4,7 +4,8 @@ import { emit } from '../../telemetry/emitter.js';
  * @param {import('../context.js').PipelineContext} ctx
  */
 export function responseRouteStep(ctx) {
-  if (!ctx.response) {
+  // Skip if there's already an error (e.g., from validation) or no response
+  if (ctx.error || !ctx.response) {
     ctx.success = false;
     return ctx;
   }

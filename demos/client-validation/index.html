@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALIS - Client-Side Validation Demo</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+  <style>
+    .demo-section {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Validation styles */
+    .input-validation-error {
+      border-color: #e53e3e !important;
+      background-color: #fff5f5;
+    }
+    
+    .input-validation-valid {
+      border-color: #38a169 !important;
+    }
+    
+    .field-validation-error {
+      display: block;
+      color: #e53e3e;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      font-weight: 500;
+    }
+    
+    .field-validation-valid {
+      display: none;
+    }
+    
+    .nested-group {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .nested-group-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #4a5568;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #667eea;
+    }
+    
+    .btn {
+      padding: 0.875rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .result-box {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #f0fff4;
+      border: 2px solid #38a169;
+      border-radius: 12px;
+    }
+    
+    .result-box.error {
+      background: #fff5f5;
+      border-color: #e53e3e;
+    }
+    
+    .result-box pre {
+      margin: 0;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+    }
+    
+    h1 {
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: #718096;
+      margin-bottom: 2rem;
+    }
+    
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    
+    @media (max-width: 600px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-section">
+    <h1>🔒 Client-Side Validation</h1>
+    <p class="subtitle">Nested object properties with ASP.NET Core conventions</p>
+    
+    <!-- Employee Registration Form with Nested Properties -->
+    <form id="employee-form" 
+          data-alis-post="/api/employees" 
+          data-alis-validate="true"
+          data-alis-target="#form-result"
+          data-alis-on-after="handleEmployeeResult">
+      
+      <!-- Personal Information -->
+      <div class="nested-group">
+        <div class="nested-group-title">👤 Personal Information</div>
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="Employee_FirstName">First Name</label>
+            <input type="text" 
+                   id="Employee_FirstName" 
+                   name="Employee.FirstName"
+                   data-val="true"
+                   data-val-required="First name is required"
+                   data-val-minlength="Minimum 2 characters"
+                   data-val-minlength-min="2" />
+            <span data-valmsg-for="Employee.FirstName" class="field-validation-valid"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="Employee_LastName">Last Name</label>
+            <input type="text" 
+                   id="Employee_LastName" 
+                   name="Employee.LastName"
+                   data-val="true"
+                   data-val-required="Last name is required"
+                   data-val-minlength="Minimum 2 characters"
+                   data-val-minlength-min="2" />
+            <span data-valmsg-for="Employee.LastName" class="field-validation-valid"></span>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="Employee_Email">Email</label>
+          <input type="text" 
+                 id="Employee_Email" 
+                 name="Employee.Email"
+                 data-val="true"
+                 data-val-required="Email is required"
+                 data-val-email="Please enter a valid email address" />
+          <span data-valmsg-for="Employee.Email" class="field-validation-valid"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="Employee_Phone">Phone</label>
+          <input type="text" 
+                 id="Employee_Phone" 
+                 name="Employee.Phone"
+                 data-val="true"
+                 data-val-regex="Please enter a valid phone number"
+                 data-val-regex-pattern="^\+?[\d\s-]{10,}$" />
+          <span data-valmsg-for="Employee.Phone" class="field-validation-valid"></span>
+        </div>
+      </div>
+      
+      <!-- Address Information -->
+      <div class="nested-group">
+        <div class="nested-group-title">📍 Address</div>
+        
+        <div class="form-group">
+          <label for="Employee_Address_Street">Street</label>
+          <input type="text" 
+                 id="Employee_Address_Street" 
+                 name="Employee.Address.Street"
+                 data-val="true"
+                 data-val-required="Street address is required" />
+          <span data-valmsg-for="Employee.Address.Street" class="field-validation-valid"></span>
+        </div>
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="Employee_Address_City">City</label>
+            <input type="text" 
+                   id="Employee_Address_City" 
+                   name="Employee.Address.City"
+                   data-val="true"
+                   data-val-required="City is required" />
+            <span data-valmsg-for="Employee.Address.City" class="field-validation-valid"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="Employee_Address_ZipCode">Zip Code</label>
+            <input type="text" 
+                   id="Employee_Address_ZipCode" 
+                   name="Employee.Address.ZipCode"
+                   data-val="true"
+                   data-val-required="Zip code is required"
+                   data-val-regex="Invalid zip code format"
+                   data-val-regex-pattern="^\d{5}(-\d{4})?$" />
+            <span data-valmsg-for="Employee.Address.ZipCode" class="field-validation-valid"></span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Employment Details -->
+      <div class="nested-group">
+        <div class="nested-group-title">💼 Employment</div>
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="Employee_Department">Department</label>
+            <select id="Employee_Department" 
+                    name="Employee.Department"
+                    data-val="true"
+                    data-val-required="Please select a department">
+              <option value="">-- Select Department --</option>
+              <option value="engineering">Engineering</option>
+              <option value="marketing">Marketing</option>
+              <option value="sales">Sales</option>
+              <option value="hr">Human Resources</option>
+            </select>
+            <span data-valmsg-for="Employee.Department" class="field-validation-valid"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="Employee_Salary">Salary</label>
+            <input type="text" 
+                   id="Employee_Salary" 
+                   name="Employee.Salary"
+                   data-val="true"
+                   data-val-required="Salary is required"
+                   data-val-number="Please enter a valid number"
+                   data-val-range="Salary must be between 30000 and 500000"
+                   data-val-range-min="30000"
+                   data-val-range-max="500000" />
+            <span data-valmsg-for="Employee.Salary" class="field-validation-valid"></span>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="Employee_StartDate">Start Date</label>
+          <input type="date" 
+                 id="Employee_StartDate" 
+                 name="Employee.StartDate"
+                 data-val="true"
+                 data-val-required="Start date is required" />
+          <span data-valmsg-for="Employee.StartDate" class="field-validation-valid"></span>
+        </div>
+      </div>
+      
+      <!-- Emergency Contact (Array notation) -->
+      <div class="nested-group">
+        <div class="nested-group-title">🚨 Emergency Contact</div>
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="Employee_EmergencyContacts_0__Name">Contact Name</label>
+            <input type="text" 
+                   id="Employee_EmergencyContacts_0__Name" 
+                   name="Employee.EmergencyContacts[0].Name"
+                   data-val="true"
+                   data-val-required="Emergency contact name is required" />
+            <span data-valmsg-for="Employee.EmergencyContacts[0].Name" class="field-validation-valid"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="Employee_EmergencyContacts_0__Phone">Contact Phone</label>
+            <input type="text" 
+                   id="Employee_EmergencyContacts_0__Phone" 
+                   name="Employee.EmergencyContacts[0].Phone"
+                   data-val="true"
+                   data-val-required="Emergency contact phone is required"
+                   data-val-regex="Please enter a valid phone number"
+                   data-val-regex-pattern="^\+?[\d\s-]{10,}$" />
+            <span data-valmsg-for="Employee.EmergencyContacts[0].Phone" class="field-validation-valid"></span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Password with EqualTo -->
+      <div class="nested-group">
+        <div class="nested-group-title">🔐 Account Security</div>
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="Password">Password</label>
+            <input type="password" 
+                   id="Password" 
+                   name="Password"
+                   data-val="true"
+                   data-val-required="Password is required"
+                   data-val-minlength="Password must be at least 8 characters"
+                   data-val-minlength-min="8" />
+            <span data-valmsg-for="Password" class="field-validation-valid"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="ConfirmPassword">Confirm Password</label>
+            <input type="password" 
+                   id="ConfirmPassword" 
+                   name="ConfirmPassword"
+                   data-val="true"
+                   data-val-required="Please confirm your password"
+                   data-val-equalto="Passwords do not match"
+                   data-val-equalto-other="Password" />
+            <span data-valmsg-for="ConfirmPassword" class="field-validation-valid"></span>
+          </div>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">
+        Register Employee
+      </button>
+    </form>
+    
+    <div id="form-result"></div>
+  </div>
+  
+  <script src="/dist/alis.js"></script>
+  <script>
+    // Initialize ALIS
+    ALIS.init();
+    
+    // Handle form result
+    window.handleEmployeeResult = function(ctx) {
+      const resultDiv = document.getElementById('form-result');
+      
+      if (ctx.success) {
+        resultDiv.innerHTML = `
+          <div class="result-box">
+            <h3>✅ Employee Registered Successfully!</h3>
+            <pre>${JSON.stringify(ctx.response, null, 2)}</pre>
+          </div>
+        `;
+      } else if (ctx.validation) {
+        // Server-side validation errors are handled by ALIS
+        resultDiv.innerHTML = `
+          <div class="result-box error">
+            <h3>❌ Server Validation Failed</h3>
+            <p>Please check the form for errors.</p>
+          </div>
+        `;
+      }
+    };
+  </script>
+</body>
+</html>
+

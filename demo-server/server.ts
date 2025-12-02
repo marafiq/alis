@@ -629,6 +629,99 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     `);
   },
 
+  // Employee registration with nested properties (Client-side validation demo)
+  "POST /api/employees": async (req) => {
+    await delay(400);
+    const body = parseBody(await req.text(), req.headers.get("content-type") || "");
+    
+    // Server-side validation (should not trigger if client-side passes)
+    const errors: Record<string, string[]> = {};
+    
+    // Nested property validation using dot notation
+    if (!body["Employee.FirstName"]?.trim()) errors["Employee.FirstName"] = ["First name is required"];
+    if (!body["Employee.LastName"]?.trim()) errors["Employee.LastName"] = ["Last name is required"];
+    if (!body["Employee.Email"]?.trim()) errors["Employee.Email"] = ["Email is required"];
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body["Employee.Email"])) {
+      errors["Employee.Email"] = ["Invalid email format"];
+    }
+    
+    if (!body["Employee.Address.Street"]?.trim()) errors["Employee.Address.Street"] = ["Street is required"];
+    if (!body["Employee.Address.City"]?.trim()) errors["Employee.Address.City"] = ["City is required"];
+    if (!body["Employee.Address.ZipCode"]?.trim()) errors["Employee.Address.ZipCode"] = ["Zip code is required"];
+    
+    if (!body["Employee.Department"]) errors["Employee.Department"] = ["Department is required"];
+    if (!body["Employee.Salary"]) errors["Employee.Salary"] = ["Salary is required"];
+    
+    if (!body["Password"]?.trim()) errors["Password"] = ["Password is required"];
+    if (body["Password"] !== body["ConfirmPassword"]) errors["ConfirmPassword"] = ["Passwords do not match"];
+    
+    if (Object.keys(errors).length > 0) {
+      return problemDetails("Server validation failed", errors);
+    }
+    
+    // Success - return the employee data
+    return jsonResponse({
+      success: true,
+      message: "Employee registered successfully!",
+      employee: {
+        firstName: body["Employee.FirstName"],
+        lastName: body["Employee.LastName"],
+        email: body["Employee.Email"],
+        address: {
+          street: body["Employee.Address.Street"],
+          city: body["Employee.Address.City"],
+          zipCode: body["Employee.Address.ZipCode"]
+        },
+        department: body["Employee.Department"],
+        salary: body["Employee.Salary"],
+        startDate: body["Employee.StartDate"],
+        emergencyContact: {
+          name: body["Employee.EmergencyContacts[0].Name"],
+          phone: body["Employee.EmergencyContacts[0].Phone"]
+        }
+      }
+    });
+  },
+
+  // Syncfusion order form (Syncfusion validation demo)
+  "POST /api/order": async (req) => {
+    await delay(400);
+    const body = parseBody(await req.text(), req.headers.get("content-type") || "");
+    
+    const errors: Record<string, string[]> = {};
+    
+    if (!body["Order.Category"]) errors["Order.Category"] = ["Category is required"];
+    if (!body["Order.Quantity"]) errors["Order.Quantity"] = ["Quantity is required"];
+    else {
+      const qty = parseInt(body["Order.Quantity"]);
+      if (isNaN(qty) || qty < 1 || qty > 100) {
+        errors["Order.Quantity"] = ["Quantity must be between 1 and 100"];
+      }
+    }
+    if (!body["Order.DeliveryDate"]) errors["Order.DeliveryDate"] = ["Delivery date is required"];
+    if (!body["Order.CustomerName"]?.trim()) errors["Order.CustomerName"] = ["Customer name is required"];
+    if (!body["Order.Phone"]?.trim()) errors["Order.Phone"] = ["Phone is required"];
+    if (body["Order.AcceptTerms"] !== "true") errors["Order.AcceptTerms"] = ["You must accept the terms"];
+    
+    if (Object.keys(errors).length > 0) {
+      return problemDetails("Order validation failed", errors);
+    }
+    
+    return jsonResponse({
+      success: true,
+      message: "Order placed successfully!",
+      order: {
+        id: Math.floor(Math.random() * 10000),
+        category: body["Order.Category"],
+        quantity: parseInt(body["Order.Quantity"]),
+        deliveryDate: body["Order.DeliveryDate"],
+        customerName: body["Order.CustomerName"],
+        phone: body["Order.Phone"],
+        total: (Math.random() * 500 + 50).toFixed(2)
+      }
+    });
+  },
+
   // Cascading selects - States by country
   "GET /api/states": async (req, url) => {
     await delay(200);

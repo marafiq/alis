@@ -9,20 +9,22 @@ export function getMethodAndUrl(element) {
     throw new TypeError('getMethodAndUrl: element is required');
   }
 
-  if (element instanceof HTMLFormElement) {
-    const method = (element.getAttribute('method') || 'get').toLowerCase();
-    const action = element.getAttribute('action');
-    if (!action) {
-      throw new Error('Form requires an action attribute for ALIS');
-    }
-    return { method, url: action };
-  }
-
+  // First, check for data-alis-{method} attributes (works for all elements including forms)
   for (const method of METHODS) {
     const attr = element.getAttribute(`data-alis-${method}`);
     if (attr) {
       return { method, url: attr };
     }
+  }
+
+  // For forms, fall back to action/method attributes
+  if (element instanceof HTMLFormElement) {
+    const method = (element.getAttribute('method') || 'get').toLowerCase();
+    const action = element.getAttribute('action');
+    if (!action) {
+      throw new Error('Form requires an action attribute or data-alis-{method} attribute for ALIS');
+    }
+    return { method, url: action };
   }
 
   throw new Error('No ALIS method attribute found');

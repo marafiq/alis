@@ -5,6 +5,11 @@ import { getRetryPolicy } from '../../registry/retry.js';
  * @param {import('../context.js').PipelineContext} ctx
  */
 export async function requestExecuteStep(ctx) {
+  // Skip if there's already an error (e.g., from validation)
+  if (ctx.error) {
+    return ctx;
+  }
+  
   if (!ctx.request) {
     throw new Error('requestExecuteStep: request not built');
   }

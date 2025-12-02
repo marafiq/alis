@@ -5,6 +5,11 @@ import { getSerializer } from '../../registry/serialize.js';
  * @param {import('../context.js').PipelineContext} ctx
  */
 export function requestBuildStep(ctx) {
+  // Skip if there's already an error (e.g., from validation)
+  if (ctx.error) {
+    return ctx;
+  }
+  
   const methodAndUrl = ctx.config.url
     ? { method: ctx.config.method, url: ctx.config.url }
     : ctx.element

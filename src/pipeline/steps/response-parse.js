@@ -4,8 +4,9 @@ import { isProblemDetails, parseProblemDetails } from '../../validation/problem-
  * @param {import('../context.js').PipelineContext} ctx
  */
 export async function responseParseStep(ctx) {
-  if (!ctx.response) {
-    throw new Error('responseParseStep: missing response');
+  // Skip if there's already an error (e.g., from validation) or no response
+  if (ctx.error || !ctx.response) {
+    return ctx;
   }
 
   const contentType = ctx.response.headers.get('content-type') || '';

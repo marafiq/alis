@@ -17,6 +17,16 @@ export function validate(value, params, _element) {
     return ValidationResult.invalid(message);
   }
   
+  // Boolean false (for checkboxes)
+  if (value === false) {
+    return ValidationResult.invalid(message);
+  }
+  
+  // String "false" (for checkbox hidden inputs)
+  if (value === 'false') {
+    return ValidationResult.invalid(message);
+  }
+  
   // Empty string or whitespace-only
   if (typeof value === 'string' && value.trim() === '') {
     return ValidationResult.invalid(message);
