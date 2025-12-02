@@ -39,6 +39,7 @@ export function createContext(element, overrides = {}) {
     element,
     config: baseConfig,
     trigger,
+    abortController: new AbortController(),
     state: {
       attempts: 0,
       aborted: false,

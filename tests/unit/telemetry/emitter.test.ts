@@ -30,6 +30,24 @@ describe('telemetry/emitter', () => {
     expect(payload).toHaveProperty('timestamp');
   });
 
+  it('honors per-call level overrides', () => {
+    const adapter = { emit: vi.fn() };
+    setAdapter(adapter);
+    setLevel('warn');
+
+    const payload = emit('custom:event', { foo: true }, { levels: { 'custom:event': 'error' } });
+
+    expect(payload).not.toBe(false);
+    expect(adapter.emit).toHaveBeenCalledWith('custom:event', expect.objectContaining({
+      level: 'error',
+      data: { foo: true }
+    }));
+  });
+
+  it('throws for invalid event names', () => {
+    expect(() => emit('', {})).toThrow(TypeError);
+  });
+
   it('validates adapter structure', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => setAdapter(null as any)).toThrow(TypeError);
