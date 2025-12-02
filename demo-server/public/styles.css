@@ -805,6 +805,39 @@ body::before {
   cursor: pointer;
 }
 
+/* .NET Core Tag Helper Validation Styles */
+.field-validation-valid {
+  display: none;
+}
+
+.field-validation-error {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--accent-red);
+  animation: fadeIn 0.2s ease-out;
+}
+
+[data-valmsg-for] {
+  display: block;
+  min-height: 1.2em;
+  margin-top: var(--space-1);
+  font-size: 0.85rem;
+  color: var(--accent-red);
+}
+
+[data-valmsg-for]:empty {
+  display: none;
+}
+
+.input-validation-error,
+.input.input-validation-error,
+.select.input-validation-error,
+.textarea.input-validation-error {
+  border-color: var(--accent-red) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
 .error-text {
   display: block;
   margin-top: var(--space-2);

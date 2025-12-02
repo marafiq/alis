@@ -210,7 +210,7 @@
     <section id="contact" class="section">
       <div class="section-header">
         <h2 class="section-title">📧 Contact Form</h2>
-        <p class="section-desc">Full validation with beautiful error messages.</p>
+        <p class="section-desc">Full validation with .NET Core tag helper conventions.</p>
       </div>
       
       <div class="card card-form">
@@ -224,37 +224,47 @@
             <div class="form-group">
               <label for="contact-name">Name *</label>
               <input type="text" id="contact-name" name="name" class="input" 
-                     placeholder="Your full name">
+                     placeholder="Your full name"
+                     data-val="true" data-val-required="Name is required">
+              <span data-valmsg-for="name" class="field-validation-valid"></span>
             </div>
             <div class="form-group">
               <label for="contact-email">Email *</label>
               <input type="email" id="contact-email" name="email" class="input" 
-                     placeholder="you@example.com">
+                     placeholder="you@example.com"
+                     data-val="true" data-val-required="Email is required" data-val-email="Invalid email">
+              <span data-valmsg-for="email" class="field-validation-valid"></span>
             </div>
           </div>
           
           <div class="form-group">
             <label for="contact-subject">Subject *</label>
-            <select id="contact-subject" name="subject" class="select">
+            <select id="contact-subject" name="subject" class="select"
+                    data-val="true" data-val-required="Subject is required">
               <option value="">Select a subject...</option>
               <option value="general">General Inquiry</option>
               <option value="support">Technical Support</option>
               <option value="feedback">Feedback</option>
               <option value="other">Other</option>
             </select>
+            <span data-valmsg-for="subject" class="field-validation-valid"></span>
           </div>
           
           <div class="form-group">
             <label for="contact-message">Message *</label>
             <textarea id="contact-message" name="message" class="textarea" rows="4"
-                      placeholder="Tell us what's on your mind..."></textarea>
+                      placeholder="Tell us what's on your mind..."
+                      data-val="true" data-val-required="Message is required"></textarea>
+            <span data-valmsg-for="message" class="field-validation-valid"></span>
           </div>
           
           <div class="form-group">
             <label class="checkbox-label">
-              <input type="checkbox" name="agree" value="yes">
+              <input type="checkbox" name="agree" value="yes"
+                     data-val="true" data-val-required="You must agree to the terms">
               <span>I agree to the terms and conditions *</span>
             </label>
+            <span data-valmsg-for="agree" class="field-validation-valid"></span>
           </div>
           
           <div class="form-actions">
@@ -264,9 +274,9 @@
               Send Message
             </button>
           </div>
+          
+          <div id="contact-result" class="form-result"></div>
         </form>
-        
-        <div id="contact-result" class="form-result"></div>
       </div>
     </section>
 

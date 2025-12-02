@@ -14,9 +14,40 @@ export function swapStep(ctx) {
     return ctx;
   }
 
+  // Preserve focus if active element is outside the swap target
+  const activeElement = document.activeElement;
+  const shouldRestoreFocus = activeElement && 
+    activeElement !== document.body && 
+    !target.contains(activeElement);
+  
+  // Get cursor position for text inputs
+  let selectionStart = null;
+  let selectionEnd = null;
+  if (shouldRestoreFocus && (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement)) {
+    selectionStart = activeElement.selectionStart;
+    selectionEnd = activeElement.selectionEnd;
+  }
+
   const strategyName = typeof ctx.config.swap === 'string' ? ctx.config.swap : 'innerHTML';
   const strategy = getSwapStrategy(strategyName);
   strategy(target, typeof ctx.body === 'string' ? ctx.body : JSON.stringify(ctx.body));
+
+  // Restore focus if it was outside the target
+  if (shouldRestoreFocus && activeElement instanceof HTMLElement) {
+    // Use requestAnimationFrame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      activeElement.focus();
+      // Restore cursor position for text inputs
+      if ((activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) && 
+          selectionStart !== null && selectionEnd !== null) {
+        try {
+          activeElement.setSelectionRange(selectionStart, selectionEnd);
+        } catch {
+          // Some input types don't support setSelectionRange
+        }
+      }
+    });
+  }
 
   return ctx;
 }

@@ -71,23 +71,35 @@ function closeModal() {
 function showAddUserModal() {
   Modal.body.innerHTML = `
     <h3>👤 Add New User</h3>
-    <form data-alis data-alis-target="#add-user-result" data-alis-swap="innerHTML" action="/api/users" method="post">
+    <form id="add-user-form" 
+          data-alis 
+          data-alis-target="#add-user-result" 
+          data-alis-swap="innerHTML" 
+          data-alis-on-after="handleAddUserResult"
+          action="/api/users" 
+          method="post">
       <div class="form-group">
         <label for="new-name">Full Name</label>
-        <input type="text" id="new-name" name="name" class="input" placeholder="John Doe" autofocus>
+        <input type="text" id="new-name" name="name" class="input" placeholder="John Doe" 
+               data-val="true" data-val-required="Name is required">
+        <span data-valmsg-for="name" class="field-validation-valid"></span>
       </div>
       <div class="form-group">
         <label for="new-email">Email Address</label>
-        <input type="email" id="new-email" name="email" class="input" placeholder="john@example.com">
+        <input type="email" id="new-email" name="email" class="input" placeholder="john@example.com"
+               data-val="true" data-val-required="Email is required" data-val-email="Invalid email format">
+        <span data-valmsg-for="email" class="field-validation-valid"></span>
       </div>
       <div class="form-group">
         <label for="new-role">Role</label>
-        <select id="new-role" name="role" class="select">
+        <select id="new-role" name="role" class="select"
+                data-val="true" data-val-required="Role is required">
           <option value="">Choose a role...</option>
           <option value="Admin">👑 Admin</option>
           <option value="Editor">✏️ Editor</option>
           <option value="Viewer">👁️ Viewer</option>
         </select>
+        <span data-valmsg-for="role" class="field-validation-valid"></span>
       </div>
       <div id="add-user-result"></div>
       <div class="form-actions">
@@ -103,6 +115,20 @@ function showAddUserModal() {
   // Focus the first input after modal opens
   setTimeout(() => document.getElementById('new-name')?.focus(), 100);
 }
+
+// Hook handler for add user result - auto close modal and refresh on success
+window.handleAddUserResult = function(ctx) {
+  if (ctx.success && ctx.body?.success) {
+    // Success - close modal, show toast, refresh table
+    closeModal();
+    Toast.success(ctx.body.message || 'User created successfully!');
+    // Refresh users table
+    setTimeout(() => {
+      document.getElementById('refresh-users')?.click();
+    }, 100);
+  }
+  // On validation error, modal stays open and errors are shown via data-valmsg-for
+};
 
 // Close modal on overlay click
 document.getElementById('modal-overlay').addEventListener('click', (e) => {
@@ -192,24 +218,8 @@ ALIS.init({
     (ctx) => {
       console.log('[ALIS] Request complete:', ctx.config.url, ctx.success ? '✓' : '✗');
       
-      // Show toast for API responses
-      if (ctx.body && typeof ctx.body === 'object') {
-        if (ctx.body.success && ctx.body.message) {
-          Toast.success(ctx.body.message);
-          
-          // Refresh users table after successful user operations
-          if (ctx.config.url?.includes('/api/users') && !ctx.config.url.includes('/edit')) {
-            setTimeout(() => {
-              document.getElementById('refresh-users')?.click();
-            }, 500);
-          }
-        } else if (ctx.body.title && ctx.body.errors) {
-          // Validation error - toast handled by validation display
-        }
-      }
-      
-      // Handle errors
-      if (ctx.error) {
+      // Handle network/fetch errors
+      if (ctx.error && !ctx.body?.errors) {
         Toast.error(ctx.error.message || 'An error occurred');
       }
     }

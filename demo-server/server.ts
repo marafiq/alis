@@ -179,7 +179,8 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     if (!body.role) errors.role = ["Role is required"];
     
     if (Object.keys(errors).length > 0) {
-      return validationErrorHtml("Please fix the following errors", errors);
+      // Return ProblemDetails - ALIS will populate data-valmsg-for spans
+      return problemDetails("Please fix the errors below", errors);
     }
     
     const user: User = {
@@ -192,16 +193,12 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     };
     users.push(user);
     
-    return htmlResponse(`
-      <div class="success-result">
-        <div class="success-icon">✓</div>
-        <h4>User Created!</h4>
-        <p><strong>${user.name}</strong> has been added successfully.</p>
-        <button class="btn btn-primary" onclick="closeModal(); document.getElementById('refresh-users')?.click();">
-          Close & Refresh
-        </button>
-      </div>
-    `);
+    // Return JSON success - hook will handle modal close and refresh
+    return jsonResponse({
+      success: true,
+      message: `User "${user.name}" created successfully!`,
+      user
+    });
   },
 
   "GET /api/users/:id/edit": async (req, url) => {
@@ -381,7 +378,7 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     return htmlResponse(`<span class="cart-badge">${count}</span>`);
   },
 
-  // Contact form with comprehensive validation
+  // Contact form with comprehensive validation - returns ProblemDetails for ALIS validation display
   "POST /api/contact": async (req) => {
     await delay(400);
     const body = parseBody(await req.text(), req.headers.get("content-type") || "");
@@ -402,7 +399,8 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     if (!body.agree) errors.agree = ["You must agree to the terms"];
     
     if (Object.keys(errors).length > 0) {
-      return validationErrorHtml("Please fix the following errors", errors);
+      // Return ProblemDetails - ALIS will populate data-valmsg-for spans
+      return problemDetails("Please fix the errors below", errors);
     }
     
     return htmlResponse(`
