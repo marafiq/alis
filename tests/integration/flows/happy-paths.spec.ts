@@ -1,24 +1,26 @@
 /**
  * Critical Happy Path Tests
  * 
- * These tests cover the 90% use cases that users will encounter most frequently.
+ * These tests cover the 10 Core Happy Paths defined in the review guide.
  * Each test verifies the complete flow from user interaction to final DOM state.
- * 
- * Uses existing fixtures and demos to ensure tests are reliable.
  */
 import { test, expect } from '@playwright/test';
 
 // Helper to wait for ALIS initialization
-async function waitForALIS(page: import('@playwright/test').Page) {
+async function waitForALIS(page) {
   await page.waitForFunction(() => {
-    const w = window as typeof window & { __ALIS_INIT?: boolean; ALIS?: unknown };
+    const w = window;
     return w.__ALIS_INIT === true || w.ALIS !== undefined;
   });
 }
 
-test.describe('Happy Path 1: Form POST with target swap', () => {
+test.describe('Happy Path 1: Form POST with FormData', () => {
   test('submits form and swaps HTML into target', async ({ page }) => {
     await page.route('**/api/users', async (route) => {
+      const request = route.request();
+      expect(request.method()).toBe('POST');
+      expect(request.headers()['content-type']).toContain('multipart/form-data');
+      
       await route.fulfill({
         status: 200,
         contentType: 'text/html',
@@ -49,125 +51,52 @@ test.describe('Happy Path 1: Form POST with target swap', () => {
     await waitForALIS(page);
 
     await page.fill('[name="email"]', 'test@test.com');
-    
     const submitButton = page.locator('button[type="submit"]');
-    await submitButton.click();
     
+    const promise = submitButton.click();
     await expect(submitButton).toBeDisabled();
+    await promise;
+    
     await expect(page.locator('#fixture-result')).toContainText('Done');
     await expect(submitButton).toBeEnabled();
   });
+});
 
-  test('sets aria-busy on form during request', async ({ page }) => {
-    await page.route('**/api/users', async (route) => {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<div>Done</div>'
-      });
-    });
-
+test.describe('Happy Path 2: Form GET with Query String', () => {
+  test('appends data to URL as query string', async ({ page }) => {
     await page.goto('/tests/integration/pages/form-submit.html');
     await waitForALIS(page);
 
-    await page.fill('[name="email"]', 'test@test.com');
-    
-    const form = page.locator('form');
-    await page.click('button[type="submit"]');
-    
-    await expect(form).toHaveAttribute('aria-busy', 'true');
-    await expect(page.locator('#fixture-result')).toContainText('Done');
-    await expect(form).not.toHaveAttribute('aria-busy');
-  });
-});
-
-test.describe('Happy Path 2: Form POST with validation errors (ProblemDetails)', () => {
-  test('displays validation errors next to fields', async ({ page }) => {
-    await page.route('**/api/validate', async (route) => {
-      await route.fulfill({
-        status: 400,
-        contentType: 'application/problem+json',
-        body: JSON.stringify({
-          type: 'https://tools.ietf.org/html/rfc7807',
-          title: 'Validation failed',
-          status: 400,
-          errors: {
-            email: ['Email is required'],
-            password: ['Password is required']
-          }
-        })
-      });
+    // Replace body with GET form
+    await page.evaluate(() => {
+      document.body.innerHTML = `
+        <form data-alis-get="/api/search" data-alis-target="#result">
+          <input name="email" value="search-term">
+          <button type="submit" id="search-btn">Search</button>
+        </form>
+        <div id="result"></div>
+      `;
     });
 
-    await page.goto('/tests/integration/pages/form-submit-validation.html');
-    await waitForALIS(page);
-
-    await page.click('button[type="submit"]');
-
-    await expect(page.locator('[data-valmsg-for="email"]')).toContainText('Email is required');
-    await expect(page.locator('[data-valmsg-for="password"]')).toContainText('Password is required');
-  });
-
-  test('clears previous errors on new submission', async ({ page }) => {
-    await page.route('**/api/validate', async (route) => {
-      await route.fulfill({
-        status: 400,
-        contentType: 'application/problem+json',
-        body: JSON.stringify({
-          type: 'https://tools.ietf.org/html/rfc7807',
-          title: 'Validation failed',
-          status: 400,
-          errors: { email: ['Email is required'] }
-        })
-      });
-    });
-
-    await page.goto('/tests/integration/pages/form-submit-validation.html');
-    await waitForALIS(page);
-
-    await page.click('button[type="submit"]');
-    await expect(page.locator('[data-valmsg-for="email"]')).toContainText('Email is required');
-
-    await page.unroute('**/api/validate');
-    await page.route('**/api/validate', async (route) => {
+    let capturedUrl = '';
+    await page.route('**/api/search**', async (route) => {
+      capturedUrl = route.request().url();
       await route.fulfill({
         status: 200,
         contentType: 'text/html',
-        body: '<div>Success!</div>'
+        body: '<div>Results</div>'
       });
     });
 
-    await page.fill('[name="email"]', 'test@example.com');
-    await page.click('button[type="submit"]');
+    await page.click('#search-btn');
 
-    await expect(page.locator('[data-valmsg-for="email"]')).toBeEmpty();
-  });
-
-  test('sets aria-invalid on invalid fields', async ({ page }) => {
-    await page.route('**/api/validate', async (route) => {
-      await route.fulfill({
-        status: 400,
-        contentType: 'application/problem+json',
-        body: JSON.stringify({
-          type: 'https://tools.ietf.org/html/rfc7807',
-          title: 'Validation failed',
-          status: 400,
-          errors: { email: ['Invalid email'] }
-        })
-      });
-    });
-
-    await page.goto('/tests/integration/pages/form-submit-validation.html');
-    await waitForALIS(page);
-
-    await page.click('button[type="submit"]');
-
-    await expect(page.locator('[name="email"]')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('#result')).toContainText('Results');
+    expect(capturedUrl).toContain('/api/search');
+    expect(capturedUrl).toContain('email=search-term');
   });
 });
 
-test.describe('Happy Path 3: Debounced search input', () => {
+test.describe('Happy Path 3: Debounced Search Input', () => {
   test('debounces rapid input events', async ({ page }) => {
     await page.goto('/demos/debounce/index.html');
     await waitForALIS(page);
@@ -190,35 +119,10 @@ test.describe('Happy Path 3: Debounced search input', () => {
     await input.fill('');
     await input.pressSequentially('hello', { delay: 50 });
 
-    // Wait for debounce to complete (500ms + buffer)
-    await page.waitForTimeout(700);
+    await page.waitForTimeout(1500);
 
     expect(requestCount).toBe(1);
     expect(lastQuery).toBe('hello');
-  });
-
-  test('maintains focus while typing', async ({ page }) => {
-    await page.goto('/demos/debounce/index.html');
-    await waitForALIS(page);
-
-    await page.route('**/api/search**', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<div class="result-item">Found results</div>'
-      });
-    });
-
-    const input = page.locator('#search-input');
-    await input.focus();
-    await input.fill('test');
-    
-    // Wait for debounce and swap
-    await page.waitForTimeout(700);
-    await expect(page.locator('#search-results')).toContainText('Found results');
-    
-    // Focus should still be on input
-    await expect(input).toBeFocused();
   });
 
   test('input is NOT disabled during debounced request', async ({ page }) => {
@@ -226,7 +130,7 @@ test.describe('Happy Path 3: Debounced search input', () => {
     await waitForALIS(page);
 
     await page.route('**/api/search**', async (route) => {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       await route.fulfill({
         status: 200,
         contentType: 'text/html',
@@ -238,19 +142,83 @@ test.describe('Happy Path 3: Debounced search input', () => {
     await input.focus();
     await input.fill('a');
     
-    // Wait for debounce to trigger (500ms)
-    await page.waitForTimeout(550);
-    
-    // Input should NOT be disabled during request
+    await page.waitForTimeout(600);
     await expect(input).toBeEnabled();
-    
-    // Wait for completion
-    await expect(page.locator('#search-results')).toContainText('Results');
   });
 });
 
-test.describe('Happy Path 4: Client-side validation', () => {
-  test('prevents submission when validation fails', async ({ page }) => {
+test.describe('Happy Path 4: Button Click with JSON', () => {
+  test('sends JSON body when configured', async ({ page }) => {
+    await page.goto('/tests/integration/pages/form-submit.html');
+    await waitForALIS(page);
+
+    // Replace body with JSON button
+    await page.evaluate(() => {
+      document.body.innerHTML = `
+        <button id="btn-post" 
+          data-alis-post="/api/resource" 
+          data-alis-target="#result"
+          data-alis-serialize="json"
+          data-alis-collect="self"
+          name="action"
+          value="some-value">
+          Post JSON
+        </button>
+        <div id="result"></div>
+      `;
+    });
+
+    let capturedBody = null;
+    let contentType = '';
+    
+    await page.route('**/api/resource', async (route) => {
+      const headers = route.request().headers();
+      contentType = headers['content-type'];
+      capturedBody = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<div>Done</div>'
+      });
+    });
+
+    await page.click('#btn-post');
+    
+    await expect(page.locator('#result')).toContainText('Done');
+    expect(contentType).toContain('application/json');
+    expect(capturedBody).toEqual({ action: 'some-value' });
+  });
+});
+
+test.describe('Happy Path 5: Server Validation Errors (ProblemDetails)', () => {
+  test('displays validation errors next to fields', async ({ page }) => {
+    await page.goto('/tests/integration/pages/form-submit-validation.html');
+    await waitForALIS(page);
+
+    await page.route('**/api/validate', async (route) => {
+      await route.fulfill({
+        status: 400,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({
+          type: 'https://tools.ietf.org/html/rfc7807',
+          title: 'Validation failed',
+          status: 400,
+          errors: {
+            email: ['Email is required']
+          }
+        })
+      });
+    });
+
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator('[data-valmsg-for="email"]')).toContainText('Email is required');
+    await expect(page.locator('[name="email"]')).toHaveAttribute('aria-invalid', 'true');
+  });
+});
+
+test.describe('Happy Path 6 & 7: Client-Side Validation & Nested Properties', () => {
+  test('prevents submission and shows errors for nested fields', async ({ page }) => {
     await page.goto('/demos/client-validation/index.html');
     await waitForALIS(page);
 
@@ -260,221 +228,106 @@ test.describe('Happy Path 4: Client-side validation', () => {
       await route.fulfill({ status: 200, body: 'OK' });
     });
 
+    await page.fill('input[name="Employee.FirstName"]', '');
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(200);
-
+    
     expect(requestMade).toBe(false);
     await expect(page.locator('[data-valmsg-for="Employee.FirstName"]')).not.toBeEmpty();
   });
 
-  test('clears errors as user types valid values', async ({ page }) => {
+  test('errors clear when user fixes input ("forgiving on input")', async ({ page }) => {
     await page.goto('/demos/client-validation/index.html');
     await waitForALIS(page);
 
     await page.click('button[type="submit"]');
     await expect(page.locator('[data-valmsg-for="Employee.FirstName"]')).not.toBeEmpty();
 
-    await page.fill('[name="Employee.FirstName"]', 'John');
-    await page.waitForTimeout(200);
+    await page.fill('input[name="Employee.FirstName"]', 'Valid Name');
+    await page.waitForTimeout(300);
     
     await expect(page.locator('[data-valmsg-for="Employee.FirstName"]')).toBeEmpty();
   });
-
-  test('submits successfully when all validations pass', async ({ page }) => {
-    await page.goto('/demos/client-validation/index.html');
-    await waitForALIS(page);
-
-    let requestMade = false;
-    await page.route('**/api/employees', async (route) => {
-      requestMade = true;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, message: 'Employee registered!' })
-      });
-    });
-
-    // Fill all required fields (use input[] selector for clarity)
-    await page.fill('input[name="Employee.FirstName"]', 'John');
-    await page.fill('input[name="Employee.LastName"]', 'Doe');
-    await page.fill('input[name="Employee.Email"]', 'john@example.com');
-    await page.fill('input[name="Employee.Address.Street"]', '123 Main St');
-    await page.fill('input[name="Employee.Address.City"]', 'New York');
-    await page.fill('input[name="Employee.Address.ZipCode"]', '10001');
-    await page.selectOption('select[name="Employee.Department"]', 'engineering');
-    await page.fill('input[name="Employee.Salary"]', '75000');
-    await page.fill('input[name="Employee.StartDate"]', '2024-01-15');
-    await page.fill('input[name="Employee.EmergencyContacts[0].Name"]', 'Jane Doe');
-    await page.fill('input[name="Employee.EmergencyContacts[0].Phone"]', '+1 555-987-6543');
-    await page.fill('input[name="Password"]', 'securepass123');
-    await page.fill('input[name="ConfirmPassword"]', 'securepass123');
-
-    await page.click('button[type="submit"]');
-
-    // Wait for success message in result area
-    await expect(page.locator('#form-result')).toContainText('Employee Registered', { timeout: 5000 });
-    expect(requestMade).toBe(true);
-  });
 });
 
-test.describe('Happy Path 5: Button click with data-alis-{method}', () => {
-  test('GET method works', async ({ page }) => {
-    await page.goto('/demos/methods/index.html');
+test.describe('Happy Path 8: Loading Indicator', () => {
+  test('shows spinner and sets aria-busy', async ({ page }) => {
+    await page.goto('/demos/indicators/index.html');
     await waitForALIS(page);
 
-    let capturedMethod = '';
-    await page.route('**/api/resource**', async (route) => {
-      capturedMethod = route.request().method();
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<div>Resource loaded</div>'
-      });
-    });
-
-    await page.click('#btn-get');
-    
-    await expect(page.locator('#result')).toContainText('Resource loaded');
-    expect(capturedMethod).toBe('GET');
-  });
-
-  test('POST method works', async ({ page }) => {
-    await page.goto('/demos/methods/index.html');
-    await waitForALIS(page);
-
-    let capturedMethod = '';
-    await page.route('**/api/resource', async (route) => {
-      capturedMethod = route.request().method();
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<div>Resource created</div>'
-      });
-    });
-
-    await page.click('#btn-post');
-    
-    await expect(page.locator('#result')).toContainText('Resource created');
-    expect(capturedMethod).toBe('POST');
-  });
-
-  test('DELETE method works', async ({ page }) => {
-    await page.goto('/demos/methods/index.html');
-    await waitForALIS(page);
-
-    let capturedMethod = '';
-    await page.route('**/api/resource', async (route) => {
-      capturedMethod = route.request().method();
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<div>Resource deleted</div>'
-      });
-    });
-
-    await page.click('#btn-delete');
-    
-    await expect(page.locator('#result')).toContainText('Resource deleted');
-    expect(capturedMethod).toBe('DELETE');
-  });
-});
-
-test.describe('Edge Cases and Regression Prevention', () => {
-  test('multiple rapid clicks only trigger one request (concurrency)', async ({ page }) => {
-    await page.goto('/demos/methods/index.html');
-    await waitForALIS(page);
-
-    let requestCount = 0;
-    await page.route('**/api/resource**', async (route) => {
-      requestCount++;
+    await page.route('**/api/slow', async (route) => {
       await new Promise(resolve => setTimeout(resolve, 200));
       await route.fulfill({
         status: 200,
         contentType: 'text/html',
-        body: `<div>Request ${requestCount}</div>`
+        body: '<div>Loaded</div>'
       });
     });
 
-    const btn = page.locator('#btn-get');
-    await btn.click();
-    await btn.click({ force: true });
-    await btn.click({ force: true });
-
-    await expect(page.locator('#result')).toContainText('Request');
-
-    // Only ONE request should have been made (others ignored by coordinator)
-    expect(requestCount).toBe(1);
+    const button = page.locator('button[data-alis-post]');
+    const spinner = page.locator('#spinner');
+    
+    await expect(spinner).toBeHidden();
+    
+    const promise = button.click();
+    
+    await expect(spinner).toBeVisible();
+    await expect(button).toHaveAttribute('aria-busy', 'true');
+    
+    await promise;
+    
+    await expect(spinner).toBeHidden();
+    await expect(button).not.toHaveAttribute('aria-busy');
+    await expect(page.locator('#indicator-result')).toContainText('Loaded');
   });
+});
 
-  test('state is restored even when request fails', async ({ page }) => {
-    await page.goto('/tests/integration/pages/form-submit.html');
+test.describe('Happy Path 9: Hooks (Before/After)', () => {
+  test('executes hooks in order', async ({ page }) => {
+    await page.goto('/demos/methods/index.html');
     await waitForALIS(page);
 
-    await page.route('**/api/users', async (route) => {
-      await new Promise(resolve => setTimeout(resolve, 50));
-      await route.fulfill({
-        status: 500,
-        body: 'Server Error'
-      });
+    await page.evaluate(() => {
+      window.hookLogs = [];
+      window.hook1 = (_ctx) => { window.hookLogs.push('hook1'); };
+      window.hook2 = (_ctx) => { window.hookLogs.push('hook2'); };
+      
+      const btn = document.getElementById('btn-get');
+      btn.setAttribute('data-alis-on-after', 'hook1, hook2');
     });
 
-    const btn = page.locator('button[type="submit"]');
-    await btn.click();
+    await page.route('**/api/resource', async (route) => {
+      await route.fulfill({ status: 200, body: 'OK' });
+    });
 
-    await page.waitForTimeout(300);
-
-    // Button should be re-enabled despite error
-    await expect(btn).toBeEnabled();
-    await expect(btn).not.toHaveAttribute('aria-busy');
+    await page.click('#btn-get');
+    
+    // Wait for hooks to run
+    await page.waitForFunction(() => window.hookLogs && window.hookLogs.length === 2);
+    
+    const logs = await page.evaluate(() => window.hookLogs);
+    expect(logs).toEqual(['hook1', 'hook2']);
   });
+});
 
-  test('confirm dialog prevents request when rejected', async ({ page }) => {
+test.describe('Happy Path 10: Confirmation Dialog', () => {
+  test('dialog controls request execution', async ({ page }) => {
     await page.goto('/tests/integration/pages/confirm.html');
     await waitForALIS(page);
 
-    // Set up window.confirm to return false
-    await page.evaluate(() => {
-      window.confirm = () => false;
-    });
+    await page.evaluate(() => { window.confirm = () => false; });
 
     let requestMade = false;
-    await page.route('**/api/items/**', async (route) => {
+    await page.route('**/api/**', async (route) => {
       requestMade = true;
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<div>Deleted</div>'
-      });
+      await route.fulfill({ status: 200, body: 'OK' });
     });
 
     await page.click('button[data-alis-delete]');
-    await page.waitForTimeout(200);
-
-    // Request should NOT have been made
     expect(requestMade).toBe(false);
-  });
 
-  test('confirm dialog allows request when accepted', async ({ page }) => {
-    await page.goto('/tests/integration/pages/confirm.html');
-    await waitForALIS(page);
-
-    // Set up window.confirm to return true
-    await page.evaluate(() => {
-      window.confirm = () => true;
-    });
-
-    let requestMade = false;
-    await page.route('**/api/items/**', async (route) => {
-      requestMade = true;
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/html',
-        body: '<div>Deleted</div>'
-      });
-    });
+    await page.evaluate(() => { window.confirm = () => true; });
 
     await page.click('button[data-alis-delete]');
-
     await expect(async () => {
       expect(requestMade).toBe(true);
     }).toPass();

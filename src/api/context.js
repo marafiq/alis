@@ -49,6 +49,8 @@ export function buildConfigFromAttributes(element) {
   if (attrs.collect) config.collect = attrs.collect;
   if (attrs.indicator) config.indicator = attrs.indicator;
   if (attrs.swap) config.swap = attrs.swap;
+  if (attrs.serialize) config.serialize = attrs.serialize;
+  if (attrs.encoding) config.encoding = attrs.encoding;
   if (attrs.retry) config.retry = parseRetry(attrs.retry);
   if (attrs.confirm) {
     const confirmHandler =

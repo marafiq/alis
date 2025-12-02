@@ -50,6 +50,10 @@ export function readValue(element) {
     return { name, value: element.value };
   }
 
+  if (element instanceof HTMLButtonElement) {
+    return { name, value: element.value };
+  }
+
   return null;
 }
 

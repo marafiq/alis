@@ -111,4 +111,3 @@ function isLegacyField(value) {
     'value' in value
   );
 }
-
