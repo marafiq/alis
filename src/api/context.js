@@ -51,6 +51,10 @@ export function buildConfigFromAttributes(element) {
   if (attrs.swap) config.swap = attrs.swap;
   if (attrs.serialize) config.serialize = attrs.serialize;
   if (attrs.encoding) config.encoding = attrs.encoding;
+  const concurrencyAttr = attrs.concurrency || attrs['duplicate-request'];
+  if (concurrencyAttr) {
+    config.duplicateRequest = concurrencyAttr;
+  }
   if (attrs.retry) config.retry = parseRetry(attrs.retry);
   if (attrs.confirm) {
     const confirmHandler =

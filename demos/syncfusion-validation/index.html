@@ -6,62 +6,81 @@
   <title>ALIS - Syncfusion Validation Demo</title>
   <link rel="stylesheet" href="../assets/demo.css">
   <style>
-    .demo-section {
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 2rem;
-    }
-    
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    
-    .form-group label {
+    /* Adjustments for standalone demo page */
+    body {
       display: block;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: #333;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
     }
     
-    /* Syncfusion-like component styles */
+    .info-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .info-box h4 {
+      color: var(--accent-info);
+      margin: 0 0 8px 0;
+      font-size: 14px;
+    }
+    
+    .info-box p {
+      color: var(--text-secondary);
+      margin: 0;
+      font-size: 13px;
+    }
+
+    /* Simulated Syncfusion Styles matching theme */
     .e-input-group {
       position: relative;
       display: flex;
-      border: 2px solid #e0e0e0;
+      border: 1px solid var(--border-primary);
       border-radius: 8px;
-      background: white;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--bg-tertiary);
+      transition: all var(--transition-fast);
     }
     
     .e-input-group:focus-within {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
     }
     
     .e-input-group.e-error {
-      border-color: #e53e3e !important;
-      background-color: #fff5f5;
+      border-color: var(--accent-danger) !important;
+      background-color: rgba(239, 68, 68, 0.05);
     }
     
     .e-input {
       flex: 1;
-      padding: 0.75rem;
+      padding: 10px 14px;
       border: none;
       background: transparent;
-      font-size: 1rem;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-primary);
       outline: none;
     }
     
     .e-input-group-icon {
-      padding: 0.75rem;
-      background: #f7fafc;
-      border-left: 1px solid #e0e0e0;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 1px solid var(--border-primary);
       cursor: pointer;
       display: flex;
       align-items: center;
+      color: var(--text-secondary);
     }
     
-    /* Dropdown styles */
+    .e-input-group-icon:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+    
+    /* Dropdown */
     .sf-dropdown {
       position: relative;
     }
@@ -71,14 +90,15 @@
       top: 100%;
       left: 0;
       right: 0;
-      background: white;
-      border: 2px solid #667eea;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--accent-primary);
       border-top: none;
       border-radius: 0 0 8px 8px;
       max-height: 200px;
       overflow-y: auto;
       z-index: 100;
       display: none;
+      box-shadow: var(--shadow-lg);
     }
     
     .sf-dropdown-list.open {
@@ -86,166 +106,90 @@
     }
     
     .sf-dropdown-item {
-      padding: 0.75rem 1rem;
+      padding: 10px 14px;
       cursor: pointer;
-      transition: background 0.2s;
+      color: var(--text-primary);
+      transition: background var(--transition-fast);
+      font-size: 14px;
     }
     
     .sf-dropdown-item:hover {
-      background: #f0f4ff;
+      background: var(--bg-hover);
     }
     
     .sf-dropdown-item.selected {
-      background: #667eea;
+      background: var(--gradient-primary);
       color: white;
     }
     
-    /* Numeric input styles */
-    .sf-numeric {
-      display: flex;
-    }
-    
+    /* Numeric */
     .sf-numeric-btn {
       width: 40px;
       border: none;
-      background: #f7fafc;
+      background: rgba(255, 255, 255, 0.05);
       cursor: pointer;
-      font-size: 1.2rem;
-      transition: background 0.2s;
+      font-size: 16px;
+      color: var(--text-primary);
+      transition: background var(--transition-fast);
     }
     
     .sf-numeric-btn:hover {
-      background: #e2e8f0;
+      background: rgba(255, 255, 255, 0.1);
     }
     
     .sf-numeric-btn:first-child {
       border-radius: 8px 0 0 8px;
-      border-right: 1px solid #e0e0e0;
+      border-right: 1px solid var(--border-primary);
     }
     
     .sf-numeric-btn:last-child {
       border-radius: 0 8px 8px 0;
-      border-left: 1px solid #e0e0e0;
+      border-left: 1px solid var(--border-primary);
     }
     
-    /* DatePicker styles */
+    /* DatePicker */
     .sf-datepicker .e-input-group-icon::before {
       content: '📅';
     }
     
-    /* Checkbox wrapper */
+    /* Checkbox */
     .e-checkbox-wrapper {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem;
-      border: 2px solid transparent;
+      gap: 10px;
+      padding: 8px;
+      border: 1px solid transparent;
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
+      color: var(--text-primary);
     }
     
     .e-checkbox-wrapper:hover {
-      background: #f7fafc;
+      background: var(--bg-hover);
     }
     
     .e-checkbox-wrapper.e-error {
-      border-color: #e53e3e;
-      background: #fff5f5;
+      border-color: var(--accent-danger);
+      background-color: rgba(239, 68, 68, 0.05);
     }
     
     .e-checkbox {
-      width: 20px;
-      height: 20px;
-      accent-color: #667eea;
-    }
-    
-    /* Validation styles */
-    .field-validation-error {
-      display: block;
-      color: #e53e3e;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-      font-weight: 500;
-    }
-    
-    .field-validation-valid {
-      display: none;
-    }
-    
-    .btn {
-      padding: 0.875rem 2rem;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-    
-    .result-box {
-      margin-top: 2rem;
-      padding: 1.5rem;
-      background: #f0fff4;
-      border: 2px solid #38a169;
-      border-radius: 12px;
-    }
-    
-    .result-box.error {
-      background: #fff5f5;
-      border-color: #e53e3e;
-    }
-    
-    h1 {
-      color: #2d3748;
-      margin-bottom: 0.5rem;
-    }
-    
-    .subtitle {
-      color: #718096;
-      margin-bottom: 2rem;
-    }
-    
-    .info-box {
-      background: #ebf8ff;
-      border: 1px solid #90cdf4;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .info-box h4 {
-      color: #2b6cb0;
-      margin: 0 0 0.5rem 0;
-    }
-    
-    .info-box p {
-      color: #4a5568;
-      margin: 0;
-      font-size: 0.9rem;
-    }
-    
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-primary);
     }
   </style>
 </head>
 <body>
-  <div class="demo-section">
-    <h1>🎨 Syncfusion Component Validation</h1>
-    <p class="subtitle">ALIS adapter pattern for third-party component libraries</p>
+  <div class="demo-card">
+    <div class="section-header">
+      <div class="section-icon">🎨</div>
+      <div>
+        <h1 class="section-title">Syncfusion Component Validation</h1>
+        <p class="section-desc">ALIS adapter pattern for third-party component libraries</p>
+      </div>
+    </div>
     
     <div class="info-box">
       <h4>ℹ️ How it works</h4>
@@ -267,7 +211,7 @@
         <label>Product Category</label>
         <div class="sf-dropdown">
           <div class="e-input-group" id="category-wrapper">
-            <!-- Hidden input that Syncfusion would create -->
+            <!-- Hidden input -->
             <input type="hidden" 
                    id="category" 
                    name="Order.Category"
@@ -338,7 +282,7 @@
         <span data-valmsg-for="Order.DeliveryDate" class="field-validation-valid"></span>
       </div>
       
-      <div class="row">
+      <div class="form-grid">
         <!-- Simulated Syncfusion TextBox with validation -->
         <div class="form-group">
           <label>Customer Name</label>
@@ -400,15 +344,17 @@
         <span data-valmsg-for="Order.AcceptTerms" class="field-validation-valid"></span>
       </div>
       
-      <button type="submit" class="btn btn-primary">
-        Place Order
-      </button>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+          Place Order
+        </button>
+      </div>
     </form>
     
     <div id="form-result"></div>
   </div>
   
-  <script src="/dist/alis.js"></script>
+  <script src="../../dist/alis.js"></script>
   <script>
     // Simulate Syncfusion ej2_instances
     function setupSyncfusionComponent(id, initialValue = null) {
@@ -553,15 +499,22 @@
       
       if (ctx.success) {
         resultDiv.innerHTML = `
-          <div class="result-box">
-            <h3>✅ Order Placed Successfully!</h3>
-            <pre>${JSON.stringify(ctx.response, null, 2)}</pre>
+          <div class="result-area">
+            <div class="success-message">
+              <span class="success-icon">✅</span>
+              <div>
+                <strong>Order Placed Successfully!</strong>
+                <div style="margin-top: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-primary);">
+                  ${JSON.stringify(ctx.response, null, 2)}
+                </div>
+              </div>
+            </div>
           </div>
         `;
       } else if (ctx.validation) {
         resultDiv.innerHTML = `
-          <div class="result-box error">
-            <h3>❌ Validation Failed</h3>
+          <div class="error-message" style="margin-top: 16px;">
+            <strong>Validation Failed</strong>
             <p>Please check the form for errors.</p>
           </div>
         `;
@@ -570,4 +523,3 @@
   </script>
 </body>
 </html>
-

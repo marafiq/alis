@@ -19,7 +19,8 @@ export async function requestExecuteStep(ctx) {
     method: request.method,
     headers: request.headers,
     body: request.body,
-    credentials: /** @type {RequestCredentials} */ (ctx.config.credentials ?? 'same-origin')
+    credentials: /** @type {RequestCredentials} */ (ctx.config.credentials ?? 'same-origin'),
+    signal: ctx.abortController?.signal
   };
 
   const requestFn = () => fetch(request.url, fetchOptions);
