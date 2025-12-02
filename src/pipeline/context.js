@@ -16,9 +16,10 @@ let contextCounter = 0;
  * @property {{ url: string; method: string; headers: Record<string, string>; body: any } | null} request
  * @property {Response | null} response
  * @property {unknown} body
- * @property {Record<string, unknown> | null} validation
+ * @property {{ errors?: Record<string, string[]> } | null} validation
  * @property {Error | null} error
  * @property {{ source: Element | null; data: unknown } | null} collect
+ * @property {{ apply: () => void; restore: () => void } | null} stateManager
  * @property {boolean} success
  */
 
@@ -51,6 +52,7 @@ export function createContext(element, overrides = {}) {
     validation: null,
     error: null,
     collect: null,
+    stateManager: null,
     success: false
   };
 }

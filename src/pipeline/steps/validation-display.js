@@ -9,13 +9,10 @@ export function validationDisplayStep(ctx) {
     return ctx;
   }
 
-  if (!ctx.validation) {
-    clearErrors(form);
-    return ctx;
-  }
-
   clearErrors(form);
-  displayErrors(form, ctx.validation);
+  if (ctx.validation) {
+    displayErrors(form, ctx.validation);
+  }
   return ctx;
 }
 

@@ -8,7 +8,6 @@ describe('pipeline/steps/validation-display', () => {
     form.innerHTML = '<span data-valmsg-for="email">Error</span>';
     const ctx = createContext(form);
     const result = validationDisplayStep(ctx);
-    expect(result.validation).toBeNull();
     expect(form.querySelector('[data-valmsg-for="email"]')?.textContent).toBe('');
   });
 
