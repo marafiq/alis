@@ -629,6 +629,36 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     `);
   },
 
+  "GET /api/links": async (_req, url) => {
+    const item = (url.searchParams.get('item') || 'unknown').toLowerCase();
+    const details: Record<string, { title: string; body: string }> = {
+      alpha: {
+        title: 'Alpha Feature',
+        body: 'Alpha showcases optimistic UI updates and illusion-free progress indicators.'
+      },
+      beta: {
+        title: 'Beta Feature',
+        body: 'Beta focuses on form orchestration by combining client and server validation.'
+      },
+      gamma: {
+        title: 'Gamma Feature',
+        body: 'Gamma demonstrates background refreshes, streaming swaps, and live widgets.'
+      }
+    };
+
+    const payload = details[item] ?? {
+      title: 'Unknown Feature',
+      body: `No documentation found for "${item}".`
+    };
+
+    return htmlResponse(`
+      <article class="link-detail">
+        <h3>${payload.title}</h3>
+        <p>${payload.body}</p>
+      </article>
+    `);
+  },
+
   // Employee registration with nested properties (Client-side validation demo)
   "POST /api/employees": async (req) => {
     await delay(400);

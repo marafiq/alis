@@ -579,6 +579,7 @@ Then open http://localhost:4173 in your browser.
 | `/demos/syncfusion-validation/` | Syncfusion component validation |
 | `/demos/methods/` | HTTP methods (GET, POST, PUT, DELETE) |
 | `/demos/indicators/` | Loading indicators |
+| `/demos/hyperlink/` | Hyperlink triggers that fetch without navigation |
 | `/demos/hooks-advanced/` | Hooks, modals, and toasts |
 | `/demos/confirm-delete/` | Confirmation dialogs |
 | `/demos/islands/` | Dynamic content islands |
