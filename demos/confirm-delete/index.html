@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>ALIS Demo – Confirm Delete</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+</head>
+
+<body>
+  <main class="demo-card">
+    <h1>Confirm Delete Demo</h1>
+    <p>Placeholder for confirm registry demo. Confirmation hooks are defined in <code>ALIS.confirm</code>.</p>
+
+    <button data-alis-delete="/api/items/1" data-alis-confirm="deleteConfirm" data-alis-target="delete-result">
+      Delete Item
+    </button>
+
+    <div id="delete-result" class="panel">Nothing deleted.</div>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+</body>
+
+</html>
+

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>ALIS Demo – Programmatic API</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+</head>
+
+<body>
+  <main class="demo-card">
+    <h1>Programmatic API Demo</h1>
+    <p>Demonstrates <code>ALIS.request</code> and <code>ALIS.from()</code> once the API is fully implemented.</p>
+
+    <div class="panel stack" id="programmatic-demo">
+      <label>
+        Item Name
+        <input id="item-name" value="Demo Item">
+      </label>
+      <button id="programmatic-save">Save via ALIS.request()</button>
+    </div>
+
+    <div id="programmatic-result" class="panel">Awaiting action.</div>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+  <script>
+    const button = document.getElementById('programmatic-save');
+    const output = document.getElementById('programmatic-result');
+
+    button.addEventListener('click', async () => {
+      output.textContent = 'Programmatic API not implemented yet.';
+    });
+  </script>
+</body>
+
+</html>
+

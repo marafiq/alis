@@ -523,7 +523,87 @@ ALIS.telemetry.flush();
 
 ---
 
-## 5. Module Structure
+## 5. Build & Distribution
+
+### 5.1 Bundler & Outputs
+
+- **Bundler:** Rollup (single entry `src/index.js`) emitting both dev and prod bundles in one pass.
+- **Outputs:**  
+  - `dist/alis.js` – unminified IIFE exposing global `ALIS` for demos/tests.  
+  - `dist/alis.min.js` – terser-minified IIFE + source map.  
+  - `dist/alis.esm.js` – tree-shakeable module for modern bundlers.  
+  - `dist/alis.cjs.js` – CommonJS for Node-based tooling.  
+  - `dist/alis.d.ts` – hand-authored or `tsc --emitDeclarationOnly` declarations derived from the public interfaces in §4.
+- **Constraints:** All demos, Playwright specs, and published artifacts MUST consume one of the files above—no direct `src/` imports outside unit tests.
+
+```javascript
+// rollup.config.mjs (excerpt)
+import { terser } from 'rollup-plugin-terser';
+
+export default [
+  {
+    input: 'src/index.js',
+    output: {
+      file: 'dist/alis.js',
+      format: 'iife',
+      name: 'ALIS',
+      sourcemap: true
+    },
+    plugins: [/* resolve, commonjs, babel/ts */]
+  },
+  {
+    input: 'src/index.js',
+    output: { file: 'dist/alis.min.js', format: 'iife', name: 'ALIS', sourcemap: true },
+    plugins: [/* same plugins */, terser()]
+  },
+  // Repeat for esm/cjs, optionally via Rollup output array
+];
+```
+
+### 5.2 Scripts & CI Contract
+
+| Script | Purpose |
+|--------|---------|
+| `npm run build` | Clean `dist/`, run type generation, execute Rollup (all formats) |
+| `npm run build:watch` | Developer feedback loop during demo work |
+| `npm run demo:serve` | Serve repo root (e.g., `vite preview` or `http-server`) so demos load `dist/` |
+| `npm run test:unit` | Vitest + happy-dom (Section 10) |
+| `npm run test:e2e` | Playwright suite that requires a fresh `dist/` |
+
+CI order: `lint → test:unit → build → test:e2e`. The Playwright step fails fast if `dist/` is missing or stale (timestamp check or `npm run build -- --check`).
+
+### 5.3 Demo & Fixture Layout
+
+```
+demos/
+├── README.md                # Usage + scenario matrix
+├── assets/demo.css
+├── form-submit/
+│   └── index.html           # Basic POST success + validation
+├── inline-edit/
+│   └── index.html           # Change/blur PATCH flow
+├── indicators/
+│   └── index.html           # Indicator permutations
+├── confirm-delete/
+│   └── index.html           # Confirm registry usage
+└── programmatic/
+    └── index.html           # ALIS.request / from()
+```
+
+- Each HTML file loads `../dist/alis.js`, documents its intent in-page, and links to the matching Playwright spec (`tests/integration/flows/<scenario>.spec.ts`).
+- Shared helper JS/CSS lives in `demos/assets/` to avoid duplication.
+- `demos/README.md` enumerates scenarios, required backend mocks (if any), and steps to verify.
+
+### 5.4 Dist Consumption Rules
+
+1. **Integration tests:** Serve the fixtures in `tests/integration/pages/` (mirrors `demos/`) and inject `dist/alis.js`. Playwright only interacts with these bundles.  
+2. **Manual demos:** `npm run demo:serve` builds if needed, then serves; developers validate behaviors using actual build artifacts.  
+3. **Publishing:** `npm pack` includes only `dist/` + relevant metadata—CI uploads `dist/` as an artifact for QA sign-off.  
+4. **Regression guard:** Bundle size and export signature snapshots live under `tests/bundle/` so changes to Rollup config or tree shaking are intentional.
+
+---
+
+## 6. Module Structure
 
 ```
 alis-fetch/
@@ -638,7 +718,7 @@ alis-fetch/
 
 ---
 
-## 6. Error Strategy
+## 7. Error Strategy
 
 ### 6.1 Error Types
 
@@ -687,9 +767,9 @@ ALIS.init({
 
 ---
 
-## 7. Telemetry
+## 8. Telemetry
 
-### 7.1 Levels
+### 8.1 Levels
 
 | Level | Events |
 |-------|--------|
@@ -699,7 +779,7 @@ ALIS.init({
 | `info` | + Request start/complete, swap, complete |
 | `debug` | + Everything (state, handlers, collect, etc.) |
 
-### 7.2 Events
+### 8.2 Events
 
 ```
 trigger              → Element found, event matched
@@ -736,7 +816,20 @@ error                → Any error
 
 ---
 
-## 8. Implementation Phases
+## 9. Implementation Phases
+
+### Phase 0: Toolchain & Bundle (Week 0.5)
+
+| File / Task | Functions / Deliverables | Tests |
+|-------------|--------------------------|-------|
+| `rollup.config.mjs` | Single-entry build emitting `dist/alis.{js,min.js,esm.js,cjs.js}` + sourcemaps | 6 (bundle snapshot + size guard) |
+| `scripts/build.js` or npm scripts | Clean `dist/`, invoke Rollup, emit hash manifest | - |
+| `vitest.config.ts` | happy-dom default env, alias setup, coverage | 4 (config smoke via `vitest --run`) |
+| `playwright.config.ts` | Static server pointing to repo root + `dist/` check fixture | 3 (smoke via `npx playwright test --list`) |
+| `demos/` scaffold | README, shared assets, `form-submit` + `inline-edit` placeholders using `dist/alis.js` | 4 (Playwright smoke + HTML lint) |
+| CI workflow (`.github/workflows/ci.yml`) | `lint → test:unit → build → test:e2e` order with artifact upload | 2 (workflow dry-run) |
+
+**Goal:** dist-first workflow proven before feature code lands.
 
 ### Phase 1: Foundation (No DOM)
 
@@ -894,41 +987,55 @@ error                → Any error
 
 ---
 
-## 9. Test Infrastructure
+## 10. Test Infrastructure
 
-### 9.1 Setup
+### 10.1 Unit Setup (Vitest + happy-dom)
 
-```javascript
-// tests/setup.js
-import { JSDOM } from 'jsdom';
+- All unit/step tests run via Vitest using the `happy-dom` environment for richer DOM APIs.
+- Test files import source modules directly (`src/**`) for debuggability; only Playwright consumes `dist/`.
+- Global setup lives in `tests/setup/unit.ts` and is referenced in `vitest.config.ts`.
 
-let dom;
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
 
-beforeEach(() => {
-  dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-    url: 'http://localhost'
-  });
-  
-  global.document = dom.window.document;
-  global.window = dom.window;
-  global.Element = dom.window.Element;
-  global.HTMLFormElement = dom.window.HTMLFormElement;
-  global.FormData = dom.window.FormData;
-  global.Headers = dom.window.Headers;
-  global.Request = dom.window.Request;
-  global.Response = dom.window.Response;
-  global.fetch = jest.fn();
-});
-
-afterEach(() => {
-  jest.clearAllMocks();
+export default defineConfig({
+  test: {
+    environment: 'happy-dom',
+    setupFiles: ['tests/setup/unit.ts'],
+    coverage: {
+      provider: 'v8',
+      reportsDirectory: 'coverage/unit'
+    },
+    alias: {
+      '@src': '/src'
+    }
+  }
 });
 ```
 
-### 9.2 Helpers
+```typescript
+// tests/setup/unit.ts
+import { afterEach, beforeEach, vi } from 'vitest';
 
-```javascript
-// tests/helpers.js
+beforeEach(() => {
+  vi.useFakeTimers();
+  // fresh DOM per test is handled by happy-dom automatically
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.useRealTimers();
+  document.body.innerHTML = '';
+});
+```
+
+### 10.2 Helpers
+
+```typescript
+// tests/helpers/dom.ts
+import { vi } from 'vitest';
+
 export function createElement(tag, attrs = {}, children = '') {
   const el = document.createElement(tag);
   Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
@@ -939,9 +1046,9 @@ export function createElement(tag, attrs = {}, children = '') {
 
 export function createForm(attrs = {}, fields = []) {
   const form = createElement('form', attrs);
-  fields.forEach(f => {
-    const input = document.createElement(f.tag || 'input');
-    Object.entries(f).forEach(([k, v]) => {
+  fields.forEach(field => {
+    const input = document.createElement(field.tag || 'input');
+    Object.entries(field).forEach(([k, v]) => {
       if (k !== 'tag') input.setAttribute(k, v);
     });
     form.appendChild(input);
@@ -951,12 +1058,11 @@ export function createForm(attrs = {}, fields = []) {
 
 export function mockFetch(responses) {
   const queue = Array.isArray(responses) ? [...responses] : [responses];
-  
-  global.fetch = jest.fn(() => {
+  globalThis.fetch = vi.fn(() => {
     const next = queue.shift() || queue[0];
     return Promise.resolve(new Response(
       typeof next.body === 'string' ? next.body : JSON.stringify(next.body),
-      { status: next.status || 200, headers: next.headers }
+      { status: next.status ?? 200, headers: next.headers }
     ));
   });
 }
@@ -967,190 +1073,123 @@ export function fireEvent(element, eventType, options = {}) {
   return event;
 }
 
-export async function submitForm(selector) {
-  const form = document.querySelector(selector);
-  const event = new window.Event('submit', { bubbles: true, cancelable: true });
-  form.dispatchEvent(event);
-  await flushPromises();
-}
-
-export function flushPromises() {
-  return new Promise(resolve => setTimeout(resolve, 0));
-}
+export const flushPromises = () => new Promise(resolve => setTimeout(resolve, 0));
 ```
 
-### 9.3 Example Unit Test
+### 10.3 Example Unit Test (Vitest)
 
-```javascript
-// tests/unit/collector/reader.test.js
-import { readValue, readFormValues } from '../../../src/collector/reader.js';
-import { createElement, createForm } from '../../helpers.js';
+```typescript
+// tests/unit/collector/reader.test.ts
+import { describe, expect, it } from 'vitest';
+import { readValue } from '../../../src/collector/reader.js';
+import { createElement } from '../../helpers/dom.js';
 
 describe('readValue', () => {
-  test('returns name and value for text input', () => {
-    const input = createElement('input', { 
-      type: 'text', 
-      name: 'email', 
-      value: 'test@example.com' 
+  it('returns name and value for text input', () => {
+    const input = createElement('input', {
+      type: 'text',
+      name: 'email',
+      value: 'test@example.com'
     });
-    
-    const result = readValue(input);
-    
-    expect(result).toEqual({ 
-      name: 'email', 
-      value: 'test@example.com' 
-    });
+
+    expect(readValue(input)).toEqual({ name: 'email', value: 'test@example.com' });
   });
-  
-  test('returns null for input without name', () => {
-    const input = createElement('input', { 
-      type: 'text', 
-      value: 'test' 
+
+  it('returns null for unchecked checkbox', () => {
+    const input = createElement('input', {
+      type: 'checkbox',
+      name: 'agree'
     });
-    
-    const result = readValue(input);
-    
-    expect(result).toBeNull();
-  });
-  
-  test('returns null for disabled input', () => {
-    const input = createElement('input', { 
-      type: 'text', 
-      name: 'email', 
-      value: 'test', 
-      disabled: 'disabled' 
-    });
-    
-    const result = readValue(input);
-    
-    expect(result).toBeNull();
-  });
-  
-  test('returns checked value for checkbox', () => {
-    const input = createElement('input', { 
-      type: 'checkbox', 
-      name: 'agree', 
-      checked: 'checked' 
-    });
-    
-    const result = readValue(input);
-    
-    expect(result).toEqual({ name: 'agree', value: true });
-  });
-  
-  test('returns null for unchecked checkbox', () => {
-    const input = createElement('input', { 
-      type: 'checkbox', 
-      name: 'agree' 
-    });
-    
-    const result = readValue(input);
-    
-    expect(result).toBeNull();
+
+    expect(readValue(input)).toBeNull();
   });
 });
 ```
 
-### 9.4 Example Integration Test
+### 10.4 Integration Setup (Playwright + dist/)
 
-```javascript
-// tests/integration/flows/form-submit.test.js
-import { ALIS } from '../../../src/index.js';
-import { createForm, mockFetch, submitForm, flushPromises } from '../../helpers.js';
+- Playwright launches a static server (e.g., `npm run demo:serve -- --mode=test`) that serves `demos/` and `tests/integration/pages/`.
+- Each fixture HTML file imports `../../dist/alis.js`; suites fail fast if the file is missing (hook in `test.beforeAll`).
+- The `playwright.config.ts` ensures `npm run build` ran by depending on the `BUILD_SHA` file emitted during Phase 0.
 
-describe('Form Submit Flow', () => {
-  beforeEach(() => {
-    ALIS.init();
-  });
-  
-  test('successful form submit swaps target', async () => {
-    mockFetch({ status: 200, body: '<p>Success</p>' });
-    
-    createForm({
-      action: '/api/users',
-      method: 'post',
-      'data-alis': '',
-      'data-alis-target': 'result'
-    }, [
-      { name: 'email', value: 'test@example.com' }
-    ]);
-    
-    document.body.innerHTML += '<div id="result">Old</div>';
-    
-    await submitForm('form');
-    
-    expect(document.querySelector('#result').innerHTML).toBe('<p>Success</p>');
-  });
-  
-  test('validation error displays on fields', async () => {
-    mockFetch({ 
-      status: 400, 
-      body: {
-        type: 'validation',
-        title: 'Validation Error',
-        errors: {
-          email: ['Email is required']
-        }
-      },
-      headers: { 'Content-Type': 'application/problem+json' }
-    });
-    
-    createForm({
-      action: '/api/users',
-      method: 'post',
-      'data-alis': ''
-    }, [
-      { name: 'email', value: '' }
-    ]);
-    
-    document.body.innerHTML += '<span data-valmsg-for="email"></span>';
-    
-    await submitForm('form');
-    
-    expect(document.querySelector('[data-valmsg-for="email"]').textContent)
-      .toBe('Email is required');
-  });
-  
-  test('button disabled during request', async () => {
-    let resolveRequest;
-    global.fetch = jest.fn(() => new Promise(r => { resolveRequest = r; }));
-    
-    const form = createForm({
-      action: '/api/users',
-      method: 'post',
-      'data-alis': ''
-    }, [
-      { name: 'email', value: 'test@example.com' }
-    ]);
-    
-    form.innerHTML += '<button type="submit">Submit</button>';
-    const button = form.querySelector('button');
-    
-    submitForm('form');  // Don't await
-    await flushPromises();
-    
-    expect(button.disabled).toBe(true);
-    
-    resolveRequest(new Response('OK'));
-    await flushPromises();
-    
-    expect(button.disabled).toBe(false);
-  });
+```typescript
+// playwright.config.ts (excerpt)
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  testDir: 'tests/integration/flows',
+  webServer: {
+    command: 'npm run demo:serve -- --mode=test',
+    port: 4173,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000
+  },
+  use: {
+    baseURL: 'http://127.0.0.1:4173/tests/integration/pages'
+  },
+  globalSetup: './tests/setup/playwright-global.ts'
 });
 ```
+
+```typescript
+// tests/setup/playwright-global.ts
+import fs from 'node:fs';
+import path from 'node:path';
+
+export default async function ensureDistBuilt() {
+  const distFile = path.resolve('dist/alis.js');
+  if (!fs.existsSync(distFile)) {
+    throw new Error('dist/alis.js not found. Run `npm run build` before Playwright.');
+  }
+}
+```
+
+### 10.5 Example Playwright Flow
+
+```typescript
+// tests/integration/flows/form-submit.spec.ts
+import { expect, test } from '@playwright/test';
+
+test('form submit swaps target', async ({ page }) => {
+  await page.goto('/form-submit.html');
+
+  await page.fill('form [name="email"]', 'test@example.com');
+  await page.click('form button[type="submit"]');
+
+  await expect(page.locator('#result')).toContainText('Success');
+});
+
+test('validation error surfaces ProblemDetails', async ({ page }) => {
+  await page.goto('/form-submit-validation.html');
+
+  await page.click('form button[type="submit"]');
+
+  await expect(page.locator('[data-valmsg-for="email"]')).toContainText('Email is required');
+});
+```
+
+### 10.6 Reliability & Discipline
+
+- **Zero external dependencies:** Playwright intercepts (`page.route`) or MSW servers stub every HTTP call so suites never rely on flaky backends or the public internet.
+- **Browser availability:** `postinstall` (and CI bootstrap) runs `npx playwright install --with-deps`, guaranteeing Chromium/Firefox/WebKit are present before tests execute.
+- **Pre-flight guard:** `npm run test:e2e` checks for `dist/alis.js`, running `npm run build` if missing; failures abort immediately rather than skipping.
+- **No skipped suites:** Vitest config disallows `.skip`/`.only` in CI (`test.allowOnly = false`); Playwright uses `forbidOnly: true`. Any attempt to bypass a flaky test fails the build.
+- **Deterministic timing:** All async flows rely on fake timers in Vitest and `page.waitForResponse`/`page.waitForFunction` in Playwright, not arbitrary sleeps. If timing is uncertain, fix the code or instrumentation—never disable the test.
+- **Blocking policy:** Pull requests and releases MUST show green `npm run test:unit` and `npm run test:e2e` locally and in CI. There is no acceptable “skipping because of X or Y”; if the environment fails, repair it before proceeding.
 
 ---
 
-## 10. Rules
+## 11. Rules
 
 ### Development Rules
 
-1. **Test first** - Write test, see it fail, implement, see it pass
-2. **One function at a time** - Complete with tests before moving on
-3. **No hacks** - If test fails, fix properly or redesign
-4. **Delete old code** - No dead code, no commented code
-5. **Run all tests** - Before moving to next function
-6. **Small commits** - Each function is one logical unit
+1. **No hacks** - Ship only clean, maintainable solutions; “temporary” code is not allowed.
+2. **One function/unit at a time** - Finish a slice end-to-end (code + tests) before touching the next.
+3. **Tests before progress** - Never move forward until the new unit has passing Vitest/Playwright coverage.
+4. **Delete old code** - Remove dead code, obsolete files, commented blocks immediately.
+5. **Run all tests** - `npm run test:unit`, `npm run build`, and `npm run test:e2e` must be green before handing work off.
+6. **Small commits** - Each function or logical unit is its own commit for easy review.
+7. **Dist-first** - `npm run build` must precede demos, Playwright, or any artifact sharing.
 
 ### Code Rules
 
@@ -1159,23 +1198,34 @@ describe('Form Submit Flow', () => {
 3. **Explicit errors** - No undefined behavior
 4. **No globals** - Pass dependencies explicitly
 5. **TypeScript-friendly** - Clear interfaces even in JS
+6. **No low-quality shortcuts** - Prefer modular, functional patterns consistent with senior-level code.
+7. **No test-only imports** - Outside Vitest, rely exclusively on `dist/`.
 
 ### Refactoring Rules
 
-1. **Tests must pass before refactor**
-2. **Delete old implementation completely**
-3. **Tests must pass after refactor**
-4. **No "temporary" code**
+1. **Tests must pass before refactor begins.**
+2. **Delete old implementation completely**—no dual systems or dead files linger.
+3. **Tests must pass after refactor** with the same coverage as before.
+4. **No "temporary" code**—if a safer design is needed, invest the time immediately.
+5. **Modular outcome**—refactors must leave the codebase more composable and easier to reason about.
+
+### JavaScript Quality Mandates
+
+- **No hacks or low-quality code.**
+- **Implement one function/unit at a time with immediate tests.**
+- **Never advance work while a unit lacks passing coverage.**
+- **Delete obsolete or dead code during any change.**
+- **Keep modules highly composable, functional, and worthy of a senior engineer.**
 
 ---
 
-## 11. Summary
+## 12. Summary
 
-**Total Tests:** ~450
+**Total Tests:** ~470
 
 **Total Files:** ~55
 
-**Timeline:** ~9 weeks
+**Timeline:** ~9.5 weeks (Phase 0 + 9 phases)
 
 **Key Decisions:**
 
@@ -1188,6 +1238,9 @@ describe('Form Submit Flow', () => {
 | Programmatic API | Third-party control integration |
 | Coordinator | Handle concurrent requests |
 | Safe state manager | Handle edge cases |
+| Single-file Rollup dist | Guarantees demos/tests consume shipping artifact |
+| Vitest (happy-dom) + Playwright | Fast unit feedback + glitch-free browser coverage |
+| Demos mirror Playwright fixtures | Documentation and tests stay in sync |
 
 ---
 

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Integration Fixture – Form Submit Validation</title>
+</head>
+
+<body>
+  <form id="fixture-validation-form" data-alis data-alis-target="fixture-validation-result" action="/api/users" method="post">
+    <label>
+      Email
+      <input type="email" name="email" value="">
+    </label>
+    <button type="submit">Submit</button>
+  </form>
+
+  <span data-valmsg-for="email"></span>
+  <div id="fixture-validation-result">Awaiting response...</div>
+
+  <script src="../../../dist/alis.js"></script>
+</body>
+
+</html>
+

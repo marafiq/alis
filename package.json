@@ -1,0 +1,60 @@
+{
+  "name": "alis",
+  "version": "1.0.0",
+  "description": "ALIS Fetch - declarative fetch module and API",
+  "type": "module",
+  "main": "./dist/alis.cjs.js",
+  "module": "./dist/alis.esm.js",
+  "types": "./dist/alis.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/alis.d.ts",
+      "import": "./dist/alis.esm.js",
+      "require": "./dist/alis.cjs.js",
+      "default": "./dist/alis.esm.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "node scripts/build.js",
+    "build:watch": "rollup -c --watch",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "node scripts/ensure-dist.js && playwright test",
+    "test:e2e:headed": "node scripts/ensure-dist.js && playwright test --headed",
+    "demo:serve": "vite dev --host 127.0.0.1 --port 4173",
+    "lint": "tsc --noEmit --pretty",
+    "prepare": "playwright install --with-deps",
+    "ci": "npm run lint && npm run test:unit && npm run build && npm run test:e2e"
+  },
+  "keywords": [
+    "fetch",
+    "forms",
+    "htmx",
+    "declarative",
+    "pipeline"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@vitest/coverage-v8": "^4.0.14",
+    "happy-dom": "^20.0.11",
+    "rimraf": "^6.1.2",
+    "rollup": "^2.79.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.6",
+    "vitest": "^4.0.14"
+  },
+  "engines": {
+    "node": ">=18.20.0",
+    "npm": ">=9.0.0"
+  }
+}

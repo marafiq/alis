@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>ALIS Demo – Inline Edit</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+</head>
+
+<body>
+  <main class="demo-card">
+    <h1>Inline Edit Demo</h1>
+    <p>Simulates an inline field update using <code>data-alis-patch</code> and smart collect defaults.</p>
+
+    <div class="panel" data-alis-patch="/api/items/1" data-alis-target="inline-result">
+      <label>
+        Display Name
+        <input name="displayName" value="ALIS Fetch">
+      </label>
+      <button class="inline-save">Save</button>
+    </div>
+
+    <div id="inline-result" class="panel">No updates yet.</div>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+</body>
+
+</html>
+

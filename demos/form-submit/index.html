@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>ALIS Demo – Form Submit</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+</head>
+
+<body>
+  <main class="demo-card">
+    <h1>Form Submit Demo</h1>
+    <p>This scenario mirrors <code>tests/integration/pages/form-submit.html</code> and loads the shipping bundle from <code>dist/alis.js</code>.</p>
+
+    <form id="user-form" data-alis data-alis-target="result" action="/api/users" method="post" class="stack">
+      <label>
+        Email
+        <input type="email" name="email" required>
+      </label>
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="result" class="panel" aria-live="polite">Awaiting response...</div>
+
+    <section class="notice">
+      <strong>Note:</strong> This is a placeholder while the pipeline is under construction. Network requests are intercepted
+      by Playwright/MSW when tests run.
+    </section>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+</body>
+
+</html>
+

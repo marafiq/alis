@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>ALIS Demo – Indicators</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+</head>
+
+<body>
+  <main class="demo-card">
+    <h1>Indicator Demo</h1>
+    <p>Shows how loading indicators and aria states will be applied during a request.</p>
+
+    <button data-alis-get="/api/spinner" data-alis-indicator="is-loading, #global-spinner">
+      Load Content
+    </button>
+
+    <div id="global-spinner" class="notice" hidden>
+      Loading...
+    </div>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+</body>
+
+</html>
+

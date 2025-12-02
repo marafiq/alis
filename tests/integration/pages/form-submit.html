@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Integration Fixture – Form Submit</title>
+</head>
+
+<body>
+  <form id="fixture-form" data-alis data-alis-target="fixture-result" action="/api/users" method="post">
+    <label>
+      Email
+      <input type="email" name="email" value="fixture@example.com">
+    </label>
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="fixture-result">Awaiting response...</div>
+
+  <script src="../../../dist/alis.js"></script>
+</body>
+
+</html>
+

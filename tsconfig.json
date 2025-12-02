@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true,
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "types": [
+      "vitest/globals"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": [
+        "src/*"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "tests",
+    "scripts",
+    "vite.config.ts",
+    "playwright.config.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "rollup.config.mjs"
+  ]
+}
+
