@@ -63,7 +63,39 @@ export function buildConfigFromAttributes(element) {
     config.confirm = confirmFallback;
   }
   if (attrs.trigger) config.trigger = attrs.trigger;
+  
+  // Parse onBefore and onAfter hooks from attributes
+  // Format: data-alis-on-before="functionName" or data-alis-on-after="fn1, fn2"
+  if (attrs['on-before']) {
+    config.onBefore = parseHooks(attrs['on-before']);
+  }
+  if (attrs['on-after']) {
+    config.onAfter = parseHooks(attrs['on-after']);
+  }
+  
   return config;
+}
+
+/**
+ * Parse hook attribute value into array of functions
+ * @param {string} value - Comma-separated function names
+ * @returns {Array<(ctx: import('../pipeline/context.js').PipelineContext) => void>}
+ */
+function parseHooks(value) {
+  if (!value || typeof window === 'undefined') return [];
+  
+  return value.split(',')
+    .map(name => name.trim())
+    .filter(Boolean)
+    .map(name => {
+      const fn = /** @type {Record<string, unknown>} */ (window)[name];
+      if (typeof fn === 'function') {
+        return /** @type {(ctx: import('../pipeline/context.js').PipelineContext) => void} */ (fn);
+      }
+      console.warn(`[ALIS] Hook function "${name}" not found on window`);
+      return null;
+    })
+    .filter(/** @type {(fn: unknown) => fn is Function} */ (fn => fn !== null));
 }
 
 /**

@@ -172,23 +172,24 @@
             <code>&lt;form data-alis action="/api/contact" method="post" data-alis-target="#result"&gt;</code>
           </div>
           
-          <form id="contact-form" 
-                data-alis 
-                data-alis-target="#contact-result"
-                data-alis-swap="innerHTML"
-                action="/api/contact" 
-                method="post">
-            <div class="form-grid">
-              <div class="form-group">
-                <label>Name</label>
-                <input type="text" name="name" class="input" placeholder="John Doe">
-                <span data-valmsg-for="name" class="field-error"></span>
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="email" class="input" placeholder="john@example.com">
-                <span data-valmsg-for="email" class="field-error"></span>
-              </div>
+        <form id="contact-form" 
+              data-alis 
+              data-alis-target="#contact-result"
+              data-alis-swap="innerHTML"
+              action="/api/contact" 
+              method="post"
+              novalidate>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" name="name" class="input" placeholder="John Doe">
+              <span data-valmsg-for="name" class="field-error"></span>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="text" name="email" class="input" placeholder="john@example.com">
+              <span data-valmsg-for="email" class="field-error"></span>
+            </div>
               <div class="form-group full-width">
                 <label>Subject</label>
                 <select name="subject" class="input">

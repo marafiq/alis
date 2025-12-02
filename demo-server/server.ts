@@ -296,18 +296,12 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
       status: body.status || users[userIndex].status
     };
     
-    return htmlResponse(`
-      <div class="success-message">
-        <span class="icon">✓</span>
-        <span>User updated successfully!</span>
-      </div>
-      <script>
-        setTimeout(() => {
-          closeModal();
-          document.querySelector('#refresh-users')?.click();
-        }, 1000);
-      </script>
-    `);
+    // Return JSON success - hook will handle modal close and refresh
+    return jsonResponse({
+      success: true,
+      message: 'User updated successfully!',
+      user: users[userIndex]
+    });
   },
 
   "DELETE /api/users/:id": async (req, url) => {
@@ -528,6 +522,65 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
         </div>
       </div>
     `);
+  },
+
+  // Island demo - returns interactive HTML with ALIS attributes
+  "GET /api/island": async () => {
+    const now = new Date().toLocaleTimeString();
+    return htmlResponse(`
+      <div class="island">
+        <h2>🏝️ Dynamic Island</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">
+          This content was loaded dynamically. The buttons below use ALIS attributes and work immediately!
+        </p>
+        
+        <div id="time-display" class="time-display">${now}</div>
+        
+        <div class="btn-row">
+          <button class="btn"
+                  data-alis-get="/api/time"
+                  data-alis-target="#time-display"
+                  data-alis-indicator="is-loading">
+            🔄 Update Time
+          </button>
+          
+          <button class="btn btn-secondary"
+                  data-alis-post="/api/island/action"
+                  data-alis-target="#island-message"
+                  data-alis-indicator="is-loading">
+            📤 Send Action
+          </button>
+        </div>
+        
+        <div id="island-message"></div>
+      </div>
+    `);
+  },
+
+  // Get current time
+  "GET /api/time": async () => {
+    await delay(300);
+    const now = new Date().toLocaleTimeString();
+    return htmlResponse(now);
+  },
+
+  // Island action endpoint
+  "POST /api/island/action": async () => {
+    await delay(500);
+    const timestamp = new Date().toISOString();
+    return htmlResponse(`
+      <div class="message success">
+        ✓ Action completed at ${timestamp}
+      </div>
+    `);
+  },
+
+  // Counter increment endpoint for islands demo
+  "POST /api/counter/increment": async () => {
+    await delay(100);
+    // Simulate a counter (in real app, would be session-based)
+    const count = Math.floor(Math.random() * 100) + 1;
+    return htmlResponse(String(count));
   },
 };
 

@@ -14,7 +14,7 @@ export function swapStep(ctx) {
     return ctx;
   }
 
-  // Preserve focus if active element is outside the swap target
+  // Capture focus state BEFORE swap
   const activeElement = document.activeElement;
   const shouldRestoreFocus = activeElement && 
     activeElement !== document.body && 
@@ -24,18 +24,22 @@ export function swapStep(ctx) {
   let selectionStart = null;
   let selectionEnd = null;
   if (shouldRestoreFocus && (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement)) {
-    selectionStart = activeElement.selectionStart;
-    selectionEnd = activeElement.selectionEnd;
+    try {
+      selectionStart = activeElement.selectionStart;
+      selectionEnd = activeElement.selectionEnd;
+    } catch {
+      // Some input types don't support selection
+    }
   }
 
   const strategyName = typeof ctx.config.swap === 'string' ? ctx.config.swap : 'innerHTML';
   const strategy = getSwapStrategy(strategyName);
   strategy(target, typeof ctx.body === 'string' ? ctx.body : JSON.stringify(ctx.body));
 
-  // Restore focus if it was outside the target
+  // Restore focus IMMEDIATELY after swap (synchronously)
   if (shouldRestoreFocus && activeElement instanceof HTMLElement) {
-    // Use requestAnimationFrame to ensure DOM is updated
-    requestAnimationFrame(() => {
+    // Check if element is still in DOM and focusable
+    if (document.body.contains(activeElement)) {
       activeElement.focus();
       // Restore cursor position for text inputs
       if ((activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) && 
@@ -46,7 +50,7 @@ export function swapStep(ctx) {
           // Some input types don't support setSelectionRange
         }
       }
-    });
+    }
   }
 
   return ctx;

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALIS - Islands Demo</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card-bg: #16161f;
+      --border: #2a2a3a;
+      --text: #ffffff;
+      --text-muted: #a0a0b0;
+      --accent: #6366f1;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 40px;
+    }
+    
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+    }
+    
+    p {
+      color: var(--text-muted);
+      max-width: 500px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-secondary {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+      background: #1e1e2a;
+    }
+    
+    .btn.is-loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    
+    #island-container {
+      min-height: 200px;
+      width: 100%;
+      max-width: 600px;
+    }
+    
+    .island {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .island h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .island-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .time-display {
+      font-size: 32px;
+      font-family: 'Courier New', monospace;
+      color: var(--accent);
+      padding: 16px;
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .island-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    
+    .counter-display {
+      font-size: 48px;
+      font-weight: bold;
+      text-align: center;
+      color: var(--accent);
+    }
+    
+    .status {
+      font-size: 14px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    
+    .back-link {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .back-link:hover {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <h1>🏝️ ALIS Islands Demo</h1>
+  <p>
+    This page demonstrates ALIS working with dynamically injected "islands" of functionality.
+    Click the button below to load an interactive island that uses ALIS attributes.
+  </p>
+  
+  <button id="add-island-btn" class="btn btn-primary" onclick="addIsland()">
+    ➕ Add Island
+  </button>
+  
+  <div id="island-container"></div>
+
+  <!-- ALIS loaded in body, not head -->
+  <script src="/dist/alis.js"></script>
+  
+  <script>
+    // Initialize ALIS - this sets up event delegation
+    ALIS.init();
+    console.log('[Islands Demo] ALIS initialized, version:', ALIS.version);
+    
+    let islandCount = 0;
+    let counters = {};
+    
+    function addIsland() {
+      islandCount++;
+      counters[islandCount] = 0;
+      const container = document.getElementById('island-container');
+      
+      // Create island HTML with ALIS attributes
+      const islandHTML = `
+        <div class="island" id="island-${islandCount}">
+          <h2>🕐 Time Island #${islandCount}</h2>
+          <div class="island-content">
+            <div id="time-display-${islandCount}" class="time-display">
+              Click "Update Time" to fetch server time
+            </div>
+            <div class="island-actions">
+              <button class="btn btn-primary"
+                      data-alis-get="/api/time"
+                      data-alis-target="#time-display-${islandCount}"
+                      data-alis-swap="innerHTML"
+                      data-alis-indicator="is-loading">
+                🔄 Update Time
+              </button>
+              <button class="btn btn-secondary"
+                      data-alis-post="/api/counter"
+                      data-alis-target="#counter-${islandCount}"
+                      data-alis-swap="innerHTML"
+                      data-alis-indicator="is-loading">
+                ➕ Increment Counter
+              </button>
+            </div>
+            <div id="counter-${islandCount}" class="counter-display">0</div>
+            <div class="status">Island loaded at ${new Date().toLocaleTimeString()}</div>
+          </div>
+        </div>
+      `;
+      
+      container.innerHTML = islandHTML;
+      
+      // Log that ALIS should pick up the new elements
+      console.log('[Islands Demo] Island added, ALIS should handle new data-alis-* elements');
+    }
+  </script>
+</body>
+</html>
+

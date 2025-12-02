@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALIS Island Demo - Dynamic Loading</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card: #16161f;
+      --border: #2a2a3a;
+      --text: #ffffff;
+      --text-muted: #a0a0b0;
+      --accent: #6366f1;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+    }
+    
+    p {
+      color: var(--text-muted);
+      max-width: 500px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    }
+    
+    #island-container {
+      min-height: 200px;
+      width: 100%;
+      max-width: 600px;
+    }
+    
+    /* Styles for the loaded island */
+    .island {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .island h2 {
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .island .time-display {
+      font-family: monospace;
+      font-size: 2rem;
+      color: var(--accent);
+      padding: 16px;
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    
+    .island .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .island .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    
+    .island .btn-secondary:hover {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      box-shadow: none;
+      transform: none;
+    }
+    
+    .island .btn.is-loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    
+    .island .message {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .island .message.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚡ ALIS Island Demo</h1>
+  <p>
+    This demo shows ALIS working with dynamically loaded content. 
+    Click the button below to load an "island" of interactive HTML that uses ALIS attributes.
+  </p>
+  
+  <button id="load-island-btn" class="btn" onclick="loadIsland()">
+    🏝️ Add Island
+  </button>
+  
+  <div id="island-container"></div>
+
+  <!-- ALIS loaded at the end of body -->
+  <script src="/dist/alis.js"></script>
+  
+  <script>
+    // Initialize ALIS
+    ALIS.init();
+    
+    function loadIsland() {
+      const btn = document.getElementById('load-island-btn');
+      btn.disabled = true;
+      btn.textContent = 'Loading...';
+      
+      // Fetch the island HTML from server
+      fetch('/api/island')
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById('island-container').innerHTML = html;
+          btn.textContent = '✓ Island Loaded';
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.textContent = '🏝️ Add Island (retry)';
+          console.error('Failed to load island:', err);
+        });
+    }
+  </script>
+</body>
+</html>
+

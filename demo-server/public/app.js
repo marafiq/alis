@@ -54,8 +54,12 @@ window.Toast = Toast;
 // ========================================
 
 const Modal = {
-  overlay: document.getElementById('modal-overlay'),
-  body: document.getElementById('modal-body'),
+  get overlay() {
+    return document.getElementById('modal-overlay');
+  },
+  get body() {
+    return document.getElementById('modal-body');
+  },
   
   show(content = '') {
     if (content) this.body.innerHTML = content;
@@ -63,7 +67,15 @@ const Modal = {
   },
   
   hide() {
-    this.overlay.classList.remove('show');
+    const overlay = this.overlay;
+    if (overlay) {
+      overlay.classList.remove('show');
+      // Force style recalculation
+      overlay.style.display = 'none';
+      setTimeout(() => {
+        overlay.style.display = '';
+      }, 10);
+    }
   }
 };
 
@@ -89,20 +101,20 @@ window.showAddUserModal = function() {
     <h3>➕ Add New User</h3>
     <form id="add-user-form" 
           data-alis 
-          data-alis-target="#add-user-result" 
-          data-alis-swap="innerHTML" 
-          data-alis-on-after="handleAddUserResult"
+          data-alis-swap="none"
+          data-alis-on-after="logHook, closeModalOnSuccess, showSuccessToast, refreshUsersGrid, displayValidationErrors"
           action="/api/users" 
-          method="post">
+          method="post"
+          novalidate>
       <div class="form-grid">
         <div class="form-group full-width">
           <label>Full Name</label>
-          <input type="text" name="name" class="input" placeholder="John Doe" autofocus>
+          <input type="text" name="name" class="input" placeholder="John Doe">
           <span data-valmsg-for="name" class="field-error"></span>
         </div>
         <div class="form-group full-width">
           <label>Email Address</label>
-          <input type="email" name="email" class="input" placeholder="john@example.com">
+          <input type="text" name="email" class="input" placeholder="john@example.com">
           <span data-valmsg-for="email" class="field-error"></span>
         </div>
         <div class="form-group full-width">
@@ -116,7 +128,6 @@ window.showAddUserModal = function() {
           <span data-valmsg-for="role" class="field-error"></span>
         </div>
       </div>
-      <div id="add-user-result"></div>
       <div class="form-actions">
         <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
         <button type="submit" class="btn btn-primary">Create User</button>
@@ -124,14 +135,58 @@ window.showAddUserModal = function() {
     </form>
   `;
   Modal.show();
-  setTimeout(() => document.querySelector('#add-user-form input')?.focus(), 100);
+  setTimeout(() => document.querySelector('#add-user-form input[name="name"]')?.focus(), 100);
 };
 
-window.handleAddUserResult = function(ctx) {
+// Hook: Dummy logging hook (demonstrates multiple hooks)
+window.logHook = function(ctx) {
+  console.log('[logHook] Called with:', {
+    success: ctx.success,
+    url: ctx.config?.url,
+    method: ctx.config?.method,
+    hasBody: !!ctx.body
+  });
+};
+
+// Hook: Close modal on success
+window.closeModalOnSuccess = function(ctx) {
   if (ctx.success && ctx.body?.success) {
-    closeModal();
-    Toast.success(ctx.body.message || 'User created successfully!');
+    Modal.hide();
+  }
+};
+
+// Hook: Show toast message
+window.showSuccessToast = function(ctx) {
+  if (ctx.success && ctx.body?.success) {
+    Toast.success(ctx.body.message || 'Operation completed!');
+  }
+};
+
+// Hook: Refresh users grid
+window.refreshUsersGrid = function(ctx) {
+  if (ctx.success && ctx.body?.success) {
     setTimeout(() => document.getElementById('refresh-users')?.click(), 100);
+  }
+};
+
+// Hook: Display validation errors
+window.displayValidationErrors = function(ctx) {
+  const form = ctx.element?.closest('form') || document.querySelector('#add-user-form');
+  if (!form) return;
+  
+  // Clear previous errors
+  form.querySelectorAll('[data-valmsg-for]').forEach(el => {
+    el.textContent = '';
+  });
+  
+  // Display new errors from ProblemDetails
+  if (ctx.body?.errors) {
+    Object.entries(ctx.body.errors).forEach(([field, messages]) => {
+      const errorSpan = form.querySelector(`[data-valmsg-for="${field}"]`);
+      if (errorSpan && Array.isArray(messages)) {
+        errorSpan.textContent = messages[0];
+      }
+    });
   }
 };
 
@@ -147,7 +202,8 @@ window.showEditUserModal = function(id, name, email, role) {
           data-alis-swap="innerHTML"
           data-alis-on-after="handleEditUserResult"
           action="/api/users/${id}" 
-          method="put">
+          method="put"
+          novalidate>
       <div class="form-grid">
         <div class="form-group full-width">
           <label>Full Name</label>
@@ -156,7 +212,7 @@ window.showEditUserModal = function(id, name, email, role) {
         </div>
         <div class="form-group full-width">
           <label>Email Address</label>
-          <input type="email" name="email" class="input" value="${email}">
+          <input type="text" name="email" class="input" value="${email}">
           <span data-valmsg-for="email" class="field-error"></span>
         </div>
         <div class="form-group full-width">
@@ -179,7 +235,8 @@ window.showEditUserModal = function(id, name, email, role) {
 };
 
 window.handleEditUserResult = function(ctx) {
-  if (ctx.success && ctx.body?.success) {
+  console.log('[handleEditUserResult]', 'success:', ctx.success, 'body:', ctx.body);
+  if (ctx.success && ctx.body && ctx.body.success === true) {
     closeModal();
     Toast.success('User updated successfully!');
     setTimeout(() => document.getElementById('refresh-users')?.click(), 100);
