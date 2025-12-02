@@ -34,8 +34,12 @@ const ALIS = {
   version: VERSION,
   init(config = {}) {
     globalConfig = structuredCloneSafe(config);
-    setupDelegation(undefined, (element, event, triggerElement) => {
-      handleTrigger(element, { triggerElement, originEvent: event }).catch(error => {
+    setupDelegation(undefined, (element, event, triggerElement, options) => {
+      handleTrigger(element, { 
+        triggerElement, 
+        originEvent: event,
+        debounced: options?.debounced 
+      }).catch(error => {
         console.error('[ALIS] trigger failed', error);
       });
     });

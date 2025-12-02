@@ -20,10 +20,10 @@ export const DEFAULT_STEPS = [
   validateStep,
   confirmStep,
   coordinateStep,
+  collectStep,         // Collect BEFORE state changes (element might get disabled)
   stateCaptureStep,
   stateApplyStep,
   hooksBeforeStep,
-  collectStep,
   requestBuildStep,
   requestExecuteStep,
   responseParseStep,

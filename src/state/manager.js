@@ -4,7 +4,7 @@ import { restoreState } from './restore.js';
 
 /**
  * @param {Element} element
- * @param {{ indicator?: string }} config
+ * @param {{ indicator?: string; debounced?: boolean }} config
  */
 export function createStateManager(element, config = {}) {
   const captured = captureState(element);

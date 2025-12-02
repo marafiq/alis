@@ -14,9 +14,11 @@ export function stateCaptureStep(ctx) {
   }
 
   const indicator = typeof ctx.config.indicator === 'string' ? ctx.config.indicator : undefined;
+  const debounced = ctx.config.debounced === true;
 
   ctx.stateManager = createStateManager(target, {
-    indicator
+    indicator,
+    debounced
   });
 
   return ctx;

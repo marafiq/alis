@@ -55,8 +55,34 @@ test.describe('Debounce & Throttle', () => {
     await page.waitForTimeout(700);
 
     expect(requestCount).toBe(1);
-    // URL should contain the query (either as param or in path)
+    // URL should contain the query parameter
     expect(capturedUrl).toContain('/api/search');
+    expect(capturedUrl).toContain('query=hello');
+  });
+
+  test('input value is correctly collected with collect="self"', async ({ page }) => {
+    await page.goto('/demos/debounce/index.html');
+
+    let capturedUrl = '';
+    await page.route('**/api/search**', async route => {
+      capturedUrl = route.request().url();
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: `<div class="result-item">Results for query</div>`
+      });
+    });
+
+    const input = page.locator('#search-input');
+    
+    // Type a specific search term
+    await input.fill('test search');
+
+    // Wait for debounce (500ms) + some buffer
+    await page.waitForTimeout(700);
+
+    // Verify the URL contains the query parameter with the typed value
+    expect(capturedUrl).toMatch(/query=test\+search|query=test%20search/);
   });
 
   test.skip('throttles scroll events', async ({ page }) => {

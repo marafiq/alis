@@ -5,8 +5,13 @@ const LISTENERS = new Map();
 const DEBOUNCE_STATE = new Map();
 
 /**
+ * @typedef {Object} TriggerOptions
+ * @property {boolean} [debounced] - Whether this trigger was debounced
+ */
+
+/**
  * @param {string[]} events
- * @param {(element: Element, event: Event, triggerElement: Element | null) => void} onTrigger
+ * @param {(element: Element, event: Event, triggerElement: Element | null, options?: TriggerOptions) => void} onTrigger
  */
 export function setupDelegation(events = ['click', 'submit', 'change', 'input', 'scroll'], onTrigger) {
   events.forEach(eventType => {
@@ -21,7 +26,7 @@ export function setupDelegation(events = ['click', 'submit', 'change', 'input', 
       // Handle debounce
       if (triggerConfig.delay > 0) {
         handleDebounce(target, triggerConfig.delay, () => {
-          executeHandler(target, event, onTrigger);
+          executeHandler(target, event, onTrigger, { debounced: true });
         });
         if (event.cancelable) event.preventDefault();
         return;
@@ -37,7 +42,7 @@ export function setupDelegation(events = ['click', 'submit', 'change', 'input', 
       if (event.cancelable) {
         event.preventDefault();
       }
-      executeHandler(target, event, onTrigger);
+      executeHandler(target, event, onTrigger, {});
     });
     const useCapture = eventType === 'submit';
     document.addEventListener(eventType, handler, useCapture);
@@ -48,12 +53,13 @@ export function setupDelegation(events = ['click', 'submit', 'change', 'input', 
 /**
  * @param {Element} target
  * @param {Event} event
- * @param {(element: Element, event: Event, triggerElement: Element | null) => void} onTrigger
+ * @param {(element: Element, event: Event, triggerElement: Element | null, options?: TriggerOptions) => void} onTrigger
+ * @param {TriggerOptions} options
  */
-function executeHandler(target, event, onTrigger) {
+function executeHandler(target, event, onTrigger, options) {
   if (typeof onTrigger === 'function') {
     const triggerElement = getTriggerElement(event);
-    onTrigger(target, event, triggerElement);
+    onTrigger(target, event, triggerElement, options);
   }
 }
 

@@ -1,11 +1,20 @@
 /**
  * @param {Element} element
- * @param {{ indicator?: string; disabled?: boolean }} config
+ * @param {{ indicator?: string; disabled?: boolean; debounced?: boolean }} config
  */
 export function applyEffects(element, config = {}) {
-  if (element instanceof HTMLButtonElement || element instanceof HTMLInputElement) {
-    element.disabled = true;
+  // Don't disable anything if the request is debounced - user is still interacting
+  const shouldDisable = !config.debounced;
+  
+  if (shouldDisable) {
+    if (element instanceof HTMLButtonElement || 
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLSelectElement ||
+        element instanceof HTMLTextAreaElement) {
+      element.disabled = true;
+    }
   }
+  
   element.setAttribute('aria-busy', 'true');
   
   // Also set aria-busy on parent form if element is within a form

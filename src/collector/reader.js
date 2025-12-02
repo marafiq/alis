@@ -8,7 +8,7 @@ export function readValue(element) {
   }
 
   const name = element.getAttribute('name');
-  if (!name || ('disabled' in element && element.disabled)) {
+  if (!name || ('disabled' in element && /** @type {any} */ (element).disabled)) {
     return null;
   }
 

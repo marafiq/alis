@@ -11,7 +11,8 @@ describe('trigger/delegation', () => {
 
     el.click();
 
-    expect(onTrigger).toHaveBeenCalledWith(el, expect.any(Event), el);
+    // 4th argument is options object (e.g., { debounced: true } for debounced triggers)
+    expect(onTrigger).toHaveBeenCalledWith(el, expect.any(Event), el, expect.any(Object));
     document.body.removeChild(el);
     teardownDelegation();
   });
