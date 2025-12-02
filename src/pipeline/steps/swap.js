@@ -14,16 +14,16 @@ export function swapStep(ctx) {
     return ctx;
   }
 
-  // Capture focus state BEFORE swap
+  // Capture focus state BEFORE swap (for elements OUTSIDE the target)
   const activeElement = document.activeElement;
-  const shouldRestoreFocus = activeElement && 
+  const shouldPreserveFocus = activeElement && 
     activeElement !== document.body && 
     !target.contains(activeElement);
   
   // Get cursor position for text inputs
   let selectionStart = null;
   let selectionEnd = null;
-  if (shouldRestoreFocus && (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement)) {
+  if (shouldPreserveFocus && (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement)) {
     try {
       selectionStart = activeElement.selectionStart;
       selectionEnd = activeElement.selectionEnd;
@@ -36,9 +36,9 @@ export function swapStep(ctx) {
   const strategy = getSwapStrategy(strategyName);
   strategy(target, typeof ctx.body === 'string' ? ctx.body : JSON.stringify(ctx.body));
 
-  // Restore focus IMMEDIATELY after swap (synchronously)
-  if (shouldRestoreFocus && activeElement instanceof HTMLElement) {
-    // Check if element is still in DOM and focusable
+  // Preserve focus for elements OUTSIDE the swap target (e.g., search input)
+  // This prevents focus loss when updating a results container
+  if (shouldPreserveFocus && activeElement instanceof HTMLElement) {
     if (document.body.contains(activeElement)) {
       activeElement.focus();
       // Restore cursor position for text inputs
@@ -52,6 +52,8 @@ export function swapStep(ctx) {
       }
     }
   }
+
+  // Note: Final focus to trigger element is handled by focusStep
 
   return ctx;
 }

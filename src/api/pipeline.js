@@ -14,6 +14,7 @@ import { validationDisplayStep } from '../pipeline/steps/validation-display.js';
 import { swapStep } from '../pipeline/steps/swap.js';
 import { stateRestoreStep } from '../pipeline/steps/state-restore.js';
 import { hooksAfterStep } from '../pipeline/steps/hooks-after.js';
+import { focusStep } from '../pipeline/steps/focus.js';
 
 export const DEFAULT_STEPS = [
   validateStep,
@@ -31,6 +32,7 @@ export const DEFAULT_STEPS = [
   swapStep,
   stateRestoreStep,
   hooksAfterStep,
+  focusStep,           // Focus restoration as final user-facing step
   coordinateCleanupStep
 ];
 
