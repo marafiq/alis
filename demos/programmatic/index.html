@@ -10,7 +10,7 @@
 <body>
   <main class="demo-card">
     <h1>Programmatic API Demo</h1>
-    <p>Demonstrates <code>ALIS.request</code> and <code>ALIS.from()</code> once the API is fully implemented.</p>
+    <p>Demonstrates <code>ALIS.request</code> and <code>ALIS.from()</code>.</p>
 
     <div class="panel stack" id="programmatic-demo">
       <label>
@@ -28,11 +28,27 @@
     const button = document.getElementById('programmatic-save');
     const output = document.getElementById('programmatic-result');
 
+    ALIS.init();
+
     button.addEventListener('click', async () => {
-      output.textContent = 'Programmatic API not implemented yet.';
+        const name = document.getElementById('item-name').value;
+        try {
+            // We use ALIS.request directly
+            await ALIS.request({
+                url: '/api/programmatic/save',
+                method: 'POST',
+                data: { name },
+                target: '#programmatic-result',
+                // Simulate a slow network via element config if we were declarative, 
+                // but here we rely on the backend (mocked in test) to be slow.
+                element: button // Bind to button for disable states
+            });
+        } catch (err) {
+            console.error('Request failed', err);
+            output.textContent = 'Error: ' + err.message;
+        }
     });
   </script>
 </body>
 
 </html>
-

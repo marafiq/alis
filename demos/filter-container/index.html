@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ALIS Demo: Filter Container</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+  <style>
+    .filter-panel {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .filter-group label { font-size: 0.875rem; font-weight: 600; }
+    .filter-group input, .filter-group select { padding: 0.5rem; min-width: 150px; }
+    .grid-container {
+      margin-top: 1rem;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .grid-header {
+      background: #e9ecef;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+    .grid-body { min-height: 100px; }
+    .grid-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid #dee2e6;
+    }
+    .grid-row:nth-child(even) { background: #f8f9fa; }
+  </style>
+</head>
+<body>
+  <main class="demo-card">
+    <h1>Filter Container Demo</h1>
+    <p>Tests collecting values from a container (not a form) and POSTing as filters.</p>
+
+    <!-- Filter Panel (NOT a form) -->
+    <div id="filter-panel" class="filter-panel">
+      <div class="filter-group">
+        <label for="filter-name">Name</label>
+        <input type="text" id="filter-name" name="name" value="">
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-status">Status</label>
+        <select id="filter-status" name="status">
+          <option value="">All</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-min-price">Min Price</label>
+        <input type="number" id="filter-min-price" name="minPrice" value="0">
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-max-price">Max Price</label>
+        <input type="number" id="filter-max-price" name="maxPrice" value="1000">
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-date">Created After</label>
+        <input type="date" id="filter-date" name="createdAfter" value="">
+      </div>
+
+      <!-- Button triggers POST with container values -->
+      <button id="apply-filters"
+              data-alis-post="/api/products/filter"
+              data-alis-collect="closest:#filter-panel"
+              data-alis-target="#grid-body">
+        Apply Filters
+      </button>
+
+      <button id="clear-filters" type="button" onclick="clearFilters()">
+        Clear
+      </button>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="grid-container">
+      <div class="grid-header">
+        <div>ID</div>
+        <div>Name</div>
+        <div>Status</div>
+        <div>Price</div>
+      </div>
+      <div id="grid-body" class="grid-body">
+        <div class="grid-row">
+          <div>Loading...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+  <script>
+    ALIS.init();
+
+    function clearFilters() {
+      document.getElementById('filter-name').value = '';
+      document.getElementById('filter-status').value = '';
+      document.getElementById('filter-min-price').value = '0';
+      document.getElementById('filter-max-price').value = '1000';
+      document.getElementById('filter-date').value = '';
+    }
+  </script>
+</body>
+</html>
+

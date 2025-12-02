@@ -12,9 +12,25 @@ export function readValue(element) {
     return null;
   }
 
+  // Check for custom value selector: data-alis-value="#selector@attribute"
+  const customValueAttr = element.getAttribute('data-alis-value');
+  if (customValueAttr) {
+    const value = readCustomValue(customValueAttr);
+    return { name, value };
+  }
+
+  // Check for custom value function: data-alis-value-fn="functionName"
+  const customValueFn = element.getAttribute('data-alis-value-fn');
+  if (customValueFn && typeof window !== 'undefined') {
+    const fn = /** @type {Record<string, unknown>} */ (window)[customValueFn];
+    if (typeof fn === 'function') {
+      return { name, value: fn(element) };
+    }
+  }
+
   if (element instanceof HTMLInputElement) {
     if (element.type === 'checkbox') {
-      return element.checked ? { name, value: element.value || true } : null;
+      return element.checked ? { name, value: element.value || 'on' } : null;
     }
     if (element.type === 'radio') {
       return element.checked ? { name, value: element.value } : null;
@@ -35,6 +51,50 @@ export function readValue(element) {
   }
 
   return null;
+}
+
+/**
+ * Read value from custom selector
+ * Format: "#selector@attribute" or "#selector .child@attribute"
+ * If no @attribute, uses textContent
+ * 
+ * @param {string} selectorAttr
+ * @returns {string}
+ */
+function readCustomValue(selectorAttr) {
+  if (!selectorAttr) return '';
+  
+  let selector = selectorAttr;
+  let attribute = 'value'; // default
+  
+  // Check for @attribute suffix
+  const atIndex = selectorAttr.lastIndexOf('@');
+  if (atIndex > 0) {
+    selector = selectorAttr.substring(0, atIndex);
+    attribute = selectorAttr.substring(atIndex + 1);
+  }
+  
+  const targetEl = document.querySelector(selector);
+  if (!targetEl) return '';
+  
+  // Special handling for common attributes
+  if (attribute === 'value' && 'value' in targetEl) {
+    return /** @type {HTMLInputElement} */ (targetEl).value;
+  }
+  if (attribute === 'textContent') {
+    return targetEl.textContent || '';
+  }
+  if (attribute === 'innerHTML') {
+    return targetEl.innerHTML || '';
+  }
+  
+  // Check for data-* attribute
+  if (attribute.startsWith('data-')) {
+    return targetEl.getAttribute(attribute) || '';
+  }
+  
+  // Generic attribute
+  return targetEl.getAttribute(attribute) || '';
 }
 
 /**

@@ -47,8 +47,7 @@ const config = [
     output: {
       file: 'dist/alis.js',
       format: 'iife',
-      name: 'ALIS',
-      exports: 'named',
+      name: 'ALISBundle',
       sourcemap: true,
       banner
     },
@@ -59,8 +58,7 @@ const config = [
     output: {
       file: 'dist/alis.min.js',
       format: 'iife',
-      name: 'ALIS',
-      exports: 'named',
+      name: 'ALISBundle',
       sourcemap: true,
       banner
     },

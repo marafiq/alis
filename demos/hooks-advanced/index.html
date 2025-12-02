@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ALIS Demo: Advanced Hooks (Modal, Toast, Grid Refresh)</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+  <style>
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 400px;
+      width: 90%;
+      transform: scale(0.9);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.show .modal {
+      transform: scale(1);
+    }
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    .modal-body { margin-bottom: 1.5rem; }
+    .modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+    .modal-actions button {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-cancel {
+      background: #e9ecef;
+      border: none;
+    }
+    .btn-confirm {
+      background: #dc3545;
+      color: white;
+      border: none;
+    }
+
+    /* Toast Styles */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .toast {
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      animation: slideIn 0.3s ease-out;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .toast.success { background: #198754; }
+    .toast.error { background: #dc3545; }
+    .toast.info { background: #0d6efd; }
+    .toast.warning { background: #ffc107; color: #212529; }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+    .toast.hiding {
+      animation: slideOut 0.3s ease-in forwards;
+    }
+
+    /* Grid Styles */
+    .data-grid {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .grid-header {
+      background: #343a40;
+      color: white;
+      padding: 0.75rem 1rem;
+      display: grid;
+      grid-template-columns: 50px 1fr 1fr 100px;
+      gap: 1rem;
+    }
+    .grid-body { min-height: 150px; }
+    .grid-row {
+      display: grid;
+      grid-template-columns: 50px 1fr 1fr 100px;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid #dee2e6;
+      align-items: center;
+    }
+    .grid-row:nth-child(even) { background: #f8f9fa; }
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .btn-add {
+      margin-top: 1rem;
+      background: #198754;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main class="demo-card">
+    <h1>Advanced Hooks Demo</h1>
+    <p>Demonstrates confirm modals, toast notifications, and grid refresh via hooks.</p>
+
+    <!-- Data Grid -->
+    <div class="data-grid">
+      <div class="grid-header">
+        <div>ID</div>
+        <div>Name</div>
+        <div>Email</div>
+        <div>Actions</div>
+      </div>
+      <div id="users-grid" class="grid-body">
+        <!-- Grid rows will be rendered here -->
+      </div>
+    </div>
+
+    <button class="btn-add" id="add-user-btn"
+            data-alis-post="/api/users"
+            data-alis-target="none"
+            data-alis-confirm="addUserConfirm"
+            data-alis-swap="none">
+      Add Random User
+    </button>
+
+    <hr style="margin: 2rem 0;">
+
+    <h2>Form with Hooks</h2>
+    <form id="user-form"
+          data-alis
+          data-alis-target="none"
+          data-alis-swap="none"
+          action="/api/users"
+          method="post">
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <input type="text" name="name" placeholder="Name" required style="padding: 0.5rem;">
+        <input type="email" name="email" placeholder="Email" required style="padding: 0.5rem;">
+        <button type="submit">Create User</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- Confirm Modal -->
+  <div id="confirm-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-title" id="modal-title">Confirm Action</div>
+      <div class="modal-body" id="modal-body">Are you sure you want to proceed?</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="modal-cancel">Cancel</button>
+        <button class="btn-confirm" id="modal-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="../../dist/alis.js"></script>
+  <script>
+    // ========================================
+    // Toast System
+    // ========================================
+    const Toast = {
+      container: document.getElementById('toast-container'),
+      
+      show(message, type = 'info', duration = 3000) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+          <span>${this.getIcon(type)}</span>
+          <span>${message}</span>
+        `;
+        this.container.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.classList.add('hiding');
+          setTimeout(() => toast.remove(), 300);
+        }, duration);
+      },
+      
+      getIcon(type) {
+        const icons = {
+          success: '✓',
+          error: '✕',
+          info: 'ℹ',
+          warning: '⚠'
+        };
+        return icons[type] || icons.info;
+      },
+      
+      success(msg) { this.show(msg, 'success'); },
+      error(msg) { this.show(msg, 'error'); },
+      info(msg) { this.show(msg, 'info'); },
+      warning(msg) { this.show(msg, 'warning'); }
+    };
+    window.Toast = Toast;
+
+    // ========================================
+    // Modal System
+    // ========================================
+    const Modal = {
+      overlay: document.getElementById('confirm-modal'),
+      titleEl: document.getElementById('modal-title'),
+      bodyEl: document.getElementById('modal-body'),
+      confirmBtn: document.getElementById('modal-confirm'),
+      cancelBtn: document.getElementById('modal-cancel'),
+      
+      _resolve: null,
+      
+      show(options = {}) {
+        this.titleEl.textContent = options.title || 'Confirm Action';
+        this.bodyEl.textContent = options.message || 'Are you sure?';
+        this.confirmBtn.textContent = options.confirmText || 'Confirm';
+        this.confirmBtn.className = `btn-confirm ${options.confirmClass || ''}`;
+        this.overlay.classList.add('show');
+        
+        return new Promise(resolve => {
+          this._resolve = resolve;
+        });
+      },
+      
+      hide(result) {
+        this.overlay.classList.remove('show');
+        if (this._resolve) {
+          this._resolve(result);
+          this._resolve = null;
+        }
+      }
+    };
+    
+    Modal.confirmBtn.addEventListener('click', () => Modal.hide(true));
+    Modal.cancelBtn.addEventListener('click', () => Modal.hide(false));
+    Modal.overlay.addEventListener('click', (e) => {
+      if (e.target === Modal.overlay) Modal.hide(false);
+    });
+    window.Modal = Modal;
+
+    // ========================================
+    // Grid Management
+    // ========================================
+    let users = [
+      { id: 1, name: 'John Doe', email: 'john@example.com' },
+      { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
+      { id: 3, name: 'Bob Wilson', email: 'bob@example.com' }
+    ];
+    
+    function renderGrid() {
+      const grid = document.getElementById('users-grid');
+      grid.innerHTML = users.map(user => `
+        <div class="grid-row" data-user-id="${user.id}">
+          <div>${user.id}</div>
+          <div>${user.name}</div>
+          <div>${user.email}</div>
+          <div>
+            <button class="btn-delete"
+                    data-alis-delete="/api/users/${user.id}"
+                    data-alis-target="none"
+                    data-alis-swap="none"
+                    data-alis-confirm="deleteUserConfirm">
+              Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    window.refreshGrid = function() {
+      renderGrid();
+      Toast.info('Grid refreshed');
+    };
+
+    // ========================================
+    // ALIS Configuration with Hooks
+    // ========================================
+    
+    // Register confirm handlers
+    ALIS.confirm.register('deleteUserConfirm', async (ctx) => {
+      const result = await Modal.show({
+        title: 'Delete User',
+        message: 'Are you sure you want to delete this user? This action cannot be undone.',
+        confirmText: 'Delete',
+        confirmClass: ''
+      });
+      return result;
+    });
+    
+    ALIS.confirm.register('addUserConfirm', async (ctx) => {
+      const result = await Modal.show({
+        title: 'Add User',
+        message: 'This will add a random user to the list. Continue?',
+        confirmText: 'Add User',
+        confirmClass: ''
+      });
+      return result;
+    });
+
+    // Initialize ALIS with global hooks
+    ALIS.init({
+      // Before request hook
+      onBefore: [
+        (ctx) => {
+          console.log('[ALIS] Request starting:', ctx.config.url);
+          return true; // Continue
+        }
+      ],
+      
+      // After request hook
+      onAfter: [
+        (ctx) => {
+          console.log('[ALIS] Request complete:', ctx.config.url, ctx.success);
+          
+          // Show toast based on result
+          if (ctx.success) {
+            Toast.success(ctx.body?.message || 'Operation successful!');
+          } else if (ctx.error) {
+            Toast.error(ctx.error.message || 'Operation failed');
+          }
+          
+          // Refresh grid after user operations
+          if (ctx.config.url?.includes('/api/users')) {
+            // Simulate server response updating our local data
+            if (ctx.config.method === 'delete' && ctx.success) {
+              const userId = parseInt(ctx.config.url.split('/').pop());
+              users = users.filter(u => u.id !== userId);
+            } else if (ctx.config.method === 'post' && ctx.success) {
+              const newUser = ctx.body?.user || {
+                id: users.length + 1,
+                name: `User ${users.length + 1}`,
+                email: `user${users.length + 1}@example.com`
+              };
+              users.push(newUser);
+            }
+            refreshGrid();
+          }
+        }
+      ]
+    });
+
+    // Initial render
+    renderGrid();
+  </script>
+</body>
+</html>
+

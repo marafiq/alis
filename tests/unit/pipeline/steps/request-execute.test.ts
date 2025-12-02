@@ -15,7 +15,7 @@ describe('pipeline/steps/request-execute', () => {
     };
 
     const mockResponse = new Response('ok', { status: 200 });
-    global.fetch = vi.fn(() => Promise.resolve(mockResponse)) as any;
+    global.fetch = vi.fn(() => Promise.resolve(mockResponse)) as unknown as typeof fetch;
 
     const result = await requestExecuteStep(ctx);
     expect(result.response).toBe(mockResponse);
@@ -37,7 +37,7 @@ describe('pipeline/steps/request-execute', () => {
       new Response('error', { status: 500 }),
       new Response('ok', { status: 200 })
     ];
-    global.fetch = vi.fn(() => Promise.resolve(responses.shift() ?? new Response('fallback', { status: 200 }))) as any;
+    global.fetch = vi.fn(() => Promise.resolve(responses.shift() ?? new Response('fallback', { status: 200 }))) as unknown as typeof fetch;
 
     const result = await requestExecuteStep(ctx);
     expect(result.response?.status).toBe(200);

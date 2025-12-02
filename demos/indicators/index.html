@@ -5,24 +5,42 @@
   <meta charset="utf-8">
   <title>ALIS Demo – Indicators</title>
   <link rel="stylesheet" href="../assets/demo.css">
+  <style>
+    .is-loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    #spinner {
+      padding: 1rem;
+      background: #f0f0f0;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 
 <body>
   <main class="demo-card">
     <h1>Indicator Demo</h1>
-    <p>Shows how loading indicators and aria states will be applied during a request.</p>
+    <p>Shows how loading indicators and aria states are applied during a request.</p>
 
-    <button data-alis-get="/api/spinner" data-alis-indicator="is-loading, #global-spinner">
+    <button 
+      data-alis-post="/api/slow" 
+      data-alis-target="indicator-result"
+      data-alis-indicator="is-loading, #spinner">
       Load Content
     </button>
 
-    <div id="global-spinner" class="notice" hidden>
+    <div id="spinner" hidden>
       Loading...
     </div>
+
+    <div id="indicator-result"></div>
   </main>
 
   <script src="../../dist/alis.js"></script>
+  <script>
+    ALIS.init();
+  </script>
 </body>
 
 </html>
-

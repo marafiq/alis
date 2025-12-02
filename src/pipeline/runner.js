@@ -24,7 +24,8 @@ export async function runPipeline(context, steps = []) {
     } catch (error) {
       currentContext.error = error instanceof Error ? error : new Error(String(error));
       emit('pipeline:error', { id: currentContext.id, error });
-      throw error;
+      // Do not throw; continue to allow cleanup steps to run.
+      // Steps should guard themselves against existing errors if they require success.
     }
   }
 

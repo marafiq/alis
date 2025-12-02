@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ALIS Demo: HTTP Methods</title>
+    <script src="../../dist/alis.js"></script>
+</head>
+<body>
+    <h1>HTTP Methods</h1>
+    <div id="result">Ready</div>
+
+    <button id="btn-get" data-alis-get="/api/resource" data-alis-target="#result">GET</button>
+    <button id="btn-post" data-alis-post="/api/resource" data-alis-target="#result">POST</button>
+    <button id="btn-put" data-alis-put="/api/resource" data-alis-target="#result">PUT</button>
+    <button id="btn-patch" data-alis-patch="/api/resource" data-alis-target="#result">PATCH</button>
+    <button id="btn-delete" data-alis-delete="/api/resource" data-alis-target="#result">DELETE</button>
+    
+    <script>
+        ALIS.init();
+    </script>
+</body>
+</html>
+

@@ -31,7 +31,7 @@ test.describe('Form submit flows', () => {
   });
 
   test('shows validation errors from problem details', async ({ page }) => {
-    await page.route('**/api/users', route =>
+    await page.route('**/api/validate', route =>
       route.fulfill({
         status: 400,
         body: JSON.stringify({

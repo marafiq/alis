@@ -1,45 +1,34 @@
+import fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
 
-const root = process.cwd();
-const distDir = path.join(root, 'dist');
-const typesSource = path.join(root, 'types', 'index.d.ts');
-
-function ensureTypesSource() {
-  if (!fs.existsSync(typesSource)) {
-    throw new Error('types/index.d.ts is required before building dist output');
-  }
+// Clean dist
+if (fs.existsSync('dist')) {
+  fs.rmSync('dist', { recursive: true, force: true });
 }
 
-function cleanDist() {
-  fs.rmSync(distDir, { recursive: true, force: true });
+// Run Rollup
+console.log('Building...');
+try {
+  execSync('npx rollup -c', { stdio: 'inherit' });
+} catch (e) {
+  console.error('Build failed');
+  process.exit(1);
 }
 
-function runRollup() {
-  execSync('rollup -c', { stdio: 'inherit' });
-}
+// Emit BUILD_INFO.json
+const files = fs.readdirSync('dist').filter(f => f.endsWith('.js'));
+const fileSizes = {};
+files.forEach(f => {
+  const stats = fs.statSync(`dist/${f}`);
+  fileSizes[f] = stats.size;
+});
 
-function copyTypes() {
-  fs.mkdirSync(distDir, { recursive: true });
-  fs.copyFileSync(typesSource, path.join(distDir, 'alis.d.ts'));
-}
+const buildInfo = {
+  timestamp: new Date().toISOString(),
+  files: fileSizes,
+  git: 'unknown' // Could extract via git rev-parse if needed
+};
 
-function writeBuildInfo() {
-  const metadata = {
-    hash: crypto.randomUUID(),
-    createdAt: new Date().toISOString()
-  };
-  fs.writeFileSync(
-    path.join(distDir, 'BUILD_INFO.json'),
-    JSON.stringify(metadata, null, 2)
-  );
-}
-
-ensureTypesSource();
-cleanDist();
-runRollup();
-copyTypes();
-writeBuildInfo();
-
+fs.writeFileSync('dist/BUILD_INFO.json', JSON.stringify(buildInfo, null, 2));
+console.log('Wrote dist/BUILD_INFO.json');

@@ -7,7 +7,7 @@ describe('pipeline/steps/validation-display', () => {
     const form = document.createElement('form');
     form.innerHTML = '<span data-valmsg-for="email">Error</span>';
     const ctx = createContext(form);
-    const result = validationDisplayStep(ctx);
+    validationDisplayStep(ctx);
     expect(form.querySelector('[data-valmsg-for="email"]')?.textContent).toBe('');
   });
 

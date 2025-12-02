@@ -17,6 +17,12 @@ export function restoreState(element, state) {
   } else {
     element.setAttribute('aria-busy', state.ariaBusy);
   }
+  
+  // Also restore aria-busy on parent form
+  const form = element.closest('form');
+  if (form && form !== element) {
+    form.removeAttribute('aria-busy');
+  }
 
   element.className = state.classList.join(' ');
 

@@ -28,11 +28,13 @@ describe('pipeline/runner', () => {
     expect(result.state.aborted).toBe(true);
   });
 
-  it('propagates errors', async () => {
+  it('captures errors in context without throwing', async () => {
     const ctx = createContext(document.createElement('div'));
-    await expect(runPipeline(ctx, [() => {
+    const result = await runPipeline(ctx, [() => {
       throw new Error('boom');
-    }])).rejects.toThrow('boom');
+    }]);
+    expect(result.error).toBeInstanceOf(Error);
+    expect(result.error?.message).toBe('boom');
   });
 });
 

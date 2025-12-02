@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EVENT_LEVELS, getEventLevel, LEVELS, shouldLog } from '../../../src/telemetry/levels.js';
+import { getEventLevel, LEVELS, shouldLog } from '../../../src/telemetry/levels.js';
 
 describe('telemetry/levels', () => {
   it('maps known events to explicit levels', () => {

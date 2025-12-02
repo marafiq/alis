@@ -1,7 +1,7 @@
 import { runPipeline } from '../pipeline/runner.js';
 import { validateStep } from '../pipeline/steps/validate.js';
 import { confirmStep } from '../pipeline/steps/confirm.js';
-import { coordinateStep } from '../pipeline/steps/coordinate.js';
+import { coordinateStep, coordinateCleanupStep } from '../pipeline/steps/coordinate.js';
 import { stateCaptureStep } from '../pipeline/steps/state-capture.js';
 import { stateApplyStep } from '../pipeline/steps/state-apply.js';
 import { hooksBeforeStep } from '../pipeline/steps/hooks-before.js';
@@ -30,13 +30,19 @@ export const DEFAULT_STEPS = [
   validationDisplayStep,
   swapStep,
   stateRestoreStep,
-  hooksAfterStep
+  hooksAfterStep,
+  coordinateCleanupStep
 ];
 
 /**
  * @param {import('../pipeline/context.js').PipelineContext} ctx
  */
-export function runDefaultPipeline(ctx) {
-  return runPipeline(ctx, DEFAULT_STEPS);
+export async function runDefaultPipeline(ctx) {
+  const result = await runPipeline(ctx, DEFAULT_STEPS);
+  // Re-throw if there was an error so callers can catch it
+  if (result.error) {
+    throw result.error;
+  }
+  return result;
 }
 

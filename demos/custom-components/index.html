@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ALIS Demo: Custom Components (Syncfusion-like)</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+  <style>
+    .sf-dropdown {
+      position: relative;
+      display: inline-block;
+      min-width: 200px;
+    }
+    .sf-dropdown-display {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sf-dropdown-display::after {
+      content: '▼';
+      font-size: 0.75rem;
+      margin-left: 0.5rem;
+    }
+    .sf-dropdown-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ced4da;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      display: none;
+      z-index: 100;
+    }
+    .sf-dropdown.open .sf-dropdown-list { display: block; }
+    .sf-dropdown-item {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    .sf-dropdown-item:hover { background: #e9ecef; }
+    .sf-dropdown-item.selected { background: #0d6efd; color: white; }
+
+    .sf-datepicker {
+      position: relative;
+      display: inline-block;
+    }
+    .sf-datepicker-input {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+    }
+
+    .sf-multiselect-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      min-height: 38px;
+    }
+    .sf-tag {
+      background: #0d6efd;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .sf-tag-remove {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .form-group { flex: 1; min-width: 200px; }
+    .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main class="demo-card">
+    <h1>Custom Components Demo</h1>
+    <p>Tests ALIS with Syncfusion-like custom components using <code>data-alis-value</code> selectors.</p>
+
+    <form id="custom-form" 
+          data-alis 
+          data-alis-target="#custom-result" 
+          action="/api/custom-components" 
+          method="post">
+
+      <div class="form-row">
+        <!-- Custom Dropdown (like Syncfusion DropDownList) -->
+        <div class="form-group">
+          <label>Department (Custom Dropdown)</label>
+          <div class="sf-dropdown" id="department-dropdown" onclick="toggleDropdown(this)">
+            <div class="sf-dropdown-display">Select Department</div>
+            <div class="sf-dropdown-list">
+              <div class="sf-dropdown-item" data-value="engineering" onclick="selectItem(event, this)">Engineering</div>
+              <div class="sf-dropdown-item" data-value="marketing" onclick="selectItem(event, this)">Marketing</div>
+              <div class="sf-dropdown-item" data-value="sales" onclick="selectItem(event, this)">Sales</div>
+              <div class="sf-dropdown-item" data-value="hr" onclick="selectItem(event, this)">Human Resources</div>
+            </div>
+          </div>
+          <!-- Hidden input that ALIS will read, updated by JS -->
+          <input type="hidden" name="department" id="department-value" value=""
+                 data-alis-value="#department-dropdown .sf-dropdown-item.selected@data-value">
+        </div>
+
+        <!-- Custom DatePicker (like Syncfusion DatePicker) -->
+        <div class="form-group">
+          <label>Start Date (Custom DatePicker)</label>
+          <div class="sf-datepicker" id="start-date-picker">
+            <input type="date" class="sf-datepicker-input" id="start-date-input" value="2024-01-15">
+          </div>
+          <!-- Value comes from nested input -->
+          <input type="hidden" name="startDate" 
+                 data-alis-value="#start-date-picker .sf-datepicker-input@value">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <!-- Custom MultiSelect (like Syncfusion MultiSelect) -->
+        <div class="form-group">
+          <label>Skills (Custom MultiSelect)</label>
+          <div class="sf-multiselect" id="skills-multiselect">
+            <div class="sf-multiselect-tags" id="skills-tags">
+              <span class="sf-tag" data-value="javascript">JavaScript <span class="sf-tag-remove" onclick="removeTag(this)">×</span></span>
+              <span class="sf-tag" data-value="typescript">TypeScript <span class="sf-tag-remove" onclick="removeTag(this)">×</span></span>
+            </div>
+          </div>
+          <!-- Value is comma-separated from tags -->
+          <input type="hidden" name="skills" id="skills-value" value="javascript,typescript"
+                 data-alis-value-fn="getSkillsValue">
+        </div>
+
+        <!-- Custom Numeric Input (like Syncfusion NumericTextBox) -->
+        <div class="form-group">
+          <label>Salary (Custom Numeric)</label>
+          <div class="sf-numeric" id="salary-numeric">
+            <button type="button" onclick="adjustNumeric(-1000)">-</button>
+            <span class="sf-numeric-display" id="salary-display">75000</span>
+            <button type="button" onclick="adjustNumeric(1000)">+</button>
+          </div>
+          <input type="hidden" name="salary" id="salary-value" value="75000"
+                 data-alis-value="#salary-display@textContent">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <!-- Standard input for comparison -->
+        <div class="form-group">
+          <label for="notes">Notes (Standard Input)</label>
+          <textarea id="notes" name="notes" rows="2">Standard textarea works normally</textarea>
+        </div>
+      </div>
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="custom-result" class="panel" style="margin-top: 1rem;">
+      Awaiting submission...
+    </div>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+  <script>
+    ALIS.init();
+
+    // Custom dropdown logic
+    function toggleDropdown(dropdown) {
+      dropdown.classList.toggle('open');
+    }
+
+    function selectItem(event, item) {
+      event.stopPropagation();
+      const dropdown = item.closest('.sf-dropdown');
+      const display = dropdown.querySelector('.sf-dropdown-display');
+      const items = dropdown.querySelectorAll('.sf-dropdown-item');
+      
+      items.forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      display.textContent = item.textContent;
+      dropdown.classList.remove('open');
+      
+      // Update hidden input
+      const hiddenInput = dropdown.parentElement.querySelector('input[type="hidden"]');
+      if (hiddenInput) {
+        hiddenInput.value = item.dataset.value;
+      }
+    }
+
+    // Custom numeric logic
+    function adjustNumeric(delta) {
+      const display = document.getElementById('salary-display');
+      const hidden = document.getElementById('salary-value');
+      const current = parseInt(display.textContent) || 0;
+      const newValue = Math.max(0, current + delta);
+      display.textContent = newValue;
+      hidden.value = newValue;
+    }
+
+    // Custom function to get skills value
+    window.getSkillsValue = function() {
+      const tags = document.querySelectorAll('#skills-tags .sf-tag');
+      return Array.from(tags).map(t => t.dataset.value).join(',');
+    };
+
+    function removeTag(removeBtn) {
+      const tag = removeBtn.closest('.sf-tag');
+      tag.remove();
+      // Update hidden input
+      document.getElementById('skills-value').value = getSkillsValue();
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.sf-dropdown')) {
+        document.querySelectorAll('.sf-dropdown.open').forEach(d => d.classList.remove('open'));
+      }
+    });
+  </script>
+</body>
+</html>
+

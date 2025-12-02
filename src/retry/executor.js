@@ -13,8 +13,13 @@ export async function executeWithRetry(operation, ctx, policy) {
     ctx.state.attempts = attempt;
     try {
       const response = await operation();
-      if (!retryStatuses.includes(response.status) || attempt === maxAttempts) {
+      // If status is not retryable, return immediately (success or non-retryable error)
+      if (!retryStatuses.includes(response.status)) {
         return response;
+      }
+      // If this is the last attempt and we got a retryable status, throw
+      if (attempt === maxAttempts) {
+        throw new Error(`Request failed with status ${response.status} after ${maxAttempts} attempts`);
       }
       lastError = new Error(`Retryable status ${response.status}`);
     } catch (error) {

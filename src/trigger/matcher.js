@@ -10,7 +10,9 @@ export function matchesTrigger(element, event) {
   const eventType = normalizeEventType(event.type, event);
 
   return entries.some(entry => {
-    const matchesEvent = !entry.event || entry.event === eventType;
+    // Extract just the event name (without modifiers like delay:500ms)
+    const entryEvent = entry.event ? entry.event.split(/\s+/)[0] : null;
+    const matchesEvent = !entryEvent || entryEvent === eventType;
     const matchesSelector =
       !entry.selector ||
       (event.target instanceof Element && event.target.matches(entry.selector));

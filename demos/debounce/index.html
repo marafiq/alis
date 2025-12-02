@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ALIS Demo: Debounce</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+  <style>
+    .search-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .search-input {
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 2px solid #ced4da;
+      border-radius: 8px;
+    }
+    .search-input:focus {
+      border-color: #0d6efd;
+      outline: none;
+    }
+    .search-results {
+      min-height: 200px;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .result-item {
+      padding: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    .result-item:last-child { border-bottom: none; }
+    .request-count {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <main class="demo-card">
+    <h1>Debounce Demo</h1>
+    <p>Tests debounced requests with <code>data-alis-trigger="input delay:500ms"</code></p>
+
+    <div class="search-container">
+      <!-- Search input with debounce -->
+      <input type="text" 
+             id="search-input"
+             name="query"
+             class="search-input"
+             placeholder="Type to search (debounced 500ms)..."
+             data-alis-get="/api/search"
+             data-alis-trigger="input delay:500ms"
+             data-alis-target="#search-results"
+             data-alis-collect="self">
+
+      <p class="request-count">
+        Requests made: <span id="request-counter">0</span>
+      </p>
+
+      <div id="search-results" class="search-results">
+        Start typing to see results...
+      </div>
+    </div>
+
+    <hr style="margin: 2rem 0;">
+
+    <h2>Throttle Example</h2>
+    <p>Tests throttled requests with <code>data-alis-trigger="scroll throttle:200ms"</code></p>
+
+    <div id="scroll-container" 
+         style="height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px;"
+         data-alis-get="/api/scroll-position"
+         data-alis-trigger="scroll throttle:200ms"
+         data-alis-target="#scroll-result"
+         data-alis-collect="none">
+      <div style="height: 800px; padding: 1rem;">
+        <p>Scroll me! Position updates are throttled to 200ms.</p>
+        <p style="margin-top: 600px;">Keep scrolling...</p>
+      </div>
+    </div>
+
+    <div id="scroll-result" class="panel" style="margin-top: 1rem;">
+      Scroll position: 0
+    </div>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+  <script>
+    ALIS.init();
+
+    // Track request count for demo
+    let requestCount = 0;
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      if (args[0]?.includes?.('/api/search')) {
+        requestCount++;
+        document.getElementById('request-counter').textContent = requestCount;
+      }
+      return originalFetch.apply(this, args);
+    };
+  </script>
+</body>
+</html>
+

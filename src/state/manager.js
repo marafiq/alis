@@ -1,5 +1,5 @@
 import { captureState } from './capture.js';
-import { applyEffects } from './apply.js';
+import { applyEffects, parseIndicator } from './apply.js';
 import { restoreState } from './restore.js';
 
 /**
@@ -8,6 +8,7 @@ import { restoreState } from './restore.js';
  */
 export function createStateManager(element, config = {}) {
   const captured = captureState(element);
+  const { selector } = config.indicator ? parseIndicator(config.indicator) : { selector: '' };
 
   return {
     apply() {
@@ -15,6 +16,13 @@ export function createStateManager(element, config = {}) {
     },
     restore() {
       restoreState(element, captured);
+      // Re-hide indicator element if we showed it
+      if (selector) {
+        const indicatorEl = document.querySelector(selector);
+        if (indicatorEl) {
+          indicatorEl.setAttribute('hidden', '');
+        }
+      }
     }
   };
 }

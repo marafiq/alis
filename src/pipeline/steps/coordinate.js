@@ -37,9 +37,10 @@ export function coordinateStep(ctx) {
 /**
  * @param {import('../context.js').PipelineContext} ctx
  */
-export function completeCoordinate(ctx) {
+export function coordinateCleanupStep(ctx) {
   if (ctx.element && ACTIVE_REQUESTS.get(ctx.element) === ctx.id) {
     ACTIVE_REQUESTS.delete(ctx.element);
   }
+  return ctx;
 }
 

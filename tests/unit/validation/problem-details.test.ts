@@ -16,7 +16,7 @@ describe('validation/problem-details', () => {
       }
     });
 
-    const parsed = details as any;
+    const parsed = details as { errors: Record<string, string[]> };
     expect(parsed.errors.email).toEqual(['Required']);
     expect(parsed.errors.name).toEqual(['Too short']);
   });

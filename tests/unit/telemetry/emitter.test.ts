@@ -31,10 +31,12 @@ describe('telemetry/emitter', () => {
   });
 
   it('validates adapter structure', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => setAdapter(null as any)).toThrow(TypeError);
   });
 
   it('rejects unknown levels', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(() => setLevel('verbose' as any)).toThrow();
   });
 

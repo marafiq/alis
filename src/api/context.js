@@ -1,5 +1,5 @@
 import { createContext } from '../pipeline/context.js';
-import { getAllAttributes } from '../utils/attribute-reader.js';
+import { getAllAttributes, getMethodAndUrl } from '../utils/attribute-reader.js';
 import { executeConfirm } from '../confirm/registry.js';
 import { executeElementConfirm } from '../confirm/element.js';
 
@@ -35,6 +35,16 @@ export function buildConfigFromAttributes(element) {
   if (!element) return {};
   const attrs = getAllAttributes(element);
   const config = /** @type {Record<string, unknown>} */ ({});
+  
+  // Extract URL and method from element (form action/method or data-alis-{method})
+  try {
+    const { method, url } = getMethodAndUrl(element);
+    config.method = method;
+    config.url = url;
+  } catch {
+    // Element might not have method/url attributes yet (will be validated later)
+  }
+  
   if (attrs.target) config.target = attrs.target;
   if (attrs.collect) config.collect = attrs.collect;
   if (attrs.indicator) config.indicator = attrs.indicator;

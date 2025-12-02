@@ -8,7 +8,8 @@ import { extractData } from './context.js';
  */
 export function request(options = {}, globalConfig = {}) {
   const config = { ...globalConfig, ...options };
-  const ctx = createContext(null, { config });
+  const element = options.element instanceof Element ? options.element : null;
+  const ctx = createContext(element, { config });
   const data = extractData(options);
   if (data !== undefined) {
     ctx.collect = { source: null, data };

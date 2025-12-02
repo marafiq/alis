@@ -4,7 +4,7 @@ import { from as fromApi } from './api/from.js';
 import { setupDelegation } from './trigger/delegation.js';
 import { registerConfirm } from './confirm/registry.js';
 
-const VERSION = '0.0.0-dev';
+const VERSION = '0.0.1';
 /** @type {Record<string, unknown>} */
 let globalConfig = {};
 
@@ -56,15 +56,35 @@ const ALIS = {
 };
 
 /**
+ * Deep clone a value, preserving functions (which can't be cloned by structuredClone)
  * @template T
  * @param {T} value
  * @returns {T}
  */
 function structuredCloneSafe(value) {
-  if (typeof structuredClone === 'function') {
-    return structuredClone(value);
+  if (value === null || typeof value !== 'object') {
+    return value;
   }
-  return JSON.parse(JSON.stringify(value));
+  
+  // Handle arrays
+  if (Array.isArray(value)) {
+    return /** @type {T} */ (value.map(item => structuredCloneSafe(item)));
+  }
+  
+  // Handle objects - shallow clone to preserve functions
+  const result = /** @type {Record<string, unknown>} */ ({});
+  for (const key of Object.keys(value)) {
+    const val = /** @type {Record<string, unknown>} */ (value)[key];
+    if (typeof val === 'function') {
+      // Keep functions as-is (can't clone them)
+      result[key] = val;
+    } else if (val !== null && typeof val === 'object') {
+      result[key] = structuredCloneSafe(val);
+    } else {
+      result[key] = val;
+    }
+  }
+  return /** @type {T} */ (result);
 }
 
 export { ALIS };

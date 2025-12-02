@@ -20,7 +20,7 @@ describe('pipeline/steps/response-parse', () => {
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
     const result = await responseParseStep(ctx);
-    const validation = result.validation as any;
+    const validation = result.validation as NonNullable<typeof result.validation>;
     expect(validation.errors.email).toEqual(['Required']);
   });
 });

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ALIS Demo: Comprehensive Form</title>
+  <link rel="stylesheet" href="../assets/demo.css">
+  <style>
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+    .form-group label { font-weight: 600; }
+    .form-group input, .form-group select, .form-group textarea { padding: 0.5rem; }
+    .validation-error { color: #dc3545; font-size: 0.875rem; }
+    .radio-group, .checkbox-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .radio-group label, .checkbox-group label { font-weight: normal; display: flex; align-items: center; gap: 0.25rem; }
+  </style>
+</head>
+<body>
+  <main class="demo-card">
+    <h1>Comprehensive Form Demo</h1>
+    <p>Tests all standard HTML input types with ALIS.</p>
+
+    <form id="comprehensive-form" 
+          data-alis 
+          data-alis-target="#form-result" 
+          action="/api/comprehensive" 
+          method="post">
+      
+      <div class="form-grid">
+        <!-- Text Inputs -->
+        <div class="form-group">
+          <label for="username">Username (text)</label>
+          <input type="text" id="username" name="username" value="johndoe" data-val="true" data-val-required="Username is required">
+          <span data-valmsg-for="username" class="validation-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" value="john@example.com" data-val="true" data-val-email="Invalid email format">
+          <span data-valmsg-for="email" class="validation-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" value="secret123">
+          <span data-valmsg-for="password" class="validation-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="age">Age (number)</label>
+          <input type="number" id="age" name="age" value="30" min="0" max="150">
+          <span data-valmsg-for="age" class="validation-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="salary">Salary (range)</label>
+          <input type="range" id="salary" name="salary" value="50000" min="0" max="200000">
+          <span data-valmsg-for="salary" class="validation-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="birthdate">Birth Date</label>
+          <input type="date" id="birthdate" name="birthdate" value="1990-05-15">
+          <span data-valmsg-for="birthdate" class="validation-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="meeting-time">Meeting Time</label>
+          <input type="time" id="meeting-time" name="meetingTime" value="14:30">
+        </div>
+
+        <div class="form-group">
+          <label for="appointment">Appointment (datetime-local)</label>
+          <input type="datetime-local" id="appointment" name="appointment" value="2024-12-25T10:00">
+        </div>
+
+        <div class="form-group">
+          <label for="website">Website (url)</label>
+          <input type="url" id="website" name="website" value="https://example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone (tel)</label>
+          <input type="tel" id="phone" name="phone" value="+1-555-123-4567">
+        </div>
+
+        <div class="form-group">
+          <label for="color">Favorite Color</label>
+          <input type="color" id="color" name="favoriteColor" value="#3498db">
+        </div>
+
+        <div class="form-group">
+          <label for="search">Search (search)</label>
+          <input type="search" id="search" name="searchQuery" value="test query">
+        </div>
+
+        <!-- Hidden -->
+        <input type="hidden" name="hiddenField" value="secret-value">
+        <input type="hidden" name="userId" value="12345">
+
+        <!-- Select -->
+        <div class="form-group">
+          <label for="country">Country (select)</label>
+          <select id="country" name="country">
+            <option value="">-- Select --</option>
+            <option value="us">United States</option>
+            <option value="uk" selected>United Kingdom</option>
+            <option value="ca">Canada</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="languages">Languages (multi-select)</label>
+          <select id="languages" name="languages" multiple>
+            <option value="en" selected>English</option>
+            <option value="es" selected>Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+          </select>
+        </div>
+
+        <!-- Textarea -->
+        <div class="form-group" style="grid-column: span 2;">
+          <label for="bio">Bio (textarea)</label>
+          <textarea id="bio" name="bio" rows="3">This is my biography.</textarea>
+        </div>
+
+        <!-- Radio -->
+        <div class="form-group">
+          <label>Gender (radio)</label>
+          <div class="radio-group">
+            <label><input type="radio" name="gender" value="male" checked> Male</label>
+            <label><input type="radio" name="gender" value="female"> Female</label>
+            <label><input type="radio" name="gender" value="other"> Other</label>
+          </div>
+        </div>
+
+        <!-- Checkboxes -->
+        <div class="form-group">
+          <label>Interests (checkboxes)</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="interests" value="sports" checked> Sports</label>
+            <label><input type="checkbox" name="interests" value="music" checked> Music</label>
+            <label><input type="checkbox" name="interests" value="reading"> Reading</label>
+            <label><input type="checkbox" name="interests" value="gaming"> Gaming</label>
+          </div>
+        </div>
+
+        <!-- Single Checkbox -->
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="newsletter" value="yes" checked>
+            Subscribe to newsletter
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="terms" value="accepted">
+            Accept Terms & Conditions
+          </label>
+          <span data-valmsg-for="terms" class="validation-error"></span>
+        </div>
+
+        <!-- Disabled field (should NOT be collected) -->
+        <div class="form-group">
+          <label for="disabled-field">Disabled Field</label>
+          <input type="text" id="disabled-field" name="disabledField" value="should-not-appear" disabled>
+        </div>
+      </div>
+
+      <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+        <button type="submit">Submit Form</button>
+        <button type="reset">Reset</button>
+      </div>
+    </form>
+
+    <div id="form-result" class="panel" style="margin-top: 1rem;">
+      Awaiting submission...
+    </div>
+  </main>
+
+  <script src="../../dist/alis.js"></script>
+  <script>
+    ALIS.init();
+  </script>
+</body>
+</html>
+
