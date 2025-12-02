@@ -1,17 +1,11 @@
 /**
  * ALIS Demo Server Integration Tests
  * Tests the real demo server features
- * 
- * These tests require the demo server to be running:
- * cd demo-server && bun run start
- * 
- * SKIPPED by default - run manually with demo server running
  */
 
 import { test, expect } from '@playwright/test';
 
-// Skip all tests - these require the demo server which runs separately
-test.skip();
+const DEMO_URL = 'http://localhost:3333';
 
 test.describe('Demo Server - Debounced Search', () => {
   test('should maintain focus while typing in search input', async ({ page }) => {

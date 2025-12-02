@@ -4,6 +4,18 @@
  */
 
 // ========================================
+// Request Counter
+// ========================================
+
+let requestCount = 0;
+let successCount = 0;
+
+function updateStats() {
+  document.getElementById('request-count').textContent = requestCount;
+  document.getElementById('success-count').textContent = successCount;
+}
+
+// ========================================
 // Toast System
 // ========================================
 
@@ -14,12 +26,7 @@ const Toast = {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
-    const icons = {
-      success: '✓',
-      error: '✕',
-      info: 'ℹ',
-      warning: '⚠'
-    };
+    const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
     
     toast.innerHTML = `
       <span class="toast-icon">${icons[type] || icons.info}</span>
@@ -51,9 +58,7 @@ const Modal = {
   body: document.getElementById('modal-body'),
   
   show(content = '') {
-    if (content) {
-      this.body.innerHTML = content;
-    }
+    if (content) this.body.innerHTML = content;
     this.overlay.classList.add('show');
   },
   
@@ -63,14 +68,25 @@ const Modal = {
 };
 
 window.Modal = Modal;
+window.closeModal = () => Modal.hide();
 
-function closeModal() {
-  Modal.hide();
-}
+// Close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
 
-function showAddUserModal() {
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ========================================
+// Add User Modal
+// ========================================
+
+window.showAddUserModal = function() {
   Modal.body.innerHTML = `
-    <h3>👤 Add New User</h3>
+    <h3>➕ Add New User</h3>
     <form id="add-user-form" 
           data-alis 
           data-alis-target="#add-user-result" 
@@ -78,126 +94,211 @@ function showAddUserModal() {
           data-alis-on-after="handleAddUserResult"
           action="/api/users" 
           method="post">
-      <div class="form-group">
-        <label for="new-name">Full Name</label>
-        <input type="text" id="new-name" name="name" class="input" placeholder="John Doe" 
-               data-val="true" data-val-required="Name is required">
-        <span data-valmsg-for="name" class="field-validation-valid"></span>
-      </div>
-      <div class="form-group">
-        <label for="new-email">Email Address</label>
-        <input type="email" id="new-email" name="email" class="input" placeholder="john@example.com"
-               data-val="true" data-val-required="Email is required" data-val-email="Invalid email format">
-        <span data-valmsg-for="email" class="field-validation-valid"></span>
-      </div>
-      <div class="form-group">
-        <label for="new-role">Role</label>
-        <select id="new-role" name="role" class="select"
-                data-val="true" data-val-required="Role is required">
-          <option value="">Choose a role...</option>
-          <option value="Admin">👑 Admin</option>
-          <option value="Editor">✏️ Editor</option>
-          <option value="Viewer">👁️ Viewer</option>
-        </select>
-        <span data-valmsg-for="role" class="field-validation-valid"></span>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Full Name</label>
+          <input type="text" name="name" class="input" placeholder="John Doe" autofocus>
+          <span data-valmsg-for="name" class="field-error"></span>
+        </div>
+        <div class="form-group full-width">
+          <label>Email Address</label>
+          <input type="email" name="email" class="input" placeholder="john@example.com">
+          <span data-valmsg-for="email" class="field-error"></span>
+        </div>
+        <div class="form-group full-width">
+          <label>Role</label>
+          <select name="role" class="input">
+            <option value="">Select role...</option>
+            <option value="Admin">Admin</option>
+            <option value="Editor">Editor</option>
+            <option value="Viewer">Viewer</option>
+          </select>
+          <span data-valmsg-for="role" class="field-error"></span>
+        </div>
       </div>
       <div id="add-user-result"></div>
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">
-          <span class="btn-icon">➕</span>
-          Create User
-        </button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create User</button>
       </div>
     </form>
   `;
   Modal.show();
-  // Focus the first input after modal opens
-  setTimeout(() => document.getElementById('new-name')?.focus(), 100);
-}
-
-// Hook handler for add user result - auto close modal and refresh on success
-window.handleAddUserResult = function(ctx) {
-  if (ctx.success && ctx.body?.success) {
-    // Success - close modal, show toast, refresh table
-    closeModal();
-    Toast.success(ctx.body.message || 'User created successfully!');
-    // Refresh users table
-    setTimeout(() => {
-      document.getElementById('refresh-users')?.click();
-    }, 100);
-  }
-  // On validation error, modal stays open and errors are shown via data-valmsg-for
+  setTimeout(() => document.querySelector('#add-user-form input')?.focus(), 100);
 };
 
-// Close modal on overlay click
-document.getElementById('modal-overlay').addEventListener('click', (e) => {
-  if (e.target === e.currentTarget) {
+window.handleAddUserResult = function(ctx) {
+  if (ctx.success && ctx.body?.success) {
     closeModal();
+    Toast.success(ctx.body.message || 'User created successfully!');
+    setTimeout(() => document.getElementById('refresh-users')?.click(), 100);
   }
-});
+};
 
-// Close modal on Escape key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
+// ========================================
+// Edit User Modal
+// ========================================
+
+window.showEditUserModal = function(id, name, email, role) {
+  Modal.body.innerHTML = `
+    <h3>✏️ Edit User</h3>
+    <form data-alis 
+          data-alis-target="#edit-user-result" 
+          data-alis-swap="innerHTML"
+          data-alis-on-after="handleEditUserResult"
+          action="/api/users/${id}" 
+          method="put">
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Full Name</label>
+          <input type="text" name="name" class="input" value="${name}">
+          <span data-valmsg-for="name" class="field-error"></span>
+        </div>
+        <div class="form-group full-width">
+          <label>Email Address</label>
+          <input type="email" name="email" class="input" value="${email}">
+          <span data-valmsg-for="email" class="field-error"></span>
+        </div>
+        <div class="form-group full-width">
+          <label>Role</label>
+          <select name="role" class="input">
+            <option value="Admin" ${role === 'Admin' ? 'selected' : ''}>Admin</option>
+            <option value="Editor" ${role === 'Editor' ? 'selected' : ''}>Editor</option>
+            <option value="Viewer" ${role === 'Viewer' ? 'selected' : ''}>Viewer</option>
+          </select>
+        </div>
+      </div>
+      <div id="edit-user-result"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  `;
+  Modal.show();
+};
+
+window.handleEditUserResult = function(ctx) {
+  if (ctx.success && ctx.body?.success) {
     closeModal();
+    Toast.success('User updated successfully!');
+    setTimeout(() => document.getElementById('refresh-users')?.click(), 100);
   }
-});
+};
 
 // ========================================
 // Theme Toggle
 // ========================================
 
-function toggleTheme() {
+window.toggleTheme = function() {
   const html = document.documentElement;
-  const currentTheme = html.getAttribute('data-theme');
-  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-  html.setAttribute('data-theme', newTheme);
+  const current = html.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
   
-  // Update icon
   const icon = document.querySelector('.theme-icon');
-  icon.textContent = newTheme === 'light' ? '☀️' : '🌙';
+  const text = document.querySelector('.theme-toggle span:last-child');
+  if (icon) icon.textContent = next === 'light' ? '☀️' : '🌙';
+  if (text) text.textContent = next === 'light' ? 'Light Mode' : 'Dark Mode';
   
-  // Save preference
-  localStorage.setItem('theme', newTheme);
-}
+  localStorage.setItem('theme', next);
+};
 
 // Load saved theme
 const savedTheme = localStorage.getItem('theme');
 if (savedTheme) {
   document.documentElement.setAttribute('data-theme', savedTheme);
-  const icon = document.querySelector('.theme-icon');
-  if (icon) icon.textContent = savedTheme === 'light' ? '☀️' : '🌙';
 }
 
 // ========================================
 // Confirm Handlers
 // ========================================
 
-// Register delete user confirmation
 ALIS.confirm.register('deleteUser', async (ctx) => {
   return new Promise((resolve) => {
     Modal.body.innerHTML = `
-      <h3>⚠️ Confirm Delete</h3>
-      <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
+      <h3>⚠️ Delete User</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">
         Are you sure you want to delete this user? This action cannot be undone.
       </p>
       <div class="form-actions">
-        <button class="btn btn-secondary" id="cancel-delete">Cancel</button>
-        <button class="btn btn-danger" id="confirm-delete">Delete User</button>
+        <button class="btn btn-ghost" id="cancel-delete">Cancel</button>
+        <button class="btn btn-danger" id="confirm-delete">Delete</button>
       </div>
     `;
     Modal.show();
     
-    document.getElementById('cancel-delete').onclick = () => {
-      closeModal();
-      resolve(false);
-    };
+    document.getElementById('cancel-delete').onclick = () => { closeModal(); resolve(false); };
+    document.getElementById('confirm-delete').onclick = () => { closeModal(); resolve(true); };
+  });
+});
+
+ALIS.confirm.register('customConfirm', async (ctx) => {
+  return new Promise((resolve) => {
+    Modal.body.innerHTML = `
+      <h3>🔔 Custom Confirmation</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">
+        This is a custom confirmation modal registered with ALIS.confirm.register()
+      </p>
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="cancel-custom">Cancel</button>
+        <button class="btn btn-primary" id="confirm-custom">Proceed</button>
+      </div>
+    `;
+    Modal.show();
     
-    document.getElementById('confirm-delete').onclick = () => {
-      closeModal();
-      resolve(true);
-    };
+    document.getElementById('cancel-custom').onclick = () => { closeModal(); resolve(false); };
+    document.getElementById('confirm-custom').onclick = () => { closeModal(); resolve(true); };
+  });
+});
+
+// ========================================
+// Hook Demos
+// ========================================
+
+window.demoBeforeHook = function(ctx) {
+  console.log('[onBefore Hook]', 'URL:', ctx.config.url, 'Method:', ctx.config.method);
+  Toast.info('onBefore hook executed! Check console.');
+  return true; // Return false to cancel request
+};
+
+window.demoAfterHook = function(ctx) {
+  console.log('[onAfter Hook]', 'Success:', ctx.success, 'Body:', ctx.body);
+  if (ctx.success) {
+    Toast.success('onAfter hook: Request succeeded!');
+  } else {
+    Toast.error('onAfter hook: Request failed!');
+  }
+};
+
+// ========================================
+// Custom Component Value Functions
+// ========================================
+
+window.getSliderValue = function(element) {
+  const input = element.querySelector('input[type="range"]');
+  return input ? input.value : '0';
+};
+
+// Update slider display
+document.addEventListener('DOMContentLoaded', () => {
+  const slider = document.getElementById('slider-input');
+  if (slider) {
+    slider.addEventListener('input', (e) => {
+      const display = e.target.closest('.custom-slider').querySelector('.slider-value');
+      if (display) display.textContent = e.target.value;
+    });
+  }
+});
+
+// ========================================
+// Navigation Active State
+// ========================================
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
   });
 });
 
@@ -206,21 +307,26 @@ ALIS.confirm.register('deleteUser', async (ctx) => {
 // ========================================
 
 ALIS.init({
-  // Global hooks
   onBefore: [
     (ctx) => {
-      console.log('[ALIS] Starting request:', ctx.config.method, ctx.config.url);
+      requestCount++;
+      updateStats();
+      console.log(`[ALIS] Request #${requestCount}:`, ctx.config.method?.toUpperCase(), ctx.config.url);
       return true;
     }
   ],
   
   onAfter: [
     (ctx) => {
-      console.log('[ALIS] Request complete:', ctx.config.url, ctx.success ? '✓' : '✗');
+      if (ctx.success) {
+        successCount++;
+        updateStats();
+      }
+      console.log(`[ALIS] Complete:`, ctx.config.url, ctx.success ? '✓' : '✗');
       
-      // Handle network/fetch errors
+      // Show error toast for network errors
       if (ctx.error && !ctx.body?.errors) {
-        Toast.error(ctx.error.message || 'An error occurred');
+        Toast.error(ctx.error.message || 'Request failed');
       }
     }
   ]
@@ -231,17 +337,13 @@ ALIS.init({
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Load users on page load
+  // Load users table
   setTimeout(() => {
     document.getElementById('refresh-users')?.click();
-  }, 500);
+  }, 300);
 });
 
-// ========================================
-// Filter Change Handlers
-// ========================================
-
-// Auto-refresh when filters change
+// Auto-refresh on filter change
 document.getElementById('filter-role')?.addEventListener('change', () => {
   document.getElementById('refresh-users')?.click();
 });
@@ -251,29 +353,16 @@ document.getElementById('filter-status')?.addEventListener('change', () => {
 });
 
 // ========================================
-// Smooth Scroll for Nav Links
+// Console Banner
 // ========================================
-
-document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', (e) => {
-    const href = link.getAttribute('href');
-    if (href?.startsWith('#')) {
-      e.preventDefault();
-      const target = document.querySelector(href);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  });
-});
 
 console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║   ⚡ ALIS Demo Application Loaded                         ║
+║   ⚡ ALIS Demo Application                                ║
 ║                                                           ║
-║   Open DevTools to see ALIS activity in the console.      ║
+║   Watch the console for request/response activity.        ║
+║   All requests are handled by ALIS declaratively!         ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
 `);
-

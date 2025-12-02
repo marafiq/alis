@@ -112,6 +112,15 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     const query = url.searchParams.get("q") || "";
     await delay(200); // Simulate network delay
     
+    if (!query.trim()) {
+      return htmlResponse(`
+        <div class="empty-state">
+          <span class="empty-icon">💡</span>
+          <span>Start typing to see live search results</span>
+        </div>
+      `);
+    }
+    
     const results = [...users, ...products]
       .filter(item => 
         item.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -120,15 +129,23 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
       .slice(0, 5);
     
     if (results.length === 0) {
-      return htmlResponse(`<div class="search-empty">No results for "${query}"</div>`);
+      return htmlResponse(`
+        <div class="empty-state">
+          <span class="empty-icon">🔍</span>
+          <span>No results for "${query}"</span>
+        </div>
+      `);
     }
     
-    const html = results.map(item => `
-      <div class="search-result" data-id="${item.id}">
-        <span class="search-result-name">${item.name}</span>
-        <span class="search-result-type">${"email" in item ? "User" : "Product"}</span>
-      </div>
-    `).join("");
+    const html = results.map(item => {
+      const isUser = "email" in item;
+      return `
+        <div class="search-result-item">
+          <span class="result-name">${item.name}</span>
+          <span class="result-type ${isUser ? 'user' : 'product'}">${isUser ? "User" : "Product"}</span>
+        </div>
+      `;
+    }).join("");
     
     return htmlResponse(html);
   },
@@ -144,26 +161,30 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     if (role) filtered = filtered.filter(u => u.role === role);
     
     const html = filtered.map(user => `
-      <tr class="user-row" data-user-id="${user.id}">
+      <tr>
         <td>${user.id}</td>
         <td>${user.name}</td>
         <td>${user.email}</td>
-        <td><span class="badge badge-${user.role.toLowerCase()}">${user.role}</span></td>
-        <td><span class="status status-${user.status}">${user.status}</span></td>
+        <td><span class="role-badge role-${user.role.toLowerCase()}">${user.role}</span></td>
+        <td><span class="status-badge status-${user.status}">${user.status}</span></td>
         <td>
-          <button class="btn btn-sm btn-edit" 
-                  data-alis-get="/api/users/${user.id}/edit" 
-                  data-alis-target="#modal-body"
-                  data-alis-swap="innerHTML">Edit</button>
-          <button class="btn btn-sm btn-danger" 
-                  data-alis-delete="/api/users/${user.id}" 
-                  data-alis-target="#users-table"
-                  data-alis-confirm="deleteUser">Delete</button>
+          <div class="action-btns">
+            <button class="action-btn" 
+                    onclick="showEditUserModal(${user.id}, '${user.name}', '${user.email}', '${user.role}')">
+              Edit
+            </button>
+            <button class="action-btn delete" 
+                    data-alis-delete="/api/users/${user.id}" 
+                    data-alis-target="#users-table"
+                    data-alis-confirm="deleteUser">
+              Delete
+            </button>
+          </div>
         </td>
       </tr>
     `).join("");
     
-    return htmlResponse(html || '<tr><td colspan="6" class="empty">No users found</td></tr>');
+    return htmlResponse(html || '<tr><td colspan="6" class="loading-cell">No users found</td></tr>');
   },
 
   "POST /api/users": async (req) => {
@@ -302,26 +323,30 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     
     // Return updated table
     const html = users.map(user => `
-      <tr class="user-row" data-user-id="${user.id}">
+      <tr>
         <td>${user.id}</td>
         <td>${user.name}</td>
         <td>${user.email}</td>
-        <td><span class="badge badge-${user.role.toLowerCase()}">${user.role}</span></td>
-        <td><span class="status status-${user.status}">${user.status}</span></td>
+        <td><span class="role-badge role-${user.role.toLowerCase()}">${user.role}</span></td>
+        <td><span class="status-badge status-${user.status}">${user.status}</span></td>
         <td>
-          <button class="btn btn-sm btn-edit" 
-                  data-alis-get="/api/users/${user.id}/edit" 
-                  data-alis-target="#modal-body"
-                  data-alis-swap="innerHTML">Edit</button>
-          <button class="btn btn-sm btn-danger" 
-                  data-alis-delete="/api/users/${user.id}" 
-                  data-alis-target="#users-table"
-                  data-alis-confirm="deleteUser">Delete</button>
+          <div class="action-btns">
+            <button class="action-btn" 
+                    onclick="showEditUserModal(${user.id}, '${user.name}', '${user.email}', '${user.role}')">
+              Edit
+            </button>
+            <button class="action-btn delete" 
+                    data-alis-delete="/api/users/${user.id}" 
+                    data-alis-target="#users-table"
+                    data-alis-confirm="deleteUser">
+              Delete
+            </button>
+          </div>
         </td>
       </tr>
     `).join("");
     
-    return htmlResponse(html || '<tr><td colspan="6" class="empty">No users found</td></tr>');
+    return htmlResponse(html || '<tr><td colspan="6" class="loading-cell">No users found</td></tr>');
   },
 
   // Products with filtering
@@ -423,7 +448,86 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     if (Math.random() < 0.5) {
       return new Response("Server Error", { status: 500 });
     }
-    return htmlResponse('<div class="success">Success! (50% chance)</div>');
+    return htmlResponse(`
+      <div class="success-message">
+        <span class="success-icon">✓</span>
+        <span>Success! Request completed after retry.</span>
+      </div>
+    `);
+  },
+
+  // Validation demo endpoint
+  "POST /api/validate-demo": async (req) => {
+    await delay(300);
+    const body = parseBody(await req.text(), req.headers.get("content-type") || "");
+    
+    const errors: Record<string, string[]> = {};
+    
+    if (!body.username?.trim()) errors.username = ["Username is required"];
+    else if (body.username.length < 3) errors.username = ["Username must be at least 3 characters"];
+    
+    if (!body.email?.trim()) errors.email = ["Email is required"];
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) errors.email = ["Invalid email format"];
+    
+    if (body.age) {
+      const age = parseInt(body.age);
+      if (isNaN(age) || age < 18 || age > 120) {
+        errors.age = ["Age must be between 18 and 120"];
+      }
+    }
+    
+    if (!body.password?.trim()) errors.password = ["Password is required"];
+    else if (body.password.length < 8) errors.password = ["Password must be at least 8 characters"];
+    
+    if (Object.keys(errors).length > 0) {
+      return problemDetails("Validation failed", errors);
+    }
+    
+    return htmlResponse(`
+      <div class="success-message">
+        <span class="success-icon">✓</span>
+        <span>All fields validated successfully!</span>
+      </div>
+    `);
+  },
+
+  // Demo delete endpoint
+  "DELETE /api/demo-delete": async () => {
+    await delay(300);
+    return htmlResponse(`
+      <div class="success-message">
+        <span class="success-icon">✓</span>
+        <span>Item deleted successfully!</span>
+      </div>
+    `);
+  },
+
+  // Hook demo endpoint
+  "GET /api/hook-demo": async () => {
+    await delay(200);
+    return htmlResponse(`
+      <div class="success-message">
+        <span class="success-icon">✓</span>
+        <span>Hook demo completed at ${new Date().toLocaleTimeString()}</span>
+      </div>
+    `);
+  },
+
+  // Custom values demo endpoint
+  "POST /api/custom-values": async (req) => {
+    await delay(200);
+    const body = parseBody(await req.text(), req.headers.get("content-type") || "");
+    
+    return htmlResponse(`
+      <div class="success-message">
+        <span class="success-icon">✓</span>
+        <div>
+          <strong>Received values:</strong><br>
+          Slider: ${body.sliderValue || 'N/A'}<br>
+          Hidden: ${body.hiddenValue || 'N/A'}
+        </div>
+      </div>
+    `);
   },
 };
 
