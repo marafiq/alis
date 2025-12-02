@@ -75,6 +75,22 @@ function problemDetails(title: string, errors: Record<string, string[]>, status 
   });
 }
 
+function validationErrorHtml(title: string, errors: Record<string, string[]>) {
+  const errorList = Object.entries(errors)
+    .map(([field, messages]) => `<li><strong>${field}:</strong> ${messages.join(', ')}</li>`)
+    .join('');
+  
+  return htmlResponse(`
+    <div class="validation-summary">
+      <div class="validation-icon">⚠️</div>
+      <div class="validation-content">
+        <h4>${title}</h4>
+        <ul>${errorList}</ul>
+      </div>
+    </div>
+  `, 200); // Return 200 so swap works, errors shown in UI
+}
+
 function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -163,7 +179,7 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     if (!body.role) errors.role = ["Role is required"];
     
     if (Object.keys(errors).length > 0) {
-      return problemDetails("Validation Failed", errors);
+      return validationErrorHtml("Please fix the following errors", errors);
     }
     
     const user: User = {
@@ -176,11 +192,16 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     };
     users.push(user);
     
-    return jsonResponse({ 
-      success: true, 
-      message: `User "${user.name}" created successfully`,
-      user 
-    });
+    return htmlResponse(`
+      <div class="success-result">
+        <div class="success-icon">✓</div>
+        <h4>User Created!</h4>
+        <p><strong>${user.name}</strong> has been added successfully.</p>
+        <button class="btn btn-primary" onclick="closeModal(); document.getElementById('refresh-users')?.click();">
+          Close & Refresh
+        </button>
+      </div>
+    `);
   },
 
   "GET /api/users/:id/edit": async (req, url) => {
@@ -381,13 +402,16 @@ const routes: Record<string, (req: Request, url: URL) => Promise<Response> | Res
     if (!body.agree) errors.agree = ["You must agree to the terms"];
     
     if (Object.keys(errors).length > 0) {
-      return problemDetails("Please fix the errors below", errors);
+      return validationErrorHtml("Please fix the following errors", errors);
     }
     
-    return jsonResponse({
-      success: true,
-      message: "Thank you! Your message has been sent successfully."
-    });
+    return htmlResponse(`
+      <div class="success-result">
+        <div class="success-icon">✓</div>
+        <h4>Message Sent!</h4>
+        <p>Thank you, ${body.name}! We'll get back to you at ${body.email} soon.</p>
+      </div>
+    `);
   },
 
   // Slow endpoint for testing indicators

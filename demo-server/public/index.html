@@ -85,12 +85,14 @@
                  autocomplete="off"
                  data-alis-get="/api/search"
                  data-alis-trigger="input delay:300ms"
-                 data-alis-target="#search-results"
+                 data-alis-target="#search-results-content"
                  data-alis-collect="self"
                  data-alis-indicator="is-loading">
         </div>
         <div id="search-results" class="search-results">
-          <div class="search-placeholder">Start typing to see results...</div>
+          <div id="search-results-content">
+            <div class="search-placeholder">Start typing to see results...</div>
+          </div>
         </div>
       </div>
     </section>
@@ -208,27 +210,26 @@
     <section id="contact" class="section">
       <div class="section-header">
         <h2 class="section-title">📧 Contact Form</h2>
-        <p class="section-desc">Full validation with ASP.NET-style error messages.</p>
+        <p class="section-desc">Full validation with beautiful error messages.</p>
       </div>
       
       <div class="card card-form">
         <form id="contact-form" 
               data-alis 
               data-alis-target="#contact-result"
+              data-alis-swap="innerHTML"
               action="/api/contact" 
               method="post">
           <div class="form-row">
             <div class="form-group">
               <label for="contact-name">Name *</label>
               <input type="text" id="contact-name" name="name" class="input" 
-                     placeholder="Your name" data-val="true" data-val-required="Name is required">
-              <span data-valmsg-for="name" class="error-text"></span>
+                     placeholder="Your full name">
             </div>
             <div class="form-group">
               <label for="contact-email">Email *</label>
               <input type="email" id="contact-email" name="email" class="input" 
-                     placeholder="your@email.com" data-val="true" data-val-email="Invalid email">
-              <span data-valmsg-for="email" class="error-text"></span>
+                     placeholder="you@example.com">
             </div>
           </div>
           
@@ -241,14 +242,12 @@
               <option value="feedback">Feedback</option>
               <option value="other">Other</option>
             </select>
-            <span data-valmsg-for="subject" class="error-text"></span>
           </div>
           
           <div class="form-group">
             <label for="contact-message">Message *</label>
             <textarea id="contact-message" name="message" class="textarea" rows="4"
-                      placeholder="Your message..."></textarea>
-            <span data-valmsg-for="message" class="error-text"></span>
+                      placeholder="Tell us what's on your mind..."></textarea>
           </div>
           
           <div class="form-group">
@@ -256,14 +255,13 @@
               <input type="checkbox" name="agree" value="yes">
               <span>I agree to the terms and conditions *</span>
             </label>
-            <span data-valmsg-for="agree" class="error-text"></span>
           </div>
           
           <div class="form-actions">
-            <button type="reset" class="btn btn-secondary">Clear</button>
-            <button type="submit" class="btn btn-primary" data-alis-indicator="is-loading, #contact-spinner">
-              <span id="contact-spinner" class="spinner" hidden></span>
-              <span>Send Message</span>
+            <button type="reset" class="btn btn-secondary">Clear Form</button>
+            <button type="submit" class="btn btn-primary">
+              <span class="btn-icon">✉️</span>
+              Send Message
             </button>
           </div>
         </form>

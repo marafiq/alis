@@ -70,35 +70,38 @@ function closeModal() {
 
 function showAddUserModal() {
   Modal.body.innerHTML = `
-    <h3>Add New User</h3>
-    <form data-alis data-alis-target="#modal-body" action="/api/users" method="post">
+    <h3>👤 Add New User</h3>
+    <form data-alis data-alis-target="#add-user-result" data-alis-swap="innerHTML" action="/api/users" method="post">
       <div class="form-group">
-        <label for="new-name">Name *</label>
-        <input type="text" id="new-name" name="name" class="input" placeholder="Full name" required>
-        <span data-valmsg-for="name" class="error-text"></span>
+        <label for="new-name">Full Name</label>
+        <input type="text" id="new-name" name="name" class="input" placeholder="John Doe" autofocus>
       </div>
       <div class="form-group">
-        <label for="new-email">Email *</label>
-        <input type="email" id="new-email" name="email" class="input" placeholder="email@example.com" required>
-        <span data-valmsg-for="email" class="error-text"></span>
+        <label for="new-email">Email Address</label>
+        <input type="email" id="new-email" name="email" class="input" placeholder="john@example.com">
       </div>
       <div class="form-group">
-        <label for="new-role">Role *</label>
-        <select id="new-role" name="role" class="select" required>
-          <option value="">Select role...</option>
-          <option value="Admin">Admin</option>
-          <option value="Editor">Editor</option>
-          <option value="Viewer">Viewer</option>
+        <label for="new-role">Role</label>
+        <select id="new-role" name="role" class="select">
+          <option value="">Choose a role...</option>
+          <option value="Admin">👑 Admin</option>
+          <option value="Editor">✏️ Editor</option>
+          <option value="Viewer">👁️ Viewer</option>
         </select>
-        <span data-valmsg-for="role" class="error-text"></span>
       </div>
+      <div id="add-user-result"></div>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Create User</button>
+        <button type="submit" class="btn btn-primary">
+          <span class="btn-icon">➕</span>
+          Create User
+        </button>
       </div>
     </form>
   `;
   Modal.show();
+  // Focus the first input after modal opens
+  setTimeout(() => document.getElementById('new-name')?.focus(), 100);
 }
 
 // Close modal on overlay click
