@@ -1,6 +1,7 @@
 import { createContext } from '../pipeline/context.js';
 import { getAllAttributes } from '../utils/attribute-reader.js';
 import { executeConfirm } from '../confirm/registry.js';
+import { executeElementConfirm } from '../confirm/element.js';
 
 /**
  * @typedef {Record<string, unknown> & { data?: unknown }} OverrideConfig
@@ -33,7 +34,7 @@ export function createContextForElement(element, overrides = {}, globalConfig = 
 export function buildConfigFromAttributes(element) {
   if (!element) return {};
   const attrs = getAllAttributes(element);
-  const config = {};
+  const config = /** @type {Record<string, unknown>} */ ({});
   if (attrs.target) config.target = attrs.target;
   if (attrs.collect) config.collect = attrs.collect;
   if (attrs.indicator) config.indicator = attrs.indicator;
@@ -45,6 +46,11 @@ export function buildConfigFromAttributes(element) {
         ctx => executeConfirm(attrs.confirm, ctx)
       );
     config.confirm = confirmHandler;
+  } else if (element?.hasAttribute('data-alis-confirm-message')) {
+    const confirmFallback =
+      /** @param {import('../pipeline/context.js').PipelineContext} ctx */
+      (ctx) => executeElementConfirm(element, ctx);
+    config.confirm = confirmFallback;
   }
   if (attrs.trigger) config.trigger = attrs.trigger;
   return config;

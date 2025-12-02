@@ -11,7 +11,7 @@ export async function responseParseStep(ctx) {
   const contentType = ctx.response.headers.get('content-type') || '';
   const clone = ctx.response.clone();
 
-  if (contentType.includes('application/json')) {
+  if (contentType.includes('json')) {
     ctx.body = await clone.json();
     if (isProblemDetails(ctx.body)) {
       ctx.validation = parseProblemDetails(ctx.body);

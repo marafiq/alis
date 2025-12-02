@@ -6,6 +6,8 @@ const distFile = path.resolve('dist/alis.js');
 
 if (!fs.existsSync(distFile)) {
   console.log('dist/alis.js missing. Running `npm run build`...');
-  execSync('npm run build', { stdio: 'inherit' });
 }
+
+console.log('Building dist bundle via `npm run build`...');
+execSync('npm run build', { stdio: 'inherit' });
 

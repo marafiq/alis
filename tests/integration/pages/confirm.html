@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Integration Fixture – Confirm</title>
+</head>
+
+<body>
+  <button
+    data-alis
+    data-alis-delete="/api/items/1"
+    data-alis-target="confirm-result"
+    data-alis-confirm-message="Delete this item?"
+  >
+    Delete Item
+  </button>
+
+  <div id="confirm-result">Nothing deleted.</div>
+
+  <script type="module">
+    import ALIS from '/dist/alis.esm.js';
+    window.ALIS = ALIS;
+    window.__ALIS_INIT = false;
+    ALIS.init();
+    window.__ALIS_INIT = true;
+  </script>
+</body>
+
+</html>
+

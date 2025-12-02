@@ -17,7 +17,13 @@
 
   <div id="fixture-result">Awaiting response...</div>
 
-  <script src="../../../dist/alis.js"></script>
+  <script type="module">
+    import ALIS from '/dist/alis.esm.js';
+    window.ALIS = ALIS;
+    window.__ALIS_INIT = false;
+    ALIS.init();
+    window.__ALIS_INIT = true;
+  </script>
 </body>
 
 </html>
