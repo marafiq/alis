@@ -11,7 +11,7 @@ describe('trigger/finder', () => {
     document.body.appendChild(form);
 
     let found = null;
-    const handler = (event) => {
+    const handler = (event: Event) => {
       found = findTriggerElement(event);
       event.preventDefault();
     };

@@ -1,52 +1,55 @@
-const VERSION = '0.0.0-dev';
+import { request as requestApi } from './api/request.js';
+import { trigger as triggerApi } from './api/trigger.js';
+import { from as fromApi } from './api/from.js';
+import { setupDelegation } from './trigger/delegation.js';
+import { registerConfirm } from './confirm/registry.js';
 
-const noop = () => {};
+const VERSION = '0.0.0-dev';
+/** @type {Record<string, unknown>} */
+let globalConfig = {};
 
 /**
- * @typedef {{ config: Record<string, unknown>; initializedAt: number }} InitResult
+ * @param {Element} element
+ * @param {Record<string, unknown>} overrides
  */
+function handleTrigger(element, overrides = {}) {
+  return triggerApi(element, overrides, globalConfig);
+}
+
+/**
+ * @param {Record<string, unknown>} options
+ */
+function handleRequest(options = {}) {
+  return requestApi(options, globalConfig);
+}
+
+/**
+ * @param {Element} element
+ */
+function handleFrom(element) {
+  return fromApi(element, globalConfig);
+}
 
 const ALIS = {
   version: VERSION,
-  /**
-   * @param {Record<string, unknown>} config
-   * @returns {InitResult}
-   */
   init(config = {}) {
+    globalConfig = structuredCloneSafe(config);
+    setupDelegation();
     return {
-      config: structuredCloneSafe(config),
+      config: structuredCloneSafe(globalConfig),
       initializedAt: Date.now()
     };
   },
   process() {
     return 0;
   },
-  trigger() {
-    throwNotImplemented('trigger');
-  },
-  request() {
-    throwNotImplemented('request');
-  },
-  from() {
-    return {
-      execute() {
-        throwNotImplemented('from().execute');
-      }
-    };
-  },
-  abort: noop,
-  abortAll: noop,
-  _internal: {
-    noop
+  trigger: handleTrigger,
+  request: handleRequest,
+  from: handleFrom,
+  confirm: {
+    register: registerConfirm
   }
 };
-
-/**
- * @param {string} name
- */
-function throwNotImplemented(name) {
-  throw new Error(`ALIS ${name} is not implemented yet`);
-}
 
 /**
  * @template T
