@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALIS - AJAX-Like Intelligent System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/demo/public/styles.css">
+</head>
+<body>
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Modal -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <div id="modal-body" class="modal-body">
+        <!-- Modal content loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">ALIS</span>
+        <span class="logo-version">v0.0.1</span>
+      </div>
+      <nav class="nav">
+        <a href="#search" class="nav-link">Search</a>
+        <a href="#users" class="nav-link">Users</a>
+        <a href="#products" class="nav-link">Products</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <span class="theme-icon">🌙</span>
+        </button>
+        <div class="cart-icon">
+          🛒 <span id="cart-count" class="cart-badge">0</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="gradient-text">AJAX-Like</span> Intelligent System
+      </h1>
+      <p class="hero-subtitle">
+        Declarative fetch for modern web applications. 
+        No JavaScript required for common patterns.
+      </p>
+      <div class="hero-features">
+        <span class="feature-tag">🎯 Declarative</span>
+        <span class="feature-tag">⚡ Fast</span>
+        <span class="feature-tag">🔄 Auto-retry</span>
+        <span class="feature-tag">✨ Animations</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="main">
+    <!-- Search Section -->
+    <section id="search" class="section">
+      <div class="section-header">
+        <h2 class="section-title">🔍 Debounced Search</h2>
+        <p class="section-desc">Type to search users and products. Requests are debounced (300ms).</p>
+      </div>
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" 
+                 id="search-input"
+                 name="q"
+                 class="search-input"
+                 placeholder="Search users and products..."
+                 autocomplete="off"
+                 data-alis-get="/api/search"
+                 data-alis-trigger="input delay:300ms"
+                 data-alis-target="#search-results"
+                 data-alis-collect="self"
+                 data-alis-indicator="is-loading">
+        </div>
+        <div id="search-results" class="search-results">
+          <div class="search-placeholder">Start typing to see results...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Users Section -->
+    <section id="users" class="section">
+      <div class="section-header">
+        <h2 class="section-title">👥 User Management</h2>
+        <p class="section-desc">Full CRUD with validation, modals, and real-time updates.</p>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <div class="filter-bar">
+            <select id="filter-role" name="role" class="select">
+              <option value="">All Roles</option>
+              <option value="Admin">Admin</option>
+              <option value="Editor">Editor</option>
+              <option value="Viewer">Viewer</option>
+            </select>
+            <select id="filter-status" name="status" class="select">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="pending">Pending</option>
+            </select>
+            <button id="refresh-users" 
+                    class="btn btn-secondary"
+                    data-alis-get="/api/users"
+                    data-alis-target="#users-table"
+                    data-alis-collect="closest:.filter-bar"
+                    data-alis-indicator="is-loading">
+              <span class="btn-icon">🔄</span> Refresh
+            </button>
+          </div>
+          <button class="btn btn-primary" onclick="showAddUserModal()">
+            <span class="btn-icon">➕</span> Add User
+          </button>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table">
+              <tr><td colspan="6" class="loading">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="products" class="section">
+      <div class="section-header">
+        <h2 class="section-title">📦 Product Catalog</h2>
+        <p class="section-desc">Filter products using container-based collection.</p>
+      </div>
+      
+      <div class="card">
+        <div id="product-filters" class="filter-panel">
+          <div class="filter-group">
+            <label>Name</label>
+            <input type="text" name="name" class="input" placeholder="Search...">
+          </div>
+          <div class="filter-group">
+            <label>Category</label>
+            <select name="category" class="select">
+              <option value="">All</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Furniture">Furniture</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Min Price</label>
+            <input type="number" name="minPrice" class="input" placeholder="0" value="0">
+          </div>
+          <div class="filter-group">
+            <label>Max Price</label>
+            <input type="number" name="maxPrice" class="input" placeholder="1000" value="500">
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select name="status" class="select">
+              <option value="">All</option>
+              <option value="available">Available</option>
+              <option value="low">Low Stock</option>
+              <option value="out">Out of Stock</option>
+            </select>
+          </div>
+          <button class="btn btn-primary"
+                  data-alis-post="/api/products/filter"
+                  data-alis-target="#products-grid"
+                  data-alis-collect="closest:#product-filters"
+                  data-alis-indicator="is-loading">
+            <span class="btn-icon">🔍</span> Apply Filters
+          </button>
+        </div>
+        
+        <div id="products-grid" class="products-grid">
+          <div class="loading-placeholder">Click "Apply Filters" to load products</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section">
+      <div class="section-header">
+        <h2 class="section-title">📧 Contact Form</h2>
+        <p class="section-desc">Full validation with ASP.NET-style error messages.</p>
+      </div>
+      
+      <div class="card card-form">
+        <form id="contact-form" 
+              data-alis 
+              data-alis-target="#contact-result"
+              action="/api/contact" 
+              method="post">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contact-name">Name *</label>
+              <input type="text" id="contact-name" name="name" class="input" 
+                     placeholder="Your name" data-val="true" data-val-required="Name is required">
+              <span data-valmsg-for="name" class="error-text"></span>
+            </div>
+            <div class="form-group">
+              <label for="contact-email">Email *</label>
+              <input type="email" id="contact-email" name="email" class="input" 
+                     placeholder="your@email.com" data-val="true" data-val-email="Invalid email">
+              <span data-valmsg-for="email" class="error-text"></span>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="contact-subject">Subject *</label>
+            <select id="contact-subject" name="subject" class="select">
+              <option value="">Select a subject...</option>
+              <option value="general">General Inquiry</option>
+              <option value="support">Technical Support</option>
+              <option value="feedback">Feedback</option>
+              <option value="other">Other</option>
+            </select>
+            <span data-valmsg-for="subject" class="error-text"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="contact-message">Message *</label>
+            <textarea id="contact-message" name="message" class="textarea" rows="4"
+                      placeholder="Your message..."></textarea>
+            <span data-valmsg-for="message" class="error-text"></span>
+          </div>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="agree" value="yes">
+              <span>I agree to the terms and conditions *</span>
+            </label>
+            <span data-valmsg-for="agree" class="error-text"></span>
+          </div>
+          
+          <div class="form-actions">
+            <button type="reset" class="btn btn-secondary">Clear</button>
+            <button type="submit" class="btn btn-primary" data-alis-indicator="is-loading, #contact-spinner">
+              <span id="contact-spinner" class="spinner" hidden></span>
+              <span>Send Message</span>
+            </button>
+          </div>
+        </form>
+        
+        <div id="contact-result" class="form-result"></div>
+      </div>
+    </section>
+
+    <!-- Demo Features -->
+    <section id="demos" class="section">
+      <div class="section-header">
+        <h2 class="section-title">🎨 Additional Features</h2>
+        <p class="section-desc">More ALIS capabilities demonstrated.</p>
+      </div>
+      
+      <div class="demo-grid">
+        <!-- Slow Loading -->
+        <div class="demo-card">
+          <h3>⏳ Loading Indicator</h3>
+          <p>Shows loading state during slow requests (2s delay).</p>
+          <button class="btn btn-primary"
+                  data-alis-get="/api/slow"
+                  data-alis-target="#slow-result"
+                  data-alis-indicator="is-loading">
+            Load Slow Content
+          </button>
+          <div id="slow-result" class="demo-result"></div>
+        </div>
+        
+        <!-- Retry -->
+        <div class="demo-card">
+          <h3>🔄 Auto Retry</h3>
+          <p>Automatically retries on 500 errors (50% fail rate).</p>
+          <button class="btn btn-primary"
+                  data-alis-get="/api/unreliable"
+                  data-alis-target="#retry-result"
+                  data-alis-indicator="is-loading">
+            Try Unreliable Endpoint
+          </button>
+          <div id="retry-result" class="demo-result"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p>Built with ⚡ ALIS - AJAX-Like Intelligent System</p>
+      <p class="footer-links">
+        <a href="https://github.com" target="_blank">GitHub</a>
+        <span>•</span>
+        <a href="#" target="_blank">Documentation</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/dist/alis.js"></script>
+  <script src="/demo/public/app.js"></script>
+</body>
+</html>
+

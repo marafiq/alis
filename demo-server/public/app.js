@@ -1,0 +1,266 @@
+/**
+ * ALIS Demo Application
+ * Showcases all ALIS features with a real server
+ */
+
+// ========================================
+// Toast System
+// ========================================
+
+const Toast = {
+  container: document.getElementById('toast-container'),
+  
+  show(message, type = 'info', duration = 4000) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = {
+      success: '✓',
+      error: '✕',
+      info: 'ℹ',
+      warning: '⚠'
+    };
+    
+    toast.innerHTML = `
+      <span class="toast-icon">${icons[type] || icons.info}</span>
+      <span class="toast-message">${message}</span>
+    `;
+    
+    this.container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('hiding');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  },
+  
+  success(msg) { this.show(msg, 'success'); },
+  error(msg) { this.show(msg, 'error'); },
+  info(msg) { this.show(msg, 'info'); },
+  warning(msg) { this.show(msg, 'warning'); }
+};
+
+window.Toast = Toast;
+
+// ========================================
+// Modal System
+// ========================================
+
+const Modal = {
+  overlay: document.getElementById('modal-overlay'),
+  body: document.getElementById('modal-body'),
+  
+  show(content = '') {
+    if (content) {
+      this.body.innerHTML = content;
+    }
+    this.overlay.classList.add('show');
+  },
+  
+  hide() {
+    this.overlay.classList.remove('show');
+  }
+};
+
+window.Modal = Modal;
+
+function closeModal() {
+  Modal.hide();
+}
+
+function showAddUserModal() {
+  Modal.body.innerHTML = `
+    <h3>Add New User</h3>
+    <form data-alis data-alis-target="#modal-body" action="/api/users" method="post">
+      <div class="form-group">
+        <label for="new-name">Name *</label>
+        <input type="text" id="new-name" name="name" class="input" placeholder="Full name" required>
+        <span data-valmsg-for="name" class="error-text"></span>
+      </div>
+      <div class="form-group">
+        <label for="new-email">Email *</label>
+        <input type="email" id="new-email" name="email" class="input" placeholder="email@example.com" required>
+        <span data-valmsg-for="email" class="error-text"></span>
+      </div>
+      <div class="form-group">
+        <label for="new-role">Role *</label>
+        <select id="new-role" name="role" class="select" required>
+          <option value="">Select role...</option>
+          <option value="Admin">Admin</option>
+          <option value="Editor">Editor</option>
+          <option value="Viewer">Viewer</option>
+        </select>
+        <span data-valmsg-for="role" class="error-text"></span>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create User</button>
+      </div>
+    </form>
+  `;
+  Modal.show();
+}
+
+// Close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    closeModal();
+  }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeModal();
+  }
+});
+
+// ========================================
+// Theme Toggle
+// ========================================
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const currentTheme = html.getAttribute('data-theme');
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', newTheme);
+  
+  // Update icon
+  const icon = document.querySelector('.theme-icon');
+  icon.textContent = newTheme === 'light' ? '☀️' : '🌙';
+  
+  // Save preference
+  localStorage.setItem('theme', newTheme);
+}
+
+// Load saved theme
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  const icon = document.querySelector('.theme-icon');
+  if (icon) icon.textContent = savedTheme === 'light' ? '☀️' : '🌙';
+}
+
+// ========================================
+// Confirm Handlers
+// ========================================
+
+// Register delete user confirmation
+ALIS.confirm.register('deleteUser', async (ctx) => {
+  return new Promise((resolve) => {
+    Modal.body.innerHTML = `
+      <h3>⚠️ Confirm Delete</h3>
+      <p style="color: var(--text-secondary); margin-bottom: var(--spacing-lg);">
+        Are you sure you want to delete this user? This action cannot be undone.
+      </p>
+      <div class="form-actions">
+        <button class="btn btn-secondary" id="cancel-delete">Cancel</button>
+        <button class="btn btn-danger" id="confirm-delete">Delete User</button>
+      </div>
+    `;
+    Modal.show();
+    
+    document.getElementById('cancel-delete').onclick = () => {
+      closeModal();
+      resolve(false);
+    };
+    
+    document.getElementById('confirm-delete').onclick = () => {
+      closeModal();
+      resolve(true);
+    };
+  });
+});
+
+// ========================================
+// ALIS Configuration
+// ========================================
+
+ALIS.init({
+  // Global hooks
+  onBefore: [
+    (ctx) => {
+      console.log('[ALIS] Starting request:', ctx.config.method, ctx.config.url);
+      return true;
+    }
+  ],
+  
+  onAfter: [
+    (ctx) => {
+      console.log('[ALIS] Request complete:', ctx.config.url, ctx.success ? '✓' : '✗');
+      
+      // Show toast for API responses
+      if (ctx.body && typeof ctx.body === 'object') {
+        if (ctx.body.success && ctx.body.message) {
+          Toast.success(ctx.body.message);
+          
+          // Refresh users table after successful user operations
+          if (ctx.config.url?.includes('/api/users') && !ctx.config.url.includes('/edit')) {
+            setTimeout(() => {
+              document.getElementById('refresh-users')?.click();
+            }, 500);
+          }
+        } else if (ctx.body.title && ctx.body.errors) {
+          // Validation error - toast handled by validation display
+        }
+      }
+      
+      // Handle errors
+      if (ctx.error) {
+        Toast.error(ctx.error.message || 'An error occurred');
+      }
+    }
+  ]
+});
+
+// ========================================
+// Initial Data Load
+// ========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Load users on page load
+  setTimeout(() => {
+    document.getElementById('refresh-users')?.click();
+  }, 500);
+});
+
+// ========================================
+// Filter Change Handlers
+// ========================================
+
+// Auto-refresh when filters change
+document.getElementById('filter-role')?.addEventListener('change', () => {
+  document.getElementById('refresh-users')?.click();
+});
+
+document.getElementById('filter-status')?.addEventListener('change', () => {
+  document.getElementById('refresh-users')?.click();
+});
+
+// ========================================
+// Smooth Scroll for Nav Links
+// ========================================
+
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', (e) => {
+    const href = link.getAttribute('href');
+    if (href?.startsWith('#')) {
+      e.preventDefault();
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  });
+});
+
+console.log(`
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║   ⚡ ALIS Demo Application Loaded                         ║
+║                                                           ║
+║   Open DevTools to see ALIS activity in the console.      ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+`);
+

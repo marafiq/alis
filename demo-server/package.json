@@ -1,0 +1,14 @@
+{
+  "name": "alis-demo-server",
+  "version": "1.0.0",
+  "description": "Demo server for ALIS framework",
+  "type": "module",
+  "scripts": {
+    "start": "bun run server.ts",
+    "dev": "bun --watch run server.ts"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}
+
