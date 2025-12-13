@@ -1,5 +1,9 @@
 using FluentValidation;
 using SeniorLivingPortal.Services;
+using SeniorLivingPortal.UseCases.Alerts;
+using SeniorLivingPortal.UseCases.Medications;
+using SeniorLivingPortal.UseCases.Residents;
+using SeniorLivingPortal.UseCases.Vitals;
 using SeniorLivingPortal.Validators;
 using Syncfusion.Licensing;
 
@@ -26,6 +30,14 @@ builder.Services.AddSingleton<IResidentService, ResidentService>();
 builder.Services.AddSingleton<IVitalsService, VitalsService>();
 builder.Services.AddSingleton<IFacilityService, FacilityService>();
 builder.Services.AddSingleton<IMedicationService, MedicationService>();
+
+// Code-first use case discovery services
+builder.Services.AddSingleton<IAlertService, AlertService>();
+builder.Services.AddTransient<AdmitResidentUseCase>();
+builder.Services.AddTransient<TransferResidentUseCase>();
+builder.Services.AddTransient<RecordVitalsUseCase>();
+builder.Services.AddTransient<MedicationRoundUseCase>();
+builder.Services.AddTransient<AdministerMedicationUseCase>();
 
 var app = builder.Build();
 
