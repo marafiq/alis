@@ -20,6 +20,20 @@ export function isFormField(element) {
 }
 
 /**
+ * @param {Element | null} element
+ * @returns {element is HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement}
+ */
+export function canBeDisabled(element) {
+  if (!element) return false;
+  return (
+    element instanceof HTMLButtonElement ||
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLSelectElement ||
+    element instanceof HTMLTextAreaElement
+  );
+}
+
+/**
  * @param {string | Element} target
  * @param {Document | Element} root
  */

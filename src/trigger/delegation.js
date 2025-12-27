@@ -17,35 +17,13 @@ const DEBOUNCE_STATE = new Map();
 export function setupDelegation(events = ['click', 'submit', 'change', 'input', 'scroll', FORCE_TRIGGER_EVENT], onTrigger) {
   events.forEach(eventType => {
     if (LISTENERS.has(eventType)) return;
+
     const handler = /** @type {(event: Event) => void} */ (event => {
-      const DEBUG = typeof window !== 'undefined' && window.ALIS_DEBUG;
-
-      if (DEBUG && (eventType === 'input' || eventType === 'change')) {
-        const t = event.target;
-        console.log('[ALIS DEBUG] Event handler called - type:', eventType,
-          'targetTag:', t instanceof Element ? t.tagName : 'not element',
-          'targetId:', t instanceof Element ? t.id : '',
-          'hasAlisGet:', t instanceof Element ? t.hasAttribute('data-alis-get') : false);
-      }
-
       const target = findTriggerElement(event);
-
-      if (DEBUG && (eventType === 'input' || eventType === 'change')) {
-        if (target) {
-          console.log('[ALIS DEBUG] findTriggerElement result - tagName:', target.tagName,
-            'id:', target.id,
-            'hasAlisGet:', target.hasAttribute('data-alis-get'));
-        } else {
-          console.log('[ALIS DEBUG] findTriggerElement result: null');
-        }
-      }
-      
       if (!target) return;
-      
-      // Get trigger config for debounce/throttle
+
       const triggerConfig = getTriggerConfig(target);
-      
-      // Handle debounce
+
       if (triggerConfig.delay > 0) {
         handleDebounce(target, triggerConfig.delay, () => {
           executeHandler(target, event, onTrigger, { debounced: true });
@@ -53,21 +31,17 @@ export function setupDelegation(events = ['click', 'submit', 'change', 'input', 
         if (event.cancelable) event.preventDefault();
         return;
       }
-      
-      // Handle throttle
-      if (triggerConfig.throttle > 0) {
-        if (!handleThrottle(target, triggerConfig.throttle)) {
-          return; // Throttled, skip this event
-        }
+
+      if (triggerConfig.throttle > 0 && !handleThrottle(target, triggerConfig.throttle)) {
+        return;
       }
-      
+
       if (event.cancelable) {
         event.preventDefault();
       }
       executeHandler(target, event, onTrigger, {});
     });
-    // Use capture phase for submit (to intercept before form submission)
-    // and for input/change events (Syncfusion may stop propagation in bubble phase)
+
     const useCapture = eventType === 'submit' || eventType === 'input' || eventType === 'change';
     document.addEventListener(eventType, handler, useCapture);
     LISTENERS.set(eventType, handler);
@@ -127,7 +101,6 @@ function handleThrottle(element, interval) {
 
 export function teardownDelegation() {
   LISTENERS.forEach((handler, eventType) => {
-    // Must match the capture phase used in setupDelegation
     const useCapture = eventType === 'submit' || eventType === 'input' || eventType === 'change';
     document.removeEventListener(eventType, handler, useCapture);
   });

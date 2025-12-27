@@ -134,12 +134,3 @@ export function findSyncfusionWrapper(element) {
   return null;
 }
 
-/**
- * @deprecated Use hasSyncfusionInstance instead.
- * Legacy function that checks if element is part of a Syncfusion component.
- * @param {Element} element
- * @returns {boolean}
- */
-export function isSyncfusionWrapper(element) {
-  return hasSyncfusionInstance(element) || findSyncfusionWrapper(element) !== null;
-}

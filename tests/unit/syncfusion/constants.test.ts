@@ -5,8 +5,7 @@ import {
   getSyncfusionValue,
   getSyncfusionVisibleElement,
   isSyncfusionInput,
-  findSyncfusionWrapper,
-  isSyncfusionWrapper
+  findSyncfusionWrapper
 } from '../../../src/syncfusion/constants.js';
 
 /**
@@ -193,14 +192,3 @@ describe('findSyncfusionWrapper', () => {
   });
 });
 
-describe('isSyncfusionWrapper (legacy)', () => {
-  it('should return true for elements with ej2_instances', () => {
-    const { hiddenInput } = createMockSyncfusionComponent();
-    expect(isSyncfusionWrapper(hiddenInput)).toBe(true);
-  });
-
-  it('should return false for regular elements', () => {
-    const div = document.createElement('div');
-    expect(isSyncfusionWrapper(div)).toBe(false);
-  });
-});

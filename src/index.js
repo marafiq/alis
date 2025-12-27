@@ -80,9 +80,6 @@ const ALIS = {
       initializedAt: Date.now()
     };
   },
-  process() {
-    return 0;
-  },
   trigger: handleTrigger,
   request: handleRequest,
   from: handleFrom,
