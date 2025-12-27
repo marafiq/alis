@@ -4,6 +4,8 @@ import {
   readFormValues,
   readValue
 } from '../../../src/collector/reader.js';
+// Register Syncfusion adapter for tests
+import '../../../src/adapters/syncfusion.js';
 
 describe('collector/reader', () => {
   describe('readValue', () => {

@@ -1,14 +1,14 @@
 import { readContainerValues, readFormValues, readValue } from './reader.js';
 import { resolveCollectSource } from './resolver.js';
-import { hasSyncfusionInstance } from '../syncfusion/constants.js';
+import { hasAdapter } from '../adapters/registry.js';
 
 /**
- * Check if element is a collectable field (has name or is Syncfusion control)
+ * Check if element is a collectable field (has name or handled by adapter)
  * @param {Element} element
  * @returns {boolean}
  */
 function isCollectableField(element) {
-  return !!element.getAttribute('name') || hasSyncfusionInstance(element);
+  return !!element.getAttribute('name') || hasAdapter(element);
 }
 
 /**

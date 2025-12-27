@@ -6,6 +6,9 @@ import { FORCE_TRIGGER_EVENT } from './trigger/constants.js';
 import { registerConfirm } from './confirm/registry.js';
 import { createValidationAPI } from './validation/integration/alis-integration.js';
 
+// Register UI framework adapters (auto-registers on import)
+import './adapters/syncfusion.js';
+
 const VERSION = '0.0.1';
 /** @type {Record<string, unknown>} */
 let globalConfig = {};

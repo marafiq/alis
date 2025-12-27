@@ -1,8 +1,8 @@
-import { getSyncfusionValue, getSyncfusionInstance, hasSyncfusionInstance } from '../syncfusion/constants.js';
+import { getAdapterFieldName, getAdapterValue, hasAdapter } from '../adapters/registry.js';
 
 /**
  * Get field name from element.
- * For Syncfusion controls, uses the instance API to get the configured name.
+ * Uses registered adapters for UI framework controls.
  * @param {Element} element
  * @returns {string | null}
  */
@@ -11,16 +11,8 @@ function getFieldName(element) {
   const name = element.getAttribute('name');
   if (name) return name;
 
-  // Syncfusion: instance.name is the configured field name
-  if (hasSyncfusionInstance(element)) {
-    const instance = getSyncfusionInstance(element);
-    if (instance?.name) return instance.name;
-    // Syncfusion creates hiddenElement with name for form submission
-    const hiddenName = instance?.hiddenElement?.getAttribute?.('name');
-    if (hiddenName) return hiddenName;
-  }
-
-  return null;
+  // Check registered adapters (Syncfusion, etc.)
+  return getAdapterFieldName(element);
 }
 
 /**
@@ -55,15 +47,14 @@ export function readValue(element) {
     }
   }
 
-  // Syncfusion component - check this BEFORE native elements
-  // because SF wraps native elements and the instance has the real value
-  if (hasSyncfusionInstance(element)) {
-    const sfValue = getSyncfusionValue(element);
-    if (sfValue) {
-      if (sfValue.isCheckbox) {
-        return sfValue.value ? { name, value: 'true' } : null;
+  // UI framework adapters (Syncfusion, etc.) - check BEFORE native elements
+  if (hasAdapter(element)) {
+    const adapterValue = getAdapterValue(element);
+    if (adapterValue) {
+      if (adapterValue.isCheckbox) {
+        return adapterValue.value ? { name, value: 'true' } : null;
       }
-      return { name, value: sfValue.value };
+      return { name, value: adapterValue.value };
     }
   }
 

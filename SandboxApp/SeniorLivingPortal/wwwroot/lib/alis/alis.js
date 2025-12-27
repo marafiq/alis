@@ -274,7 +274,7 @@ var ALISBundle = (function (exports) {
   let currentLevel = 'none';
 
   /** @type {TelemetryAdapter[]} */
-  let adapters = [];
+  let adapters$1 = [];
 
   /**
    * @param {string} eventName
@@ -299,7 +299,7 @@ var ALISBundle = (function (exports) {
       data
     };
 
-    for (const adapter of adapters) {
+    for (const adapter of adapters$1) {
       adapter.emit(eventName, payload);
     }
 
@@ -704,144 +704,80 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Syncfusion Integration Utilities
+   * ALIS Adapter Registry
    *
-   * This module provides utilities for integrating with Syncfusion EJ2 components.
-   * All detection and value access is done through the Syncfusion instance (ej2_instances)
-   * rather than CSS class detection, which is fragile and can break with updates.
+   * Adapters provide integration with UI frameworks (Syncfusion, Telerik, etc.)
+   * without polluting ALIS core code.
+   *
+   * Each adapter implements:
+   * - canHandle(element): boolean - does this adapter handle this element?
+   * - getFieldName(element): string | null - get field name for the element
+   * - getValue(element): unknown - get current value from the element
+   * - isCheckbox(element): boolean - is this a checkbox-like control?
    */
 
+  /** @type {Array<import('./types').Adapter>} */
+  const adapters = [];
+
   /**
-   * Check if element has Syncfusion ej2_instances.
-   * This is the authoritative way to detect Syncfusion components.
-   * @param {Element} element
-   * @returns {boolean}
+   * Register an adapter for a UI framework
+   * @param {import('./types').Adapter} adapter
    */
-  function hasSyncfusionInstance(element) {
-    const instances = /** @type {any} */ (element)['ej2_instances'];
-    return Array.isArray(instances) && instances.length > 0;
+  function registerAdapter(adapter) {
+    adapters.push(adapter);
   }
 
   /**
-   * Get the Syncfusion component instance for an element.
+   * Find adapter that can handle this element
    * @param {Element} element
-   * @returns {any | null}
+   * @returns {import('./types').Adapter | null}
    */
-  function getSyncfusionInstance(element) {
-    const instances = /** @type {any} */ (element)['ej2_instances'];
-    if (!Array.isArray(instances) || instances.length === 0) {
-      return null;
+  function findAdapter(element) {
+    for (const adapter of adapters) {
+      if (adapter.canHandle(element)) {
+        return adapter;
+      }
     }
-    return instances[0];
+    return null;
   }
 
   /**
-   * Get value from a Syncfusion component.
-   * Returns the raw value from the component instance.
-   * - CheckBox/Switch: returns boolean (checked state)
-   * - Other components: returns the value property
-   *
+   * Get field name using registered adapters
+   * @param {Element} element
+   * @returns {string | null}
+   */
+  function getAdapterFieldName(element) {
+    const adapter = findAdapter(element);
+    return adapter?.getFieldName(element) ?? null;
+  }
+
+  /**
+   * Get value using registered adapters
    * @param {Element} element
    * @returns {{ value: unknown; isCheckbox: boolean } | null}
    */
-  function getSyncfusionValue(element) {
-    const instance = getSyncfusionInstance(element);
-    if (!instance) {
-      return null;
-    }
+  function getAdapterValue(element) {
+    const adapter = findAdapter(element);
+    if (!adapter) return null;
 
-    // CheckBox and Switch use 'checked' property
-    if ('checked' in instance) {
-      return { value: instance.checked, isCheckbox: true };
-    }
-
-    // Most components use 'value' property
-    if ('value' in instance) {
-      return { value: instance.value, isCheckbox: false };
-    }
-
-    return null;
+    return {
+      value: adapter.getValue(element),
+      isCheckbox: adapter.isCheckbox?.(element) ?? false
+    };
   }
 
   /**
-   * Get the visible wrapper element for a Syncfusion component.
-   * Uses instance properties (inputWrapper, wrapper) instead of class detection.
-   * @param {Element} element
-   * @returns {Element}
-   */
-  function getSyncfusionVisibleElement(element) {
-    const instance = getSyncfusionInstance(element);
-    if (!instance) {
-      return element;
-    }
-
-    // Syncfusion components expose their wrapper through instance properties:
-    // - inputWrapper: { container } for input-based controls (TextBox, NumericTextBox, etc.)
-    // - wrapper: for other controls (CheckBox, etc.)
-    if (instance.inputWrapper?.container instanceof Element) {
-      return instance.inputWrapper.container;
-    }
-    if (instance.wrapper instanceof Element) {
-      return instance.wrapper;
-    }
-
-    // Fallback to the element itself
-    return element;
-  }
-
-  /**
-   * Check if element is a visible Syncfusion input (not the hidden original).
-   * Uses instance properties to find the visible input element.
+   * Check if any adapter handles this element
    * @param {Element} element
    * @returns {boolean}
    */
-  function isSyncfusionInput(element) {
-    // Check if this element is a Syncfusion component directly
-    if (hasSyncfusionInstance(element)) {
-      return true;
-    }
-
-    // Check if this is the visible input within a Syncfusion wrapper
-    // by looking for a parent/sibling with ej2_instances
-    const parent = element.closest('[id]');
-    if (parent && hasSyncfusionInstance(parent)) {
-      const instance = getSyncfusionInstance(parent);
-      // Check if this element is the visible input from the instance
-      if (instance?.element === element || instance?.inputElement === element) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Find Syncfusion wrapper for an element using instance properties.
-   * @param {Element} element
-   * @returns {Element | null}
-   */
-  function findSyncfusionWrapper(element) {
-    // First check if element itself has an instance
-    if (hasSyncfusionInstance(element)) {
-      const visible = getSyncfusionVisibleElement(element);
-      return visible !== element ? visible : null;
-    }
-
-    // Walk up to find a parent with Syncfusion instance
-    let parent = element.parentElement;
-    while (parent) {
-      if (hasSyncfusionInstance(parent)) {
-        return getSyncfusionVisibleElement(parent);
-      }
-      parent = parent.parentElement;
-    }
-
-    return null;
+  function hasAdapter(element) {
+    return findAdapter(element) !== null;
   }
 
   /**
    * Get field name from element.
-   * For Syncfusion controls, uses the instance API to get the configured name.
+   * Uses registered adapters for UI framework controls.
    * @param {Element} element
    * @returns {string | null}
    */
@@ -850,16 +786,8 @@ var ALISBundle = (function (exports) {
     const name = element.getAttribute('name');
     if (name) return name;
 
-    // Syncfusion: instance.name is the configured field name
-    if (hasSyncfusionInstance(element)) {
-      const instance = getSyncfusionInstance(element);
-      if (instance?.name) return instance.name;
-      // Syncfusion creates hiddenElement with name for form submission
-      const hiddenName = instance?.hiddenElement?.getAttribute?.('name');
-      if (hiddenName) return hiddenName;
-    }
-
-    return null;
+    // Check registered adapters (Syncfusion, etc.)
+    return getAdapterFieldName(element);
   }
 
   /**
@@ -894,15 +822,14 @@ var ALISBundle = (function (exports) {
       }
     }
 
-    // Syncfusion component - check this BEFORE native elements
-    // because SF wraps native elements and the instance has the real value
-    if (hasSyncfusionInstance(element)) {
-      const sfValue = getSyncfusionValue(element);
-      if (sfValue) {
-        if (sfValue.isCheckbox) {
-          return sfValue.value ? { name, value: 'true' } : null;
+    // UI framework adapters (Syncfusion, etc.) - check BEFORE native elements
+    if (hasAdapter(element)) {
+      const adapterValue = getAdapterValue(element);
+      if (adapterValue) {
+        if (adapterValue.isCheckbox) {
+          return adapterValue.value ? { name, value: 'true' } : null;
         }
-        return { name, value: sfValue.value };
+        return { name, value: adapterValue.value };
       }
     }
 
@@ -1106,12 +1033,12 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Check if element is a collectable field (has name or is Syncfusion control)
+   * Check if element is a collectable field (has name or handled by adapter)
    * @param {Element} element
    * @returns {boolean}
    */
   function isCollectableField(element) {
-    return !!element.getAttribute('name') || hasSyncfusionInstance(element);
+    return !!element.getAttribute('name') || hasAdapter(element);
   }
 
   /**
@@ -1386,6 +1313,142 @@ var ALISBundle = (function (exports) {
       enabled: true,
       validators: Array.from(validatorMap.values())
     };
+  }
+
+  /**
+   * Syncfusion Integration Utilities
+   *
+   * This module provides utilities for integrating with Syncfusion EJ2 components.
+   * All detection and value access is done through the Syncfusion instance (ej2_instances)
+   * rather than CSS class detection, which is fragile and can break with updates.
+   */
+
+  /**
+   * Check if element has Syncfusion ej2_instances.
+   * This is the authoritative way to detect Syncfusion components.
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function hasSyncfusionInstance(element) {
+    const instances = /** @type {any} */ (element)['ej2_instances'];
+    return Array.isArray(instances) && instances.length > 0;
+  }
+
+  /**
+   * Get the Syncfusion component instance for an element.
+   * @param {Element} element
+   * @returns {any | null}
+   */
+  function getSyncfusionInstance(element) {
+    const instances = /** @type {any} */ (element)['ej2_instances'];
+    if (!Array.isArray(instances) || instances.length === 0) {
+      return null;
+    }
+    return instances[0];
+  }
+
+  /**
+   * Get value from a Syncfusion component.
+   * Returns the raw value from the component instance.
+   * - CheckBox/Switch: returns boolean (checked state)
+   * - Other components: returns the value property
+   *
+   * @param {Element} element
+   * @returns {{ value: unknown; isCheckbox: boolean } | null}
+   */
+  function getSyncfusionValue(element) {
+    const instance = getSyncfusionInstance(element);
+    if (!instance) {
+      return null;
+    }
+
+    // CheckBox and Switch use 'checked' property
+    if ('checked' in instance) {
+      return { value: instance.checked, isCheckbox: true };
+    }
+
+    // Most components use 'value' property
+    if ('value' in instance) {
+      return { value: instance.value, isCheckbox: false };
+    }
+
+    return null;
+  }
+
+  /**
+   * Get the visible wrapper element for a Syncfusion component.
+   * Uses instance properties (inputWrapper, wrapper) instead of class detection.
+   * @param {Element} element
+   * @returns {Element}
+   */
+  function getSyncfusionVisibleElement(element) {
+    const instance = getSyncfusionInstance(element);
+    if (!instance) {
+      return element;
+    }
+
+    // Syncfusion components expose their wrapper through instance properties:
+    // - inputWrapper: { container } for input-based controls (TextBox, NumericTextBox, etc.)
+    // - wrapper: for other controls (CheckBox, etc.)
+    if (instance.inputWrapper?.container instanceof Element) {
+      return instance.inputWrapper.container;
+    }
+    if (instance.wrapper instanceof Element) {
+      return instance.wrapper;
+    }
+
+    // Fallback to the element itself
+    return element;
+  }
+
+  /**
+   * Check if element is a visible Syncfusion input (not the hidden original).
+   * Uses instance properties to find the visible input element.
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function isSyncfusionInput(element) {
+    // Check if this element is a Syncfusion component directly
+    if (hasSyncfusionInstance(element)) {
+      return true;
+    }
+
+    // Check if this is the visible input within a Syncfusion wrapper
+    // by looking for a parent/sibling with ej2_instances
+    const parent = element.closest('[id]');
+    if (parent && hasSyncfusionInstance(parent)) {
+      const instance = getSyncfusionInstance(parent);
+      // Check if this element is the visible input from the instance
+      if (instance?.element === element || instance?.inputElement === element) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Find Syncfusion wrapper for an element using instance properties.
+   * @param {Element} element
+   * @returns {Element | null}
+   */
+  function findSyncfusionWrapper(element) {
+    // First check if element itself has an instance
+    if (hasSyncfusionInstance(element)) {
+      const visible = getSyncfusionVisibleElement(element);
+      return visible !== element ? visible : null;
+    }
+
+    // Walk up to find a parent with Syncfusion instance
+    let parent = element.parentElement;
+    while (parent) {
+      if (hasSyncfusionInstance(parent)) {
+        return getSyncfusionVisibleElement(parent);
+      }
+      parent = parent.parentElement;
+    }
+
+    return null;
   }
 
   /**
@@ -4157,6 +4220,74 @@ var ALISBundle = (function (exports) {
       }
     };
   }
+
+  /**
+   * Syncfusion EJ2 Adapter for ALIS
+   *
+   * Handles all Syncfusion-specific value and name extraction.
+   * ALIS core remains framework-agnostic.
+   */
+
+
+  /**
+   * Get Syncfusion instance from element
+   * @param {Element} element
+   * @returns {any | null}
+   */
+  function getInstance(element) {
+    const instances = /** @type {any} */ (element)['ej2_instances'];
+    return Array.isArray(instances) && instances.length > 0 ? instances[0] : null;
+  }
+
+  /** @type {import('./types').Adapter} */
+  const syncfusionAdapter = {
+    name: 'syncfusion',
+
+    canHandle(element) {
+      return getInstance(element) !== null;
+    },
+
+    getFieldName(element) {
+      const instance = getInstance(element);
+      if (!instance) return null;
+
+      // Syncfusion exposes name via instance.name
+      if (instance.name) return instance.name;
+
+      // Some controls use hiddenElement for form submission
+      if (instance.hiddenElement?.getAttribute?.('name')) {
+        return instance.hiddenElement.getAttribute('name');
+      }
+
+      // Fallback to element's name attribute
+      return element.getAttribute('name');
+    },
+
+    getValue(element) {
+      const instance = getInstance(element);
+      if (!instance) return null;
+
+      // Checkbox/Switch use 'checked'
+      if ('checked' in instance) {
+        return instance.checked;
+      }
+
+      // Most controls use 'value'
+      if ('value' in instance) {
+        return instance.value;
+      }
+
+      return null;
+    },
+
+    isCheckbox(element) {
+      const instance = getInstance(element);
+      return instance && 'checked' in instance;
+    }
+  };
+
+  // Auto-register when imported
+  registerAdapter(syncfusionAdapter);
 
   const VERSION = '0.0.1';
   /** @type {Record<string, unknown>} */
