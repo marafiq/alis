@@ -94,22 +94,37 @@ public class VitalsFormViewModel
     public decimal? Weight { get; set; }
     public string? Notes { get; set; }
 
-    public Vitals ToVitals(string recordedBy) => new()
+    /// <summary>
+    /// Converts validated form data to domain entity.
+    /// Throws if required fields are null - validation must pass first.
+    /// </summary>
+    public Vitals ToVitals(string recordedBy)
     {
-        Id = Id,
-        ResidentId = ResidentId ?? 0,
-        BloodPressureSystolic = BloodPressureSystolic ?? 0,
-        BloodPressureDiastolic = BloodPressureDiastolic ?? 0,
-        HeartRate = HeartRate ?? 0,
-        Temperature = Temperature ?? 0,
-        OxygenSaturation = OxygenSaturation ?? 0,
-        RespiratoryRate = RespiratoryRate,
-        PainLevel = PainLevel,
-        Weight = Weight,
-        Notes = Notes,
-        RecordedAt = DateTime.Now,
-        RecordedBy = recordedBy
-    };
+        ArgumentNullException.ThrowIfNull(ResidentId, nameof(ResidentId));
+        ArgumentNullException.ThrowIfNull(BloodPressureSystolic, nameof(BloodPressureSystolic));
+        ArgumentNullException.ThrowIfNull(BloodPressureDiastolic, nameof(BloodPressureDiastolic));
+        ArgumentNullException.ThrowIfNull(HeartRate, nameof(HeartRate));
+        ArgumentNullException.ThrowIfNull(Temperature, nameof(Temperature));
+        ArgumentNullException.ThrowIfNull(OxygenSaturation, nameof(OxygenSaturation));
+        ArgumentException.ThrowIfNullOrEmpty(recordedBy, nameof(recordedBy));
+
+        return new Vitals
+        {
+            Id = Id,
+            ResidentId = ResidentId.Value,
+            BloodPressureSystolic = BloodPressureSystolic.Value,
+            BloodPressureDiastolic = BloodPressureDiastolic.Value,
+            HeartRate = HeartRate.Value,
+            Temperature = Temperature.Value,
+            OxygenSaturation = OxygenSaturation.Value,
+            RespiratoryRate = RespiratoryRate,
+            PainLevel = PainLevel,
+            Weight = Weight,
+            Notes = Notes,
+            RecordedAt = DateTime.Now,
+            RecordedBy = recordedBy
+        };
+    }
 }
 
 /// <summary>
