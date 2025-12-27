@@ -32,15 +32,16 @@
                 </ejs-textbox>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Native Input (for comparison)</label>
-                <input type="text" 
-                       class="e-input" 
-                       name="query2"
-                       placeholder="Type here to search..."
-                       data-alis-get="/Home/TestSearch"
-                       data-alis-trigger="input delay:500ms"
-                       data-alis-target="#test1-result-native"
-                       data-alis-collect="self" />
+                <label class="form-label">Second Syncfusion TextBox</label>
+                <ejs-textbox id="testTextBox2"
+                             name="query2"
+                             placeholder="Type here to search..."
+                             showClearButton="true"
+                             data-alis-get="/Home/TestSearch"
+                             data-alis-trigger="input delay:500ms"
+                             data-alis-target="#test1-result-native"
+                             data-alis-collect="self">
+                </ejs-textbox>
             </div>
         </div>
         

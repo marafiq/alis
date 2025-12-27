@@ -31,10 +31,6 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
 
     /// <summary>
     /// ALIS Demos index page - showcases all ALIS features
