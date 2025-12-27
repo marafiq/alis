@@ -24,15 +24,3 @@ export class ConfigError extends ALISError {
   }
 }
 
-export class NetworkError extends ALISError {
-  constructor(message = 'Network error', context = {}) {
-    super(message, 'NETWORK_ERROR', context);
-  }
-}
-
-export class AbortError extends ALISError {
-  constructor(message = 'Request aborted', context = {}) {
-    super(message, 'ABORT_ERROR', context);
-  }
-}
-

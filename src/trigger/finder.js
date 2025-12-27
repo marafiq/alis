@@ -74,19 +74,21 @@ function shouldHandleEvent(element, event) {
   }
 
   if (hasSyncfusionInstance(element)) {
-    const eventType = normalizeEvent(event.type);
-    if (['input', 'change', 'blur', 'focus'].includes(eventType)) {
+    const mapped = mapToDefaultTrigger(event.type);
+    if (['input', 'change', 'blur', 'focus'].includes(mapped)) {
       return true;
     }
   }
 
-  return normalizeEvent(event.type) === getDefaultTrigger(element);
+  return mapToDefaultTrigger(event.type) === getDefaultTrigger(element);
 }
 
 /**
+ * Map event types to their default trigger equivalents.
+ * For example, keyup is treated as change for input fields.
  * @param {string} type
  */
-function normalizeEvent(type) {
+function mapToDefaultTrigger(type) {
   return type === 'keyup' ? 'change' : type;
 }
 

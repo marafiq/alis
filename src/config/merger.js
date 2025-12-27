@@ -42,10 +42,3 @@ function deepMerge(base, override) {
   return result;
 }
 
-/**
- * @param {unknown} value
- */
-export function _isObject(value) {
-  return isObject(value);
-}
-

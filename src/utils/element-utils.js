@@ -1,36 +1,11 @@
-/**
- * @param {Element | null} element
- */
-export function isInteractiveElement(element) {
-  if (!element) return false;
-  const interactiveTags = ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'];
-  return interactiveTags.includes(element.tagName);
-}
-
-/**
- * @param {Element | null} element
- */
-export function isFormField(element) {
-  if (!element) return false;
-  return (
-    element instanceof HTMLInputElement ||
-    element instanceof HTMLSelectElement ||
-    element instanceof HTMLTextAreaElement
-  );
-}
+const DISABLEABLE_TAGS = new Set(['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA']);
 
 /**
  * @param {Element | null} element
  * @returns {element is HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement}
  */
 export function canBeDisabled(element) {
-  if (!element) return false;
-  return (
-    element instanceof HTMLButtonElement ||
-    element instanceof HTMLInputElement ||
-    element instanceof HTMLSelectElement ||
-    element instanceof HTMLTextAreaElement
-  );
+  return !!element && DISABLEABLE_TAGS.has(element.tagName);
 }
 
 /**
