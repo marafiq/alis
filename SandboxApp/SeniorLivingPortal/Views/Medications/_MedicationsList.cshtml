@@ -13,7 +13,7 @@ else
             <thead class="table-light">
                 <tr>
                     <th style="width: 30px;">
-                        <input type="checkbox" class="form-check-input" id="selectAll" />
+                        <ejs-checkbox id="selectAll" cssClass="select-all-checkbox"></ejs-checkbox>
                     </th>
                     <th>Time</th>
                     <th>Resident</th>
@@ -26,11 +26,14 @@ else
                 @foreach (var med in Model.OrderBy(m => m.ScheduledTime))
                 {
                     var isPastDue = med.ScheduledTime < TimeOnly.FromDateTime(DateTime.Now);
-                    <tr class="medication-item @(isPastDue ? "table-warning" : "")">
+                    var checkId = $"listCheck-{med.ScheduleId}";
+                    <tr class="medication-item @(isPastDue ? "table-warning" : "")" data-schedule-id="@med.ScheduleId">
                         <td>
-                            <input type="checkbox"
-                                   class="form-check-input med-checkbox"
-                                   value="@med.ScheduleId" />
+                            <ejs-checkbox id="@checkId"
+                                          cssClass="med-checkbox"
+                                          name="ScheduleIds"
+                                          value="@med.ScheduleId.ToString()">
+                            </ejs-checkbox>
                         </td>
                         <td>
                             <span class="@(isPastDue ? "text-danger fw-bold" : "")">
@@ -42,15 +45,14 @@ else
                             }
                         </td>
                         <td>
-                            @* ALIS Feature: Inline link loading with target *@
-                            <a href="#"
-                               class="med-resident text-decoration-none"
-                               data-alis-get="/Medications/ByResident?residentId=@med.ResidentId"
-                               data-alis-target="#resident-details"
-                               data-alis-trigger="click"
-                               data-alis-indicator="is-loading">
-                                @med.ResidentName
-                            </a>
+                            <ejs-button id="residentLink-@med.ScheduleId"
+                                        cssClass="e-link e-flat med-resident"
+                                        content="@med.ResidentName"
+                                        data-alis-get="/Medications/ByResident?residentId=@med.ResidentId"
+                                        data-alis-target="#resident-details"
+                                        data-alis-trigger="click"
+                                        data-alis-indicator="is-loading">
+                            </ejs-button>
                         </td>
                         <td>
                             <span class="med-name fw-semibold">@med.MedicationName</span>
@@ -58,39 +60,39 @@ else
                         <td>@med.Dosage</td>
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
-                                @* ALIS Feature: Quick action with POST and confirm *@
-                                <button type="button"
-                                        class="btn btn-success btn-sm"
-                                        data-alis-post="/Medications/QuickGive"
-                                        data-alis-collect="self"
-                                        data-alis-target="#medications-list"
-                                        data-alis-swap="innerHTML"
-                                        data-alis-confirm-message="Mark @med.MedicationName as given?"
-                                        data-alis-on-after="initMedicationControls"
-                                        data-alis-indicator="is-loading">
-                                    <input type="hidden" name="scheduleId" value="@med.ScheduleId" />
-                                    Given
-                                </button>
+                                @* ALIS: Quick action with POST and confirm - 100% Syncfusion *@
+                                <ejs-button id="listQuickGive-@med.ScheduleId"
+                                            cssClass="e-success e-small"
+                                            content="Given"
+                                            data-alis-post="/Medications/QuickGive"
+                                            data-alis-collect="self"
+                                            data-alis-target="#medications-list"
+                                            data-alis-swap="innerHTML"
+                                            data-alis-confirm-message="Mark @med.MedicationName as given?"
+                                            data-alis-on-after="initMedicationControls"
+                                            data-alis-indicator="is-loading">
+                                </ejs-button>
+                                <input type="hidden" name="scheduleId" value="@med.ScheduleId" />
 
-                                @* ALIS Feature: Load modal content *@
-                                <button type="button"
-                                        class="btn btn-outline-secondary btn-sm"
-                                        data-alis-get="/Medications/Administer?scheduleId=@med.ScheduleId"
-                                        data-alis-target="#administerModalBody"
-                                        data-alis-on-after="showAdministerModal"
-                                        data-alis-indicator="is-loading">
-                                    Other
-                                </button>
+                                @* ALIS: Load modal content *@
+                                <ejs-button id="listOtherBtn-@med.ScheduleId"
+                                            cssClass="e-outline e-small"
+                                            content="Other"
+                                            data-alis-get="/Medications/Administer?scheduleId=@med.ScheduleId"
+                                            data-alis-target="#administerModalBody"
+                                            data-alis-on-after="showAdministerModal"
+                                            data-alis-indicator="is-loading">
+                                </ejs-button>
 
-                                @* ALIS Feature: View history *@
-                                <button type="button"
-                                        class="btn btn-outline-info btn-sm"
-                                        data-alis-get="/Medications/History?residentId=@med.ResidentId"
-                                        data-alis-target="#resident-details"
-                                        data-alis-swap="innerHTML"
-                                        data-alis-indicator="is-loading">
-                                    History
-                                </button>
+                                @* ALIS: View history *@
+                                <ejs-button id="listHistoryBtn-@med.ScheduleId"
+                                            cssClass="e-outline e-info e-small"
+                                            content="History"
+                                            data-alis-get="/Medications/History?residentId=@med.ResidentId"
+                                            data-alis-target="#resident-details"
+                                            data-alis-swap="innerHTML"
+                                            data-alis-indicator="is-loading">
+                                </ejs-button>
                             </div>
                         </td>
                     </tr>
@@ -100,13 +102,23 @@ else
     </div>
 }
 
+<ejs-scripts></ejs-scripts>
+
 <script>
-    // Select all checkbox handling
-    document.getElementById('selectAll')?.addEventListener('change', function () {
-        const checkboxes = document.querySelectorAll('.med-checkbox');
-        checkboxes.forEach(cb => cb.checked = this.checked);
-        if (typeof updateBulkButton === 'function') {
-            updateBulkButton();
+    // Select all checkbox handling via Syncfusion API
+    (function() {
+        const selectAll = document.getElementById('selectAll');
+        if (selectAll && selectAll.ej2_instances && selectAll.ej2_instances[0]) {
+            selectAll.ej2_instances[0].change = function(args) {
+                document.querySelectorAll('.med-checkbox').forEach(el => {
+                    if (el.ej2_instances && el.ej2_instances[0]) {
+                        el.ej2_instances[0].checked = args.checked;
+                    }
+                });
+                if (typeof updateBulkButton === 'function') {
+                    updateBulkButton();
+                }
+            };
         }
-    });
+    })();
 </script>

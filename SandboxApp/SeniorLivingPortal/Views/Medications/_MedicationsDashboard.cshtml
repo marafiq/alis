@@ -1,6 +1,7 @@
 @model IEnumerable<MedicationAdministrationViewModel>
 @{
     var grouped = Model.GroupBy(m => m.ResidentId);
+    var counter = 0;
 }
 
 @if (!Model.Any())
@@ -18,15 +19,15 @@ else
             <div class="col-md-6 mb-3">
                 <div class="card h-100 resident-med-card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        @* ALIS Feature: Click to load resident details with throttle *@
-                        <a href="#"
-                           class="text-decoration-none"
-                           data-alis-get="/Medications/ByResident?residentId=@group.Key"
-                           data-alis-target="#resident-details"
-                           data-alis-trigger="click"
-                           data-alis-indicator="is-loading">
-                            <strong>@resident.ResidentName</strong>
-                        </a>
+                        @* ALIS Feature: Syncfusion button to load resident details *@
+                        <ejs-button id="residentBtn-@group.Key"
+                                    cssClass="e-link e-flat"
+                                    content="@resident.ResidentName"
+                                    data-alis-get="/Medications/ByResident?residentId=@group.Key"
+                                    data-alis-target="#resident-details"
+                                    data-alis-trigger="click"
+                                    data-alis-indicator="is-loading">
+                        </ejs-button>
                         <span class="badge bg-primary">@group.Count() meds</span>
                     </div>
                     <div class="card-body p-0">
@@ -34,42 +35,50 @@ else
                             @foreach (var med in group.OrderBy(m => m.ScheduledTime))
                             {
                                 var isPastDue = med.ScheduledTime < TimeOnly.FromDateTime(DateTime.Now);
-                                <li class="list-group-item medication-item d-flex justify-content-between align-items-center @(isPastDue ? "list-group-item-warning" : "")">
-                                    <div class="form-check">
-                                        <input class="form-check-input med-checkbox" type="checkbox" value="@med.ScheduleId">
-                                        <label class="form-check-label">
+                                var checkId = $"medCheck-{med.ScheduleId}";
+                                counter++;
+                                <li class="list-group-item medication-item d-flex justify-content-between align-items-center @(isPastDue ? "list-group-item-warning" : "")"
+                                    data-schedule-id="@med.ScheduleId">
+                                    <div class="d-flex align-items-center">
+                                        @* ALIS Feature: Syncfusion checkbox for selection *@
+                                        <ejs-checkbox id="@checkId"
+                                                      cssClass="med-checkbox me-2"
+                                                      name="ScheduleIds"
+                                                      value="@med.ScheduleId.ToString()">
+                                        </ejs-checkbox>
+                                        <div>
                                             <span class="med-name fw-bold">@med.MedicationName</span>
                                             <br />
                                             <small class="text-muted">@med.Dosage - @med.ScheduledTime.ToString("h:mm tt")</small>
-                                        </label>
-                                        <span class="med-resident d-none">@resident.ResidentName</span>
+                                            <span class="med-resident d-none">@resident.ResidentName</span>
+                                        </div>
                                     </div>
                                     <div class="btn-group btn-group-sm">
-                                        @* ALIS Feature: Quick action with inline confirm message *@
-                                        <button type="button"
-                                                class="btn btn-success btn-sm"
-                                                data-alis-post="/Medications/QuickGive"
-                                                data-alis-collect="self"
-                                                data-alis-target="#medications-dashboard"
-                                                data-alis-swap="innerHTML"
-                                                data-alis-confirm-message="Mark @med.MedicationName as given for @resident.ResidentName?"
-                                                data-alis-on-after="handleQuickGiveResult"
-                                                data-alis-indicator="is-loading"
-                                                title="Quick Give">
-                                            <input type="hidden" name="scheduleId" value="@med.ScheduleId" />
-                                            <span class="e-icons e-check"></span>
-                                        </button>
+                                        @* ALIS Feature: Quick action with inline confirm message - Syncfusion button *@
+                                        <ejs-button id="quickGive-@med.ScheduleId"
+                                                    cssClass="e-success e-small"
+                                                    iconCss="e-icons e-check"
+                                                    data-alis-post="/Medications/QuickGive"
+                                                    data-alis-collect="self"
+                                                    data-alis-target="#medications-dashboard"
+                                                    data-alis-swap="innerHTML"
+                                                    data-alis-confirm-message="Mark @med.MedicationName as given for @resident.ResidentName?"
+                                                    data-alis-on-after="handleQuickGiveResult"
+                                                    data-alis-indicator="is-loading"
+                                                    title="Quick Give">
+                                        </ejs-button>
+                                        <input type="hidden" name="scheduleId" value="@med.ScheduleId" />
 
-                                        @* ALIS Feature: Load form in modal *@
-                                        <button type="button"
-                                                class="btn btn-outline-primary btn-sm"
-                                                data-alis-get="/Medications/Administer?scheduleId=@med.ScheduleId"
-                                                data-alis-target="#administerModalBody"
-                                                data-alis-on-after="showAdministerModal"
-                                                data-alis-indicator="is-loading"
-                                                title="Details">
-                                            <span class="e-icons e-edit"></span>
-                                        </button>
+                                        @* ALIS Feature: Load form in modal - Syncfusion button *@
+                                        <ejs-button id="detailBtn-@med.ScheduleId"
+                                                    cssClass="e-outline e-small"
+                                                    iconCss="e-icons e-edit"
+                                                    data-alis-get="/Medications/Administer?scheduleId=@med.ScheduleId"
+                                                    data-alis-target="#administerModalBody"
+                                                    data-alis-on-after="showAdministerModal"
+                                                    data-alis-indicator="is-loading"
+                                                    title="Details">
+                                        </ejs-button>
                                     </div>
                                 </li>
                             }
@@ -80,3 +89,5 @@ else
         }
     </div>
 }
+
+<ejs-scripts></ejs-scripts>

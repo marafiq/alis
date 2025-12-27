@@ -16,30 +16,32 @@
                 <h6 class="mb-1">@resident.FullName - History</h6>
                 <small class="text-muted">Last @days days</small>
             </div>
-            @* ALIS Feature: Back button with swap *@
-            <a href="#"
-               class="btn btn-sm btn-outline-secondary"
-               data-alis-get="/Medications/ByResident?residentId=@resident.Id"
-               data-alis-target="#resident-details"
-               data-alis-swap="outerHTML"
-               data-alis-indicator="is-loading">
-                Back
-            </a>
+            @* ALIS: Back button with swap - 100% Syncfusion *@
+            <ejs-button id="backBtn"
+                        cssClass="e-outline e-small"
+                        content="Back"
+                        data-alis-get="/Medications/ByResident?residentId=@resident.Id"
+                        data-alis-target="#resident-details"
+                        data-alis-swap="outerHTML"
+                        data-alis-indicator="is-loading">
+            </ejs-button>
         </div>
 
-        @* Days filter using ALIS *@
+        @* Days filter using ALIS - 100% Syncfusion buttons *@
         <div class="mb-3">
             <div class="btn-group btn-group-sm w-100">
                 @foreach (var d in new[] { 1, 7, 14, 30 })
                 {
-                    <button type="button"
-                            class="btn @(d == days ? "btn-primary" : "btn-outline-primary")"
-                            data-alis-get="/Medications/History?residentId=@resident.Id&days=@d"
-                            data-alis-target="#resident-details"
-                            data-alis-swap="outerHTML"
-                            data-alis-indicator="is-loading">
-                        @d @(d == 1 ? "Day" : "Days")
-                    </button>
+                    var btnId = $"daysBtn-{d}";
+                    var isActive = d == days;
+                    <ejs-button id="@btnId"
+                                cssClass="@(isActive ? "e-primary e-small" : "e-outline e-small")"
+                                content="@(d == 1 ? "1 Day" : $"{d} Days")"
+                                data-alis-get="/Medications/History?residentId=@resident.Id&days=@d"
+                                data-alis-target="#resident-details"
+                                data-alis-swap="outerHTML"
+                                data-alis-indicator="is-loading">
+                    </ejs-button>
                 }
             </div>
         </div>
@@ -68,3 +70,5 @@
         }
     }
 </div>
+
+<ejs-scripts></ejs-scripts>

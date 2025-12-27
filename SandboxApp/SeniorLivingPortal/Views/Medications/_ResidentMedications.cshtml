@@ -20,7 +20,7 @@ else
             @foreach (var schedule in Model.OrderBy(s => s.ScheduledTime))
             {
                 <li class="list-group-item px-0">
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <strong>@schedule.Medication?.Name</strong>
                             <br />
@@ -28,19 +28,19 @@ else
                                 @schedule.Medication?.Dosage - @schedule.ScheduledTime.ToString("h:mm tt")
                             </small>
                         </div>
-                        @* ALIS Feature: Quick action from sidebar *@
-                        <button type="button"
-                                class="btn btn-sm btn-outline-success"
-                                data-alis-post="/Medications/QuickGive"
-                                data-alis-collect="self"
-                                data-alis-target="#medications-dashboard"
-                                data-alis-swap="innerHTML"
-                                data-alis-confirm-message="Give @schedule.Medication?.Name now?"
-                                data-alis-on-after="initMedicationControls"
-                                data-alis-indicator="is-loading">
-                            <input type="hidden" name="scheduleId" value="@schedule.Id" />
-                            Give
-                        </button>
+                        @* ALIS: Quick action from sidebar - 100% Syncfusion *@
+                        <ejs-button id="sidebarGive-@schedule.Id"
+                                    cssClass="e-success e-small"
+                                    content="Give"
+                                    data-alis-post="/Medications/QuickGive"
+                                    data-alis-collect="self"
+                                    data-alis-target="#medications-dashboard"
+                                    data-alis-swap="innerHTML"
+                                    data-alis-confirm-message="Give @schedule.Medication?.Name now?"
+                                    data-alis-on-after="initMedicationControls"
+                                    data-alis-indicator="is-loading">
+                        </ejs-button>
+                        <input type="hidden" name="scheduleId" value="@schedule.Id" />
                     </div>
                     @if (!string.IsNullOrEmpty(schedule.Medication?.Instructions))
                     {
@@ -53,15 +53,15 @@ else
         </ul>
 
         <div class="mt-3">
-            @* ALIS Feature: Load history with outerHTML swap *@
-            <a href="#"
-               class="btn btn-sm btn-outline-info w-100"
-               data-alis-get="/Medications/History?residentId=@resident.Id"
-               data-alis-target="#resident-details"
-               data-alis-swap="outerHTML"
-               data-alis-indicator="is-loading">
-                View History
-            </a>
+            @* ALIS: Load history with outerHTML swap - 100% Syncfusion *@
+            <ejs-button id="viewHistoryBtn"
+                        cssClass="e-outline e-info w-100"
+                        content="View History"
+                        data-alis-get="/Medications/History?residentId=@resident.Id"
+                        data-alis-target="#resident-details"
+                        data-alis-swap="outerHTML"
+                        data-alis-indicator="is-loading">
+            </ejs-button>
         </div>
     }
     else
@@ -69,3 +69,5 @@ else
         <p class="text-muted">No scheduled medications</p>
     }
 }
+
+<ejs-scripts></ejs-scripts>
