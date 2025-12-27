@@ -1,21 +1,24 @@
 /**
- * @param {Record<string, any> | undefined} data
+ * Serialize data as URL-encoded form data.
+ *
+ * @param {Record<string, unknown>} data
+ * @returns {{ body: string; contentType: string }}
  */
 export function serialize(data) {
   const params = new URLSearchParams();
 
-  if (data && typeof data === 'object') {
-    Object.entries(data).forEach(([key, value]) => {
-      if (value === undefined || value === null) {
-        return;
-      }
+  for (const [key, value] of Object.entries(data)) {
+    if (value === undefined || value === null) {
+      continue;
+    }
 
-      if (Array.isArray(value)) {
-        value.forEach(item => params.append(key, String(item)));
-      } else {
-        params.append(key, String(value));
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        params.append(key, String(item));
       }
-    });
+    } else {
+      params.append(key, String(value));
+    }
   }
 
   return {
@@ -23,4 +26,3 @@ export function serialize(data) {
     contentType: 'application/x-www-form-urlencoded'
   };
 }
-
