@@ -18,18 +18,18 @@ export function setupDelegation(events = ['click', 'submit', 'change', 'input', 
   events.forEach(eventType => {
     if (LISTENERS.has(eventType)) return;
     const handler = /** @type {(event: Event) => void} */ (event => {
-      // Debug logging - ALWAYS log for input events to diagnose Syncfusion issues
       const DEBUG = typeof window !== 'undefined' && window.ALIS_DEBUG;
-      if (eventType === 'input' || eventType === 'change') {
+
+      if (DEBUG && (eventType === 'input' || eventType === 'change')) {
         const t = event.target;
-        console.log('[ALIS] Event handler called - type:', eventType, 
+        console.log('[ALIS DEBUG] Event handler called - type:', eventType,
           'targetTag:', t instanceof Element ? t.tagName : 'not element',
           'targetId:', t instanceof Element ? t.id : '',
           'hasAlisGet:', t instanceof Element ? t.hasAttribute('data-alis-get') : false);
       }
-      
+
       const target = findTriggerElement(event);
-      
+
       if (DEBUG && (eventType === 'input' || eventType === 'change')) {
         if (target) {
           console.log('[ALIS DEBUG] findTriggerElement result - tagName:', target.tagName,
@@ -127,7 +127,8 @@ function handleThrottle(element, interval) {
 
 export function teardownDelegation() {
   LISTENERS.forEach((handler, eventType) => {
-    const useCapture = eventType === 'submit';
+    // Must match the capture phase used in setupDelegation
+    const useCapture = eventType === 'submit' || eventType === 'input' || eventType === 'change';
     document.removeEventListener(eventType, handler, useCapture);
   });
   LISTENERS.clear();

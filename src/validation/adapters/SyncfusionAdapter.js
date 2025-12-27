@@ -1,12 +1,4 @@
-/**
- * Syncfusion wrapper class names.
- */
-const WRAPPER_CLASSES = [
-  'e-input-group',
-  'e-control-wrapper',
-  'e-checkbox-wrapper',
-  'e-radio-wrapper'
-];
+import { findSyncfusionWrapper } from '../../syncfusion/constants.js';
 
 /**
  * Adapter for Syncfusion Essential JS 2 components.
@@ -15,7 +7,7 @@ const WRAPPER_CLASSES = [
  */
 export const SyncfusionAdapter = {
   name: 'syncfusion',
-  
+
   /**
    * Returns true if element has ej2_instances array.
    * @param {Element} element
@@ -25,7 +17,7 @@ export const SyncfusionAdapter = {
     const instances = /** @type {unknown} */ (element)['ej2_instances'];
     return Array.isArray(instances) && instances.length > 0;
   },
-  
+
   /**
    * Gets the value from Syncfusion component instance.
    * @param {Element} element
@@ -36,44 +28,29 @@ export const SyncfusionAdapter = {
     if (!Array.isArray(instances) || instances.length === 0) {
       return null;
     }
-    
+
     const instance = instances[0];
-    
+
     // CheckBox uses 'checked' property
     if ('checked' in instance) {
       return instance.checked;
     }
-    
+
     // Most components use 'value' property
     if ('value' in instance) {
       return instance.value;
     }
-    
+
     return null;
   },
-  
+
   /**
    * Returns the visible wrapper element for error styling.
    * @param {Element} element
    * @returns {Element}
    */
   getVisibleElement(element) {
-    // Look for parent with Syncfusion wrapper class
-    let parent = element.parentElement;
-    
-    while (parent) {
-      const hasWrapperClass = WRAPPER_CLASSES.some(cls => 
-        parent?.classList.contains(cls)
-      );
-      
-      if (hasWrapperClass) {
-        return parent;
-      }
-      
-      parent = parent.parentElement;
-    }
-    
-    return element;
+    return findSyncfusionWrapper(element) || element;
   },
   
   /**

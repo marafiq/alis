@@ -2,41 +2,7 @@ import { matchesTrigger } from './matcher.js';
 import { getDefaultTrigger } from '../triggers/defaults.js';
 import { parseTrigger } from './parser.js';
 import { FORCE_TRIGGER_EVENT } from './constants.js';
-
-/**
- * Syncfusion control class patterns - visible input elements created by Syncfusion
- */
-const SYNCFUSION_INPUT_CLASSES = ['e-input', 'e-dropdownlist', 'e-numerictextbox', 'e-datepicker'];
-
-/**
- * Syncfusion wrapper class patterns - these wrap actual input elements
- */
-const SYNCFUSION_WRAPPER_CLASSES = [
-  'e-input-group',
-  'e-control-wrapper', 
-  'e-ddl',
-  'e-numerictextbox',
-  'e-datepicker',
-  'e-checkbox-wrapper'
-];
-
-/**
- * Check if element is a Syncfusion wrapper that contains the event target
- * @param {Element} element
- * @returns {boolean}
- */
-function isSyncfusionWrapper(element) {
-  return SYNCFUSION_WRAPPER_CLASSES.some(cls => element.classList.contains(cls));
-}
-
-/**
- * Check if element is a Syncfusion-created input (the visible one, not the original)
- * @param {Element} element
- * @returns {boolean}
- */
-function isSyncfusionInput(element) {
-  return SYNCFUSION_INPUT_CLASSES.some(cls => element.classList.contains(cls));
-}
+import { isSyncfusionWrapper, isSyncfusionInput } from '../syncfusion/constants.js';
 
 /**
  * Find the original ALIS element for a Syncfusion control.

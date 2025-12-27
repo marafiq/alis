@@ -155,8 +155,17 @@ export function readContainerValues(container) {
   const fields = container.querySelectorAll('[name]');
   fields.forEach(field => {
     const reading = readValue(field);
-    if (reading) {
-      entries[reading.name] = reading.value;
+    if (!reading) {
+      return;
+    }
+    const { name, value } = reading;
+    // Handle multiple fields with same name (like radio buttons)
+    if (entries[name] === undefined) {
+      entries[name] = value;
+    } else if (Array.isArray(entries[name])) {
+      entries[name].push(value);
+    } else {
+      entries[name] = [entries[name], value];
     }
   });
   return entries;

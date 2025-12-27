@@ -1,12 +1,4 @@
-/**
- * Syncfusion wrapper class names that indicate a component wrapper.
- */
-const SYNCFUSION_WRAPPER_CLASSES = [
-  'e-input-group',
-  'e-control-wrapper',
-  'e-checkbox-wrapper',
-  'e-radio-wrapper'
-];
+import { isSyncfusionWrapper } from '../../syncfusion/constants.js';
 
 /**
  * Determines if an element should be validated.
@@ -84,19 +76,14 @@ function isVisible(element) {
 function hasSyncfusionVisibleWrapper(element) {
   // Look for parent with Syncfusion wrapper class
   let parent = element.parentElement;
-  
+
   while (parent) {
-    const hasSyncfusionClass = SYNCFUSION_WRAPPER_CLASSES.some(cls => 
-      parent?.classList.contains(cls)
-    );
-    
-    if (hasSyncfusionClass) {
+    if (isSyncfusionWrapper(parent)) {
       return isVisible(parent);
     }
-    
     parent = parent.parentElement;
   }
-  
+
   // No Syncfusion wrapper found, hidden input should not validate
   return false;
 }
