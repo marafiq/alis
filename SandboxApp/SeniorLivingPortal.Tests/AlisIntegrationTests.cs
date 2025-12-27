@@ -133,13 +133,23 @@ public class AlisIntegrationTests : PageTest
     /// </summary>
     private async Task SetNumericTextBoxValue(string id, decimal value)
     {
+        var valueStr = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         await Page.EvaluateAsync($@"() => {{
             const el = document.getElementById('{id}');
             if (el && el.ej2_instances && el.ej2_instances[0]) {{
-                el.ej2_instances[0].value = {value};
-                el.ej2_instances[0].dataBind();
-                el.dispatchEvent(new CustomEvent('alis:trigger', {{ bubbles: true }}));
+                const instance = el.ej2_instances[0];
+                instance.value = {valueStr};
+                // Trigger change event to notify the component
+                if (typeof instance.trigger === 'function') {{
+                    instance.trigger('change', {{ value: {valueStr} }});
+                }}
             }}
+        }}");
+        await Page.WaitForTimeoutAsync(300);
+        // Now trigger ALIS
+        await Page.EvaluateAsync($@"() => {{
+            const el = document.getElementById('{id}');
+            if (el) el.dispatchEvent(new CustomEvent('alis:trigger', {{ bubbles: true }}));
         }}");
         await Page.WaitForTimeoutAsync(200);
     }
@@ -216,10 +226,20 @@ public class AlisIntegrationTests : PageTest
         await Page.EvaluateAsync($@"() => {{
             const el = document.getElementById('{id}');
             if (el && el.ej2_instances && el.ej2_instances[0]) {{
-                el.ej2_instances[0].value = {value};
-                el.ej2_instances[0].dataBind();
-                el.dispatchEvent(new CustomEvent('alis:trigger', {{ bubbles: true }}));
+                const instance = el.ej2_instances[0];
+                // For Syncfusion Slider, set value and trigger change
+                instance.value = {value};
+                // Force notify property change
+                if (typeof instance.trigger === 'function') {{
+                    instance.trigger('change', {{ value: {value} }});
+                }}
             }}
+        }}");
+        await Page.WaitForTimeoutAsync(300);
+        // Now trigger ALIS
+        await Page.EvaluateAsync($@"() => {{
+            const el = document.getElementById('{id}');
+            if (el) el.dispatchEvent(new CustomEvent('alis:trigger', {{ bubbles: true }}));
         }}");
         await Page.WaitForTimeoutAsync(200);
     }
@@ -550,12 +570,21 @@ public class AlisIntegrationTests : PageTest
         await Page.EvaluateAsync(@"() => {
             const el = document.getElementById('testRangeSlider');
             if (el && el.ej2_instances && el.ej2_instances[0]) {
-                el.ej2_instances[0].value = [30, 70];
-                el.ej2_instances[0].dataBind();
-                el.dispatchEvent(new CustomEvent('alis:trigger', { bubbles: true }));
+                const instance = el.ej2_instances[0];
+                instance.value = [30, 70];
+                // Trigger change event to notify the component
+                if (typeof instance.trigger === 'function') {
+                    instance.trigger('change', { value: [30, 70] });
+                }
             }
         }");
         await Page.WaitForTimeoutAsync(300);
+        // Now trigger ALIS
+        await Page.EvaluateAsync(@"() => {
+            const el = document.getElementById('testRangeSlider');
+            if (el) el.dispatchEvent(new CustomEvent('alis:trigger', { bubbles: true }));
+        }");
+        await Page.WaitForTimeoutAsync(200);
 
         var content = await resultDiv.TextContentAsync();
         Assert.That(content, Does.Contain("Range Slider:").And.Contain("30"),

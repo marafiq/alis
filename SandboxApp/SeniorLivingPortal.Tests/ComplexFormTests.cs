@@ -44,7 +44,7 @@ public class ComplexFormTests : PageTest
             string s => $"'{s}'",
             bool b => b.ToString().ToLower(),
             int i => i.ToString(),
-            decimal d => d.ToString(),
+            decimal d => d.ToString(System.Globalization.CultureInfo.InvariantCulture),
             string[] arr => "[" + string.Join(",", arr.Select(s => $"'{s}'")) + "]",
             _ => value.ToString()
         };
@@ -54,10 +54,15 @@ public class ComplexFormTests : PageTest
         await Page.EvaluateAsync($@"() => {{
             const el = document.getElementById('{id}');
             if (el?.ej2_instances?.[0]) {{
-                el.ej2_instances[0].{prop} = {valueJs};
-                el.ej2_instances[0].dataBind();
+                const instance = el.ej2_instances[0];
+                instance.{prop} = {valueJs};
+                // For controls that need explicit notification, trigger change
+                if (typeof instance.trigger === 'function') {{
+                    instance.trigger('change', {{ {prop}: {valueJs} }});
+                }}
             }}
         }}");
+        await Page.WaitForTimeoutAsync(100);
     }
 
     /// <summary>
@@ -419,10 +424,19 @@ public class ComplexFormTests : PageTest
         await Page.EvaluateAsync(@"() => {
             const el = document.getElementById('testRangeSlider');
             if (el?.ej2_instances?.[0]) {
-                el.ej2_instances[0].value = [25, 75];
-                el.ej2_instances[0].dataBind();
-                el.dispatchEvent(new CustomEvent('alis:trigger', { bubbles: true }));
+                const instance = el.ej2_instances[0];
+                instance.value = [25, 75];
+                // Trigger change event to notify the component
+                if (typeof instance.trigger === 'function') {
+                    instance.trigger('change', { value: [25, 75] });
+                }
             }
+        }");
+        await Page.WaitForTimeoutAsync(300);
+        // Now trigger ALIS
+        await Page.EvaluateAsync(@"() => {
+            const el = document.getElementById('testRangeSlider');
+            if (el) el.dispatchEvent(new CustomEvent('alis:trigger', { bubbles: true }));
         }");
 
         await Page.WaitForTimeoutAsync(300);

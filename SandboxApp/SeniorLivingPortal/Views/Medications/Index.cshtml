@@ -350,13 +350,7 @@
 
     // Show administer dialog
     window.showAdministerModal = function(ctx) {
-        // Copy content to dialog body
-        const sourceContent = document.getElementById('administerModalBody')?.innerHTML;
-        const dialogBody = document.getElementById('administerDialogBody');
-        if (dialogBody && sourceContent) {
-            dialogBody.innerHTML = sourceContent;
-        }
-
+        // Content is already loaded directly to #administerDialogBody via ALIS
         if (typeof initSyncfusionControls === 'function') {
             initSyncfusionControls({ target: '#administerDialogBody' });
         }
@@ -491,11 +485,5 @@
             updateBulkButton();
         }
     });
-
-    // Hidden target for ALIS modal content loading
-    var administerModalBody = document.createElement('div');
-    administerModalBody.id = 'administerModalBody';
-    administerModalBody.style.display = 'none';
-    document.body.appendChild(administerModalBody);
 </script>
 }

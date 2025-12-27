@@ -4267,12 +4267,33 @@ var ALISBundle = (function (exports) {
       const instance = getInstance(element);
       if (!instance) return null;
 
-      // Checkbox/Switch use 'checked'
-      if ('checked' in instance) {
+      const constructorName = instance.constructor?.name || '';
+
+      // RadioButton: return value only if checked, else null (skip unchecked radios)
+      // Radio buttons have both 'checked' and 'value' properties
+      if (constructorName.includes('Radio') || element.type === 'radio') {
+        if (instance.checked) {
+          // Try multiple sources for the value
+          return instance.value || element.value || element.getAttribute('value') || 'true';
+        }
+        return null;
+      }
+
+      // Slider: handle range slider (array values) before generic 'value' check
+      if (constructorName.includes('Slider')) {
+        if (Array.isArray(instance.value)) {
+          return instance.value.join('-');
+        }
+        return instance.value;
+      }
+
+      // Checkbox/Switch: return checked state (boolean)
+      // Check for 'checked' property before 'value' since these have both
+      if ('checked' in instance && !('text' in instance)) {
         return instance.checked;
       }
 
-      // Most controls use 'value'
+      // Most controls use 'value' (dropdowns, textboxes, etc.)
       if ('value' in instance) {
         return instance.value;
       }
@@ -4282,7 +4303,12 @@ var ALISBundle = (function (exports) {
 
     isCheckbox(element) {
       const instance = getInstance(element);
-      return instance && 'checked' in instance;
+      if (!instance) return false;
+      const constructorName = instance.constructor?.name || '';
+      // Checkbox/Switch have 'checked' but not 'text' property
+      // RadioButton also has 'checked' but should not be treated as checkbox
+      if (constructorName.includes('Radio')) return false;
+      return 'checked' in instance && !('text' in instance);
     }
   };
 
