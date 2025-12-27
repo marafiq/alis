@@ -840,12 +840,26 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Get field name from element - checks name attribute and data-alis-sf-name (set by bridge)
+   * Get field name from element.
+   * For Syncfusion controls, uses the instance API to get the configured name.
    * @param {Element} element
    * @returns {string | null}
    */
   function getFieldName(element) {
-    return element.getAttribute('name') || element.getAttribute('data-alis-sf-name');
+    // Standard HTML name attribute
+    const name = element.getAttribute('name');
+    if (name) return name;
+
+    // Syncfusion: instance.name is the configured field name
+    if (hasSyncfusionInstance(element)) {
+      const instance = getSyncfusionInstance(element);
+      if (instance?.name) return instance.name;
+      // Syncfusion creates hiddenElement with name for form submission
+      const hiddenName = instance?.hiddenElement?.getAttribute?.('name');
+      if (hiddenName) return hiddenName;
+    }
+
+    return null;
   }
 
   /**
@@ -1092,12 +1106,12 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Check if element has a field name (via name attribute or data-alis-sf-name from bridge)
+   * Check if element is a collectable field (has name or is Syncfusion control)
    * @param {Element} element
    * @returns {boolean}
    */
-  function hasFieldName(element) {
-    return !!(element.getAttribute('name') || element.getAttribute('data-alis-sf-name'));
+  function isCollectableField(element) {
+    return !!element.getAttribute('name') || hasSyncfusionInstance(element);
   }
 
   /**
@@ -1117,8 +1131,8 @@ var ALISBundle = (function (exports) {
       };
     }
 
-    // For self collection, treat element as single field if it has a name
-    if (source === element && element && hasFieldName(element)) {
+    // For self collection, treat as single field if collectable
+    if (source === element && element && isCollectableField(element)) {
       const field = readValue(element);
       return {
         source: element,

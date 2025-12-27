@@ -1,13 +1,14 @@
 import { readContainerValues, readFormValues, readValue } from './reader.js';
 import { resolveCollectSource } from './resolver.js';
+import { hasSyncfusionInstance } from '../syncfusion/constants.js';
 
 /**
- * Check if element has a field name (via name attribute or data-alis-sf-name from bridge)
+ * Check if element is a collectable field (has name or is Syncfusion control)
  * @param {Element} element
  * @returns {boolean}
  */
-function hasFieldName(element) {
-  return !!(element.getAttribute('name') || element.getAttribute('data-alis-sf-name'));
+function isCollectableField(element) {
+  return !!element.getAttribute('name') || hasSyncfusionInstance(element);
 }
 
 /**
@@ -27,8 +28,8 @@ export function collect(element, options = {}) {
     };
   }
 
-  // For self collection, treat element as single field if it has a name
-  if (source === element && element && hasFieldName(element)) {
+  // For self collection, treat as single field if collectable
+  if (source === element && element && isCollectableField(element)) {
     const field = readValue(element);
     return {
       source: element,

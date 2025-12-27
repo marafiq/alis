@@ -1,14 +1,12 @@
 @{
     ViewData["Title"] = "Syncfusion + ALIS Integration Test";
 }
-
 <div class="row mb-4">
     <div class="col-12">
         <h2 class="mb-0">Syncfusion + ALIS Comprehensive Integration Test</h2>
         <p class="text-muted">All Syncfusion EJ2 controls tested with ALIS framework features</p>
     </div>
 </div>
-
 <!-- Section 1: Text Input Controls -->
 <div class="card mb-4">
     <div class="card-header bg-primary text-white">
@@ -30,7 +28,6 @@
                 </ejs-textbox>
                 <div id="textbox-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- NumericTextBox -->
             <div class="col-md-4 mb-3">
                 <label class="form-label">NumericTextBox (change trigger)</label>
@@ -48,7 +45,6 @@
                 </ejs-numerictextbox>
                 <div id="numeric-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- MaskedTextBox -->
             <div class="col-md-4 mb-3">
                 <label class="form-label">MaskedTextBox (phone)</label>
@@ -66,7 +62,6 @@
         </div>
     </div>
 </div>
-
 <!-- Section 2: Selection Controls -->
 <div class="card mb-4">
     <div class="card-header bg-success text-white">
@@ -79,8 +74,6 @@
                 <label class="form-label">DropDownList</label>
                 <ejs-dropdownlist id="testDropdown"
                                   name="dropdownValue"
-                                  data-alis-sf-name="dropdownValue"
-                                  data-alis-sf-type="dropdownlist"
                                   placeholder="Select option"
                                   data-alis-get="/Home/TestDropdownChange"
                                   data-alis-trigger="alis:trigger"
@@ -95,14 +88,11 @@
                 </ejs-dropdownlist>
                 <div id="dropdown-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- ComboBox -->
             <div class="col-md-4 mb-3">
                 <label class="form-label">ComboBox (editable)</label>
                 <ejs-combobox id="testCombobox"
                               name="comboboxValue"
-                              data-alis-sf-name="comboboxValue"
-                              data-alis-sf-type="combobox"
                               placeholder="Select or type"
                               allowCustom="true"
                               data-alis-get="/Home/TestComboChange"
@@ -119,14 +109,11 @@
                 </ejs-combobox>
                 <div id="combobox-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- AutoComplete -->
             <div class="col-md-4 mb-3">
                 <label class="form-label">AutoComplete</label>
                 <ejs-autocomplete id="testAutocomplete"
                                   name="autocompleteValue"
-                                  data-alis-sf-name="autocompleteValue"
-                                  data-alis-sf-type="autocomplete"
                                   placeholder="Type to search"
                                   minLength="1"
                                   data-alis-get="/Home/TestAutocomplete"
@@ -145,15 +132,12 @@
                 <div id="autocomplete-result" class="mt-2 small text-muted"></div>
             </div>
         </div>
-
         <div class="row">
             <!-- MultiSelect -->
             <div class="col-md-6 mb-3">
                 <label class="form-label">MultiSelect (multiple selection)</label>
                 <ejs-multiselect id="testMultiselect"
                                  name="multiselectValue"
-                                 data-alis-sf-name="multiselectValue"
-                                 data-alis-sf-type="multiselect"
                                  placeholder="Select items"
                                  mode="Box"
                                  data-alis-get="/Home/TestMultiselect"
@@ -171,14 +155,11 @@
                 </ejs-multiselect>
                 <div id="multiselect-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- ListBox -->
             <div class="col-md-6 mb-3">
                 <label class="form-label">ListBox</label>
                 <ejs-listbox id="testListbox"
                              name="listboxValue"
-                             data-alis-sf-name="listboxValue"
-                             data-alis-sf-type="listbox"
                              height="120px"
                              data-alis-get="/Home/TestListbox"
                              data-alis-trigger="alis:trigger"
@@ -197,7 +178,6 @@
         </div>
     </div>
 </div>
-
 <!-- Section 3: Date/Time Controls -->
 <div class="card mb-4">
     <div class="card-header bg-info text-white">
@@ -210,8 +190,6 @@
                 <label class="form-label">DatePicker</label>
                 <ejs-datepicker id="testDatepicker"
                                 name="datepickerValue"
-                                data-alis-sf-name="datepickerValue"
-                                data-alis-sf-type="datepicker"
                                 placeholder="Select date"
                                 format="MM/dd/yyyy"
                                 data-alis-get="/Home/TestDateChange"
@@ -221,14 +199,11 @@
                 </ejs-datepicker>
                 <div id="datepicker-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- TimePicker -->
             <div class="col-md-3 mb-3">
                 <label class="form-label">TimePicker</label>
                 <ejs-timepicker id="testTimepicker"
                                 name="timepickerValue"
-                                data-alis-sf-name="timepickerValue"
-                                data-alis-sf-type="timepicker"
                                 placeholder="Select time"
                                 format="hh:mm a"
                                 step="30"
@@ -239,14 +214,11 @@
                 </ejs-timepicker>
                 <div id="timepicker-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- DateTimePicker -->
             <div class="col-md-3 mb-3">
                 <label class="form-label">DateTimePicker</label>
                 <ejs-datetimepicker id="testDatetimepicker"
                                     name="datetimepickerValue"
-                                    data-alis-sf-name="datetimepickerValue"
-                                    data-alis-sf-type="datetimepicker"
                                     placeholder="Select date & time"
                                     format="MM/dd/yyyy hh:mm a"
                                     data-alis-get="/Home/TestDateTimeChange"
@@ -256,14 +228,11 @@
                 </ejs-datetimepicker>
                 <div id="datetimepicker-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- DateRangePicker -->
             <div class="col-md-3 mb-3">
                 <label class="form-label">DateRangePicker</label>
                 <ejs-daterangepicker id="testDaterangepicker"
                                      name="daterangepickerValue"
-                                     data-alis-sf-name="daterangepickerValue"
-                                     data-alis-sf-type="daterangepicker"
                                      placeholder="Select range"
                                      format="MM/dd/yyyy"
                                      data-alis-get="/Home/TestDateRangeChange"
@@ -276,7 +245,6 @@
         </div>
     </div>
 </div>
-
 <!-- Section 4: Toggle/Boolean Controls -->
 <div class="card mb-4">
     <div class="card-header bg-warning">
@@ -289,8 +257,6 @@
                 <label class="form-label d-block">Checkbox</label>
                 <ejs-checkbox id="testCheckbox"
                               name="checkboxValue"
-                              data-alis-sf-name="checkboxValue"
-                              data-alis-sf-type="checkbox"
                               label="Enable feature"
                               data-alis-get="/Home/TestCheckboxChange"
                               data-alis-trigger="alis:trigger"
@@ -299,14 +265,11 @@
                 </ejs-checkbox>
                 <div id="checkbox-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- Switch -->
             <div class="col-md-3 mb-3">
                 <label class="form-label d-block">Switch</label>
                 <ejs-switch id="testSwitch"
                             name="switchValue"
-                            data-alis-sf-name="switchValue"
-                            data-alis-sf-type="switch"
                             onLabel="ON"
                             offLabel="OFF"
                             data-alis-get="/Home/TestSwitchChange"
@@ -316,7 +279,6 @@
                 </ejs-switch>
                 <div id="switch-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- RadioButton Group -->
             <div class="col-md-6 mb-3">
                 <label class="form-label d-block">RadioButton Group</label>
@@ -334,7 +296,6 @@
         </div>
     </div>
 </div>
-
 <!-- Section 5: Range/Slider Controls -->
 <div class="card mb-4">
     <div class="card-header bg-secondary text-white">
@@ -347,8 +308,6 @@
                 <label class="form-label">Slider (single value)</label>
                 <ejs-slider id="testSlider"
                             name="sliderValue"
-                            data-alis-sf-name="sliderValue"
-                            data-alis-sf-type="slider"
                             min="0"
                             max="100"
                             value="50"
@@ -360,14 +319,11 @@
                 </ejs-slider>
                 <div id="slider-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- Range Slider -->
             <div class="col-md-6 mb-3">
                 <label class="form-label">Slider (range)</label>
                 <ejs-slider id="testRangeSlider"
                             name="rangeSliderValue"
-                            data-alis-sf-name="rangeSliderValue"
-                            data-alis-sf-type="slider"
                             min="0"
                             max="100"
                             value="new int[] {20, 80}"
@@ -382,7 +338,6 @@
         </div>
     </div>
 </div>
-
 <!-- Section 6: Color/Special Controls -->
 <div class="card mb-4">
     <div class="card-header bg-dark text-white">
@@ -395,8 +350,6 @@
                 <label class="form-label">ColorPicker</label>
                 <ejs-colorpicker id="testColorpicker"
                                  name="colorpickerValue"
-                                 data-alis-sf-name="colorpickerValue"
-                                 data-alis-sf-type="colorpicker"
                                  value="#0078d4"
                                  mode="Palette"
                                  data-alis-get="/Home/TestColorChange"
@@ -406,7 +359,6 @@
                 </ejs-colorpicker>
                 <div id="colorpicker-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- File Upload -->
             <div class="col-md-4 mb-3">
                 <label class="form-label">Uploader</label>
@@ -418,7 +370,6 @@
                 </ejs-uploader>
                 <div id="uploader-result" class="mt-2 small text-muted"></div>
             </div>
-
             <!-- Button variants -->
             <div class="col-md-4 mb-3">
                 <label class="form-label">Button</label>
@@ -436,7 +387,6 @@
         </div>
     </div>
 </div>
-
 <!-- Section 7: Rich Text Editor -->
 <div class="card mb-4">
     <div class="card-header bg-danger text-white">
@@ -467,7 +417,6 @@
         </div>
     </div>
 </div>
-
 <!-- Section 8: Cascading Dropdowns -->
 <div class="card mb-4">
     <div class="card-header bg-primary text-white">
@@ -493,7 +442,6 @@
                     })"></e-data-manager>
                 </ejs-dropdownlist>
             </div>
-
             <div class="col-md-4 mb-3">
                 <label class="form-label">State/Province</label>
                 <ejs-dropdownlist id="cascadeState"
@@ -507,7 +455,6 @@
                     <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
                 </ejs-dropdownlist>
             </div>
-
             <div class="col-md-4 mb-3">
                 <label class="form-label">City</label>
                 <ejs-dropdownlist id="cascadeCity"
@@ -520,7 +467,6 @@
         <div id="cascade-result" class="mt-2 small text-muted"></div>
     </div>
 </div>
-
 <!-- Section 9: Form with Validation -->
 <div class="card mb-4">
     <div class="card-header bg-success text-white">
@@ -532,7 +478,6 @@
               data-alis-validate="true"
               data-alis-target="#validation-result"
               data-alis-swap="innerHTML">
-
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Name <span class="text-danger">*</span></label>
@@ -544,7 +489,6 @@
                     </ejs-textbox>
                     <span data-valmsg-for="Name" class="field-validation-valid text-danger"></span>
                 </div>
-
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Category <span class="text-danger">*</span></label>
                     <ejs-dropdownlist id="valCategory"
@@ -560,7 +504,6 @@
                     </ejs-dropdownlist>
                     <span data-valmsg-for="Category" class="field-validation-valid text-danger"></span>
                 </div>
-
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Date <span class="text-danger">*</span></label>
                     <ejs-datepicker id="valDate"
@@ -572,14 +515,11 @@
                     <span data-valmsg-for="Date" class="field-validation-valid text-danger"></span>
                 </div>
             </div>
-
             <ejs-button id="valSubmit" type="submit" cssClass="e-primary" content="Submit"></ejs-button>
         </form>
-
         <div id="validation-result" class="mt-3 border p-2 bg-light"></div>
     </div>
 </div>
-
 <!-- Console Log Panel -->
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -590,11 +530,9 @@
         <pre id="logPanel" style="max-height: 200px; overflow-y: auto; font-size: 11px; background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 4px;"></pre>
     </div>
 </div>
-
 @section Scripts {
     <script>
         window.ALIS_DEBUG = true;
-
         document.addEventListener('DOMContentLoaded', function() {
             const logPanel = document.getElementById('logPanel');
             function log(msg) {
@@ -602,12 +540,10 @@
                 logPanel.innerHTML += `[${time}] ${msg}\n`;
                 logPanel.scrollTop = logPanel.scrollHeight;
             }
-
             // Monitor ALIS events
             document.addEventListener('alis:trigger', function(e) {
                 log(`ALIS trigger: ${e.target.id || e.target.name}`);
             });
-
             log('Page loaded - ready for testing');
         });
     </script>

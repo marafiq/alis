@@ -1,12 +1,26 @@
-import { getSyncfusionValue, hasSyncfusionInstance } from '../syncfusion/constants.js';
+import { getSyncfusionValue, getSyncfusionInstance, hasSyncfusionInstance } from '../syncfusion/constants.js';
 
 /**
- * Get field name from element - checks name attribute and data-alis-sf-name (set by bridge)
+ * Get field name from element.
+ * For Syncfusion controls, uses the instance API to get the configured name.
  * @param {Element} element
  * @returns {string | null}
  */
 function getFieldName(element) {
-  return element.getAttribute('name') || element.getAttribute('data-alis-sf-name');
+  // Standard HTML name attribute
+  const name = element.getAttribute('name');
+  if (name) return name;
+
+  // Syncfusion: instance.name is the configured field name
+  if (hasSyncfusionInstance(element)) {
+    const instance = getSyncfusionInstance(element);
+    if (instance?.name) return instance.name;
+    // Syncfusion creates hiddenElement with name for form submission
+    const hiddenName = instance?.hiddenElement?.getAttribute?.('name');
+    if (hiddenName) return hiddenName;
+  }
+
+  return null;
 }
 
 /**
