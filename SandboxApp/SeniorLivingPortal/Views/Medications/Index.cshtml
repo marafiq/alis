@@ -58,6 +58,7 @@
             <!-- ALIS: Debounced search input -->
             <ejs-textbox id="searchMeds"
                          name="query"
+                         data-alis-name="query"
                          placeholder="Search medications or residents..."
                          showClearButton="true"
                          floatLabelType="Auto"
@@ -73,6 +74,7 @@
             <!-- ALIS: Filter dropdown with change trigger -->
             <ejs-dropdownlist id="residentFilter"
                               name="residentId"
+                              data-alis-name="residentId"
                               placeholder="All Residents"
                               floatLabelType="Auto"
                               cssClass="e-outline"
@@ -245,6 +247,7 @@
               data-alis-validate="true"
               data-alis-swap="none"
               data-alis-confirm="bulkConfirm"
+              data-alis-confirm-message="Are you sure you want to administer the selected medications?"
               data-alis-on-after="handleBulkResult"
               data-alis-duplicate-request="abort">
 
