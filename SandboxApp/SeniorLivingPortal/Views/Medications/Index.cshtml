@@ -2,13 +2,15 @@
 @{
     ViewData["Title"] = "Medications";
     var residents = ViewBag.Residents as IEnumerable<Resident> ?? Enumerable.Empty<Resident>();
+    var residentOptions = new[] { new { Text = "All Residents", Value = "" } }
+        .Concat(residents.Select(r => new { Text = r.FullName, Value = r.Id.ToString() }))
+        .ToArray();
 }
 
 @*
-    MEDICATIONS MODULE - Demonstrates ALL ALIS Features
+    MEDICATIONS MODULE - 100% Syncfusion EJ2 Components + ALIS Framework
 
-    This view showcases every ALIS attribute in a real-world scenario:
-
+    Demonstrates ALL ALIS Features with pure Syncfusion controls:
     1. HTTP Methods: data-alis-get, data-alis-post
     2. Targeting: data-alis-target with selectors
     3. Triggers: data-alis-trigger with events, delay, throttle
@@ -22,300 +24,453 @@
     11. Duplicate Handling: data-alis-duplicate-request
 *@
 
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h2 class="mb-0">
-            Medication Administration
-            @* ALIS Feature: Auto-polling for alert badge with retry *@
+<!-- Page Header -->
+<div class="page-header mb-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Medication Administration</h1>
+            <p class="text-sky-100 mt-1">Administer medications to residents</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- ALIS: Auto-polling alert badge with retry -->
             <span id="alert-badge"
+                  class="inline-flex items-center"
                   data-alis-get="/Medications/AlertCount"
                   data-alis-trigger="load, timer:60000ms"
                   data-alis-target="self"
                   data-alis-swap="innerHTML"
                   data-alis-retry='{"maxAttempts": 3, "baseDelay": 2000}'>
             </span>
-        </h2>
-        <p class="text-muted">Administer medications to residents</p>
-    </div>
-    <div class="col-md-4 text-end">
-        @* ALIS Feature: Bulk action button with confirm *@
-        <ejs-button id="bulkAdminBtn"
-                    cssClass="e-warning"
-                    iconCss="e-icons e-check-box"
-                    content="Bulk Administer"
-                    disabled="true">
-        </ejs-button>
+            <ejs-button id="bulkAdminBtn"
+                        cssClass="e-warning"
+                        iconCss="e-icons e-check-box"
+                        content="BULK ADMINISTER"
+                        disabled="true">
+            </ejs-button>
+        </div>
     </div>
 </div>
 
-@* Search and Filter Section *@
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-5">
-                @* ALIS Feature: Debounced search with data-alis-trigger="input delay:300ms" *@
-                <div class="search-container">
-                    <ejs-textbox id="searchMeds"
-                                 name="query"
-                                 placeholder="Search medications or residents..."
-                                 showClearButton="true"
-                                 data-alis-get="/Medications/Search"
-                                 data-alis-trigger="input delay:300ms"
-                                 data-alis-target="#medications-list"
-                                 data-alis-collect="closest .card-body"
-                                 data-alis-indicator="is-loading, #search-spinner">
-                    </ejs-textbox>
-                    <span class="spinner" id="search-spinner"></span>
+<!-- Search & Filter Bar -->
+<div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+    <div class="grid grid-cols-12 gap-4 items-end">
+        <div class="col-span-5">
+            <!-- ALIS: Debounced search input -->
+            <ejs-textbox id="searchMeds"
+                         name="query"
+                         placeholder="Search medications or residents..."
+                         showClearButton="true"
+                         floatLabelType="Auto"
+                         cssClass="e-outline"
+                         data-alis-get="/Medications/Search"
+                         data-alis-trigger="input delay:300ms"
+                         data-alis-target="#medications-list"
+                         data-alis-collect="closest .bg-white"
+                         data-alis-indicator="is-loading">
+            </ejs-textbox>
+        </div>
+        <div class="col-span-4">
+            <!-- ALIS: Filter dropdown with change trigger -->
+            <ejs-dropdownlist id="residentFilter"
+                              name="residentId"
+                              placeholder="All Residents"
+                              floatLabelType="Auto"
+                              cssClass="e-outline"
+                              index="0"
+                              data-alis-get="/Medications/Search"
+                              data-alis-trigger="change"
+                              data-alis-target="#medications-list"
+                              data-alis-collect="closest .bg-white"
+                              data-alis-indicator="is-loading">
+                <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                <e-data-manager json="@residentOptions"></e-data-manager>
+            </ejs-dropdownlist>
+        </div>
+        <div class="col-span-3">
+            <!-- ALIS: Refresh with duplicate-request handling -->
+            <ejs-button id="refreshBtn"
+                        cssClass="e-outline e-info w-full"
+                        iconCss="e-icons e-refresh"
+                        content="REFRESH"
+                        data-alis-get="/Medications/Dashboard"
+                        data-alis-target="#medications-dashboard"
+                        data-alis-indicator="is-loading"
+                        data-alis-duplicate-request="ignore">
+            </ejs-button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-12 gap-6">
+    <!-- Main Medications Panel -->
+    <div class="col-span-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="stat-card">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                        <span class="e-icons e-clock text-amber-600 text-xl"></span>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-slate-800">@Model.Count()</div>
+                        <div class="text-sm text-slate-500">Pending</div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                @* ALIS Feature: Filter with data-alis-trigger="change" and data-alis-collect *@
-                @{
-                    var residentOptions = new[] { new { Text = "All Residents", Value = "" } }
-                        .Concat(residents.Select(r => new { Text = r.FullName, Value = r.Id.ToString() }))
-                        .ToArray();
-                }
-                <ejs-dropdownlist id="residentFilter"
-                                  name="residentId"
-                                  placeholder="Filter by Resident"
-                                  index="0"
-                                  data-alis-get="/Medications/Search"
-                                  data-alis-trigger="change"
-                                  data-alis-target="#medications-list"
-                                  data-alis-collect="closest .card-body"
-                                  data-alis-indicator="is-loading">
+            <div class="stat-card">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                        <span class="e-icons e-check text-green-600 text-xl"></span>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-slate-800">0</div>
+                        <div class="text-sm text-slate-500">Given Today</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                        <span class="e-icons e-warning text-red-600 text-xl"></span>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-slate-800">0</div>
+                        <div class="text-sm text-slate-500">Past Due</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medications Dashboard - ALIS auto-refresh -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-slate-800">Pending Medications</h2>
+                <span id="pending-count" class="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-sm font-medium">
+                    @Model.Count() items
+                </span>
+            </div>
+            <div id="medications-dashboard"
+                 data-alis-get="/Medications/Dashboard"
+                 data-alis-trigger="load"
+                 data-alis-target="self"
+                 data-alis-swap="innerHTML"
+                 data-alis-on-after="initMedicationControls">
+                @await Html.PartialAsync("_MedicationsDashboard", Model)
+            </div>
+        </div>
+
+        <!-- Medications Grid View -->
+        <div class="bg-white rounded-xl shadow-sm mt-6 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-800">List View</h2>
+            </div>
+            <div id="medications-list" class="p-4">
+                @await Html.PartialAsync("_MedicationsList", Model)
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Panel -->
+    <div class="col-span-4 space-y-6">
+        <!-- Resident Details Card -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="text-lg font-semibold text-slate-800">Resident Details</h3>
+            </div>
+            <div id="resident-details" class="p-6">
+                <div class="text-center text-slate-400 py-8">
+                    <span class="e-icons e-people text-4xl mb-2 block"></span>
+                    <p>Select a resident to view details</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Card -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="text-lg font-semibold text-slate-800">Today's Summary</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-600">Total Scheduled</span>
+                        <span class="font-bold text-slate-800">@Model.Count()</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2">
+                        <div class="bg-sky-500 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-green-600">0 completed</span>
+                        <span class="text-slate-400">0% done</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Syncfusion Dialog for Administration Form -->
+<ejs-dialog id="administerDialog"
+            header="Administer Medication"
+            width="500px"
+            isModal="true"
+            visible="false"
+            showCloseIcon="true"
+            closeOnEscape="true"
+            animationSettings="@(new Syncfusion.EJ2.Popups.DialogAnimationSettings { Effect = Syncfusion.EJ2.Popups.DialogEffect.Zoom })">
+    <e-dialog-buttons>
+        <e-dialog-dialogbutton buttonModel="@(new { content = "Cancel", cssClass = "e-flat" })" click="closeAdministerDialog"></e-dialog-dialogbutton>
+    </e-dialog-buttons>
+    <e-content-template>
+        <div id="administerDialogBody">
+            <!-- Content loaded via ALIS -->
+        </div>
+    </e-content-template>
+</ejs-dialog>
+
+<!-- Syncfusion Dialog for Bulk Administration -->
+<ejs-dialog id="bulkDialog"
+            header="Bulk Administration"
+            width="500px"
+            isModal="true"
+            visible="false"
+            showCloseIcon="true"
+            closeOnEscape="true"
+            cssClass="e-warning"
+            animationSettings="@(new Syncfusion.EJ2.Popups.DialogAnimationSettings { Effect = Syncfusion.EJ2.Popups.DialogEffect.Zoom })">
+    <e-content-template>
+        <form id="bulkForm"
+              data-alis-post="/Medications/BulkAdminister"
+              data-alis-validate="true"
+              data-alis-swap="none"
+              data-alis-confirm="bulkConfirm"
+              data-alis-on-after="handleBulkResult"
+              data-alis-duplicate-request="abort">
+
+            <div id="selected-meds-list" class="mb-4 max-h-48 overflow-y-auto">
+                <!-- Selected medications will be listed here -->
+            </div>
+
+            <div class="mb-4">
+                <ejs-dropdownlist id="bulkStatus"
+                                  name="Status"
+                                  floatLabelType="Always"
+                                  placeholder="Status"
+                                  value='"Given"'>
                     <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
-                    <e-data-manager json="@residentOptions"></e-data-manager>
+                    <e-data-manager json="@(new[] {
+                        new { Text = "Given", Value = "Given" },
+                        new { Text = "Refused", Value = "Refused" },
+                        new { Text = "Held", Value = "Held" }
+                    })"></e-data-manager>
                 </ejs-dropdownlist>
             </div>
-            <div class="col-md-3">
-                @* ALIS Feature: Refresh with duplicate-request handling *@
-                <ejs-button id="refreshBtn"
-                            cssClass="e-outline w-100"
-                            iconCss="e-icons e-refresh"
-                            content="Refresh"
-                            data-alis-get="/Medications/Dashboard"
-                            data-alis-target="#medications-dashboard"
-                            data-alis-indicator="is-loading"
-                            data-alis-duplicate-request="ignore">
+
+            <div class="mb-4">
+                <ejs-textbox id="bulkNotes"
+                             name="Notes"
+                             floatLabelType="Always"
+                             placeholder="Notes"
+                             multiline="true"
+                             cssClass="e-outline">
+                </ejs-textbox>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4 border-t border-slate-200">
+                <ejs-button id="bulkCancelBtn"
+                            cssClass="e-flat"
+                            content="Cancel"
+                            type="button">
+                </ejs-button>
+                <ejs-button id="bulkSubmitBtn"
+                            cssClass="e-warning"
+                            content="Apply to Selected"
+                            type="submit">
                 </ejs-button>
             </div>
-        </div>
-    </div>
-</div>
+        </form>
+    </e-content-template>
+</ejs-dialog>
 
-@* Dashboard Section with Auto-Refresh *@
-<div class="row">
-    <div class="col-md-8">
-        @* ALIS Feature: Auto-refresh dashboard with polling *@
-        <div id="medications-dashboard"
-             data-alis-get="/Medications/Dashboard"
-             data-alis-trigger="load"
-             data-alis-target="self"
-             data-alis-swap="innerHTML"
-             data-alis-on-after="initMedicationControls">
-            @await Html.PartialAsync("_MedicationsDashboard", Model)
-        </div>
-    </div>
-    <div class="col-md-4">
-        @* ALIS Feature: Resident quick view with throttled updates *@
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0">Resident Details</h6>
-            </div>
-            <div class="card-body" id="resident-details">
-                <p class="text-muted">Select a resident to view details</p>
-            </div>
-        </div>
-
-        @* Quick Stats Card *@
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6 class="mb-0">Today's Stats</h6>
-            </div>
-            <div class="card-body" id="stats-container">
-                <div class="row text-center">
-                    <div class="col-4">
-                        <h4 class="text-success mb-0">@Model.Count()</h4>
-                        <small class="text-muted">Pending</small>
-                    </div>
-                    <div class="col-4">
-                        <h4 class="text-info mb-0">0</h4>
-                        <small class="text-muted">Given</small>
-                    </div>
-                    <div class="col-4">
-                        <h4 class="text-warning mb-0">0</h4>
-                        <small class="text-muted">Missed</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@* Medications List Section *@
-<div class="card mt-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Pending Medications</h5>
-        <span class="badge bg-primary" id="pending-count">@Model.Count() items</span>
-    </div>
-    <div class="card-body" id="medications-list">
-        @await Html.PartialAsync("_MedicationsList", Model)
-    </div>
-</div>
-
-@* Modal for Administration Form *@
-<div class="modal fade" id="administerModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Administer Medication</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="administerModalBody">
-                <!-- Content loaded via ALIS -->
-            </div>
-        </div>
-    </div>
-</div>
-
-@* Bulk Administration Modal *@
-<div class="modal fade" id="bulkModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">Bulk Administration</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="bulkForm"
-                      data-alis-post="/Medications/BulkAdminister"
-                      data-alis-validate="true"
-                      data-alis-swap="none"
-                      data-alis-confirm="bulkConfirm"
-                      data-alis-on-after="handleBulkResult"
-                      data-alis-duplicate-request="abort">
-                    <div id="selected-meds-list" class="mb-3">
-                        <!-- Selected medications will be listed here -->
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <ejs-dropdownlist id="bulkStatus"
-                                          name="Status"
-                                          value='"Given"'>
-                            <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
-                            <e-data-manager json="@(new[] {
-                                new { Text = "Given", Value = "Given" },
-                                new { Text = "Refused", Value = "Refused" },
-                                new { Text = "Held", Value = "Held" }
-                            })"></e-data-manager>
-                        </ejs-dropdownlist>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <ejs-textbox id="bulkNotes"
-                                     name="Notes"
-                                     placeholder="Add notes for all selected..."
-                                     multiline="true">
-                        </ejs-textbox>
-                    </div>
-                    <div class="modal-footer px-0 pb-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <ejs-button id="bulkSubmitBtn" type="submit" cssClass="e-warning" content="Apply to Selected">
-                        </ejs-button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Syncfusion Toast for notifications -->
+<ejs-toast id="toastNotification"
+           showCloseButton="true"
+           newestOnTop="true">
+</ejs-toast>
 
 <ejs-scripts></ejs-scripts>
 
 @section Scripts {
 <script>
-    // Initialize medication-specific controls
+    // Dialog instances
+    let administerDialog, bulkDialog, toastNotification;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get Syncfusion dialog instances
+        administerDialog = document.getElementById('administerDialog')?.ej2_instances?.[0];
+        bulkDialog = document.getElementById('bulkDialog')?.ej2_instances?.[0];
+        toastNotification = document.getElementById('toastNotification')?.ej2_instances?.[0];
+
+        // Bulk cancel button
+        document.getElementById('bulkCancelBtn')?.addEventListener('click', closeBulkDialog);
+
+        // Bulk admin button click
+        document.getElementById('bulkAdminBtn')?.addEventListener('click', showBulkDialog);
+
+        // Register ALIS confirm handlers
+        if (typeof ALIS !== 'undefined' && ALIS.confirm) {
+            ALIS.confirm.register('bulkConfirm', function(ctx) {
+                const count = document.querySelectorAll('.med-checkbox').filter(el =>
+                    el.ej2_instances?.[0]?.checked).length;
+                return confirm('Apply action to ' + count + ' selected medications?');
+            });
+
+            ALIS.confirm.register('administerConfirm', function(ctx) {
+                return new Promise((resolve) => {
+                    const statusEl = document.getElementById('adminStatus');
+                    const status = statusEl?.ej2_instances?.[0]?.value || 'Given';
+                    const message = status === 'Given'
+                        ? 'Confirm medication administration?'
+                        : 'Record medication as ' + status + '?';
+                    resolve(confirm(message));
+                });
+            });
+        }
+    });
+
+    // Initialize medication controls after ALIS swap
     window.initMedicationControls = function(ctx) {
-        // Reinitialize Syncfusion controls after ALIS swap
         if (typeof initSyncfusionControls === 'function') {
             initSyncfusionControls({ target: '#medications-dashboard' });
         }
-
-        // Update pending count
-        const list = document.querySelectorAll('.medication-item');
-        document.getElementById('pending-count').textContent = list.length + ' items';
+        updatePendingCount();
+        updateBulkButton();
     };
 
-    // Show administer modal
+    // Show administer dialog
     window.showAdministerModal = function(ctx) {
-        if (typeof initSyncfusionControls === 'function') {
-            initSyncfusionControls({ target: '#administerModalBody' });
+        // Copy content to dialog body
+        const sourceContent = document.getElementById('administerModalBody')?.innerHTML;
+        const dialogBody = document.getElementById('administerDialogBody');
+        if (dialogBody && sourceContent) {
+            dialogBody.innerHTML = sourceContent;
         }
 
-        const modalEl = document.getElementById('administerModal');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
+        if (typeof initSyncfusionControls === 'function') {
+            initSyncfusionControls({ target: '#administerDialogBody' });
+        }
+
+        if (administerDialog) {
+            administerDialog.show();
+        }
     };
 
-    // Handle administer form result
+    window.closeAdministerDialog = function() {
+        if (administerDialog) administerDialog.hide();
+    };
+
+    window.closeBulkDialog = function() {
+        if (bulkDialog) bulkDialog.hide();
+    };
+
+    // Handle administer result
     window.handleAdministerResult = function(ctx) {
         if (ctx.error) return;
-
-        showToast(ctx.body?.message || 'Medication administered', 'success');
-
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('administerModal'));
-        if (modal) modal.hide();
-
-        // Refresh dashboard
+        showToastMessage(ctx.body?.message || 'Medication administered', 'Success');
+        closeAdministerDialog();
         refreshMedicationsDashboard();
     };
 
     // Handle bulk result
     window.handleBulkResult = function(ctx) {
         if (ctx.error) return;
-
-        showToast(ctx.body?.message || 'Bulk action completed', 'success');
-
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('bulkModal'));
-        if (modal) modal.hide();
-
-        // Clear selections
-        document.querySelectorAll('.med-checkbox:checked').forEach(cb => cb.checked = false);
-        updateBulkButton();
-
-        // Refresh dashboard
+        showToastMessage(ctx.body?.message || 'Bulk action completed', 'Success');
+        closeBulkDialog();
+        clearAllSelections();
         refreshMedicationsDashboard();
     };
 
-    // Quick give handler - shows confirmation
-    window.confirmQuickGive = function(ctx) {
-        return confirm('Mark this medication as given?');
-    };
-
-    // Handle quick give result
+    // Quick give result handler
     window.handleQuickGiveResult = function(ctx) {
         if (ctx.error) return;
-        showToast('Medication marked as given', 'success');
+        showToastMessage('Medication marked as given', 'Success');
     };
 
-    // Load resident details
-    window.loadResidentDetails = function(residentId) {
-        if (typeof ALIS !== 'undefined') {
-            ALIS.request({
-                url: '/Medications/ByResident?residentId=' + residentId,
-                method: 'GET',
-                target: '#resident-details',
-                swap: 'innerHTML',
-                onAfter: function() {
-                    if (typeof initSyncfusionControls === 'function') {
-                        initSyncfusionControls({ target: '#resident-details' });
-                    }
-                }
+    // Show bulk dialog
+    function showBulkDialog() {
+        const checked = getCheckedMedications();
+        if (checked.length === 0) return;
+
+        let html = '<div class="space-y-2">';
+        checked.forEach(item => {
+            html += `<div class="flex justify-between items-center p-2 bg-slate-50 rounded">
+                <span class="font-medium">${item.name}</span>
+                <span class="text-sm text-slate-500">${item.resident}</span>
+                <input type="hidden" name="ScheduleIds" value="${item.id}" />
+            </div>`;
+        });
+        html += '</div>';
+
+        document.getElementById('selected-meds-list').innerHTML = html;
+        if (bulkDialog) bulkDialog.show();
+    }
+
+    // Get checked medications
+    function getCheckedMedications() {
+        const result = [];
+        document.querySelectorAll('.med-checkbox').forEach(el => {
+            if (el.ej2_instances?.[0]?.checked) {
+                const item = el.closest('.medication-item');
+                result.push({
+                    id: el.ej2_instances[0].value || el.value,
+                    name: item?.querySelector('.med-name')?.textContent || 'Unknown',
+                    resident: item?.querySelector('.med-resident')?.textContent || ''
+                });
+            }
+        });
+        return result;
+    }
+
+    // Clear all checkbox selections
+    function clearAllSelections() {
+        document.querySelectorAll('.med-checkbox').forEach(el => {
+            if (el.ej2_instances?.[0]) {
+                el.ej2_instances[0].checked = false;
+            }
+        });
+        updateBulkButton();
+    }
+
+    // Update bulk button state
+    function updateBulkButton() {
+        const checked = getCheckedMedications().length;
+        const btn = document.getElementById('bulkAdminBtn');
+        if (btn?.ej2_instances?.[0]) {
+            btn.ej2_instances[0].disabled = checked === 0;
+        }
+    }
+    window.updateBulkButton = updateBulkButton;
+
+    // Update pending count
+    function updatePendingCount() {
+        const count = document.querySelectorAll('.medication-item').length;
+        const el = document.getElementById('pending-count');
+        if (el) el.textContent = count + ' items';
+    }
+
+    // Show toast message using Syncfusion Toast
+    function showToastMessage(message, title) {
+        if (toastNotification) {
+            toastNotification.show({
+                title: title || 'Notification',
+                content: message,
+                cssClass: title === 'Success' ? 'e-toast-success' : 'e-toast-info',
+                timeOut: 3000
             });
         }
-    };
+    }
+    window.showToast = showToastMessage;
 
     // Refresh medications dashboard
     function refreshMedicationsDashboard() {
@@ -330,66 +485,17 @@
         }
     }
 
-    // Register bulk confirm handler
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof ALIS !== 'undefined' && ALIS.confirm) {
-            ALIS.confirm.register('bulkConfirm', function(ctx) {
-                const count = document.querySelectorAll('.med-checkbox:checked').length;
-                return confirm('Apply action to ' + count + ' selected medications?');
-            });
-
-            ALIS.confirm.register('administerConfirm', function(ctx) {
-                return new Promise((resolve) => {
-                    // Custom confirmation with status check
-                    const status = document.getElementById('adminStatus')?.value || 'Given';
-                    const message = status === 'Given'
-                        ? 'Confirm medication administration?'
-                        : 'Record medication as ' + status + '?';
-                    resolve(confirm(message));
-                });
-            });
-        }
-    });
-
-    // Update bulk button state based on selections
-    function updateBulkButton() {
-        const checked = document.querySelectorAll('.med-checkbox:checked').length;
-        const btn = document.getElementById('bulkAdminBtn');
-        if (btn && btn.ej2_instances) {
-            btn.ej2_instances[0].disabled = checked === 0;
-        }
-    }
-
-    // Event delegation for checkboxes
+    // Event delegation for checkbox changes
     document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('med-checkbox')) {
+        if (e.target.classList.contains('e-checkbox')) {
             updateBulkButton();
         }
     });
 
-    // Show bulk modal with selected medications
-    document.getElementById('bulkAdminBtn')?.addEventListener('click', function() {
-        const checked = document.querySelectorAll('.med-checkbox:checked');
-        if (checked.length === 0) return;
-
-        // Build selected list
-        let html = '<ul class="list-group list-group-flush">';
-        checked.forEach(cb => {
-            const item = cb.closest('.medication-item');
-            const name = item?.querySelector('.med-name')?.textContent || 'Unknown';
-            const resident = item?.querySelector('.med-resident')?.textContent || '';
-            html += `<li class="list-group-item d-flex justify-content-between">
-                <span>${name}</span>
-                <small class="text-muted">${resident}</small>
-                <input type="hidden" name="ScheduleIds" value="${cb.value}" />
-            </li>`;
-        });
-        html += '</ul>';
-
-        document.getElementById('selected-meds-list').innerHTML = html;
-
-        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('bulkModal'));
-        modal.show();
-    });
+    // Hidden target for ALIS modal content loading
+    var administerModalBody = document.createElement('div');
+    administerModalBody.id = 'administerModalBody';
+    administerModalBody.style.display = 'none';
+    document.body.appendChild(administerModalBody);
 </script>
 }

@@ -1,84 +1,216 @@
-﻿<!DOCTYPE html>
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Senior Living Portal</title>
-    
-    <!-- Syncfusion Essential JS 2 - Full Bundle CSS (local) -->
-    <link href="~/lib/syncfusion/material.css" rel="stylesheet" />
 
-    <!-- Bootstrap & Site CSS -->
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- Syncfusion Tailwind 3 Theme (CDN) -->
+    <link href="https://cdn.syncfusion.com/ej2/27.1.48/tailwind3.css" rel="stylesheet" />
 
-    <!-- Syncfusion Essential JS 2 - Full Bundle Script (local, loaded sync in head so ejs.* is available for partial views) -->
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0ea5e9',
+                        secondary: '#64748b',
+                        success: '#22c55e',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --sidebar-width: 250px;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s ease;
+        }
+        .main-content.sidebar-collapsed {
+            margin-left: 0;
+        }
+        .sidebar-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #475569;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 4px 8px;
+            transition: all 0.2s;
+        }
+        .sidebar-item:hover {
+            background: #f1f5f9;
+            color: #0ea5e9;
+        }
+        .sidebar-item.active {
+            background: #e0f2fe;
+            color: #0ea5e9;
+            font-weight: 600;
+        }
+        .sidebar-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .e-grid {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .e-sidebar {
+            top: 56px !important;
+        }
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 56px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .main-wrapper {
+            padding-top: 56px;
+        }
+    </style>
+
+    <!-- Syncfusion Essential JS 2 -->
     <script src="~/lib/syncfusion/ej2.min.js"></script>
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="/">
-                    <span class="fw-bold">🏠 Senior Living Portal</span>
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Residents" asp-action="Index">Residents</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Vitals" asp-action="Index">Vitals</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Medications" asp-action="Index">Medications</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Demos">ALIS Demos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-warning" asp-controller="Home" asp-action="SyncfusionTest">🧪 SF Test</a>
-                        </li>
-                    </ul>
-                    <span class="navbar-text text-light">
-                        <span id="current-time"></span>
-                    </span>
-                </div>
-            </div>
-        </nav>
-    </header>
-    
-    <div class="container-fluid py-3">
-        @RenderBody()
+<body class="bg-slate-50">
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <ejs-button id="sidebarToggle" cssClass="e-inherit" iconCss="e-icons e-menu"></ejs-button>
+        <span class="ml-4 text-lg font-bold text-white">Senior Living Portal</span>
+        <div class="flex-1"></div>
+        <div class="flex items-center gap-4 text-white">
+            <span id="current-time" class="text-sm opacity-90"></span>
+            <ejs-button id="notificationBtn" cssClass="e-inherit" iconCss="e-icons e-comment-show"></ejs-button>
+            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-medium">JD</div>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted py-3">
-        <div class="container text-center">
-            &copy; @DateTime.Now.Year - Senior Living Portal | Powered by <strong>ALIS</strong>
-        </div>
-    </footer>
+    <div class="main-wrapper">
+        <!-- Syncfusion Sidebar -->
+        <ejs-sidebar id="sidebar" width="250px" type="Push" target=".main-content" enableGestures="true" isOpen="true">
+            <e-content-template>
+                <div class="py-4">
+                    <div class="px-4 mb-4">
+                        <div class="flex items-center gap-3 p-3 bg-sky-50 rounded-lg">
+                            <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white font-bold">
+                                SL
+                            </div>
+                            <div>
+                                <div class="font-semibold text-slate-800">Sunrise Manor</div>
+                                <div class="text-xs text-slate-500">Assisted Living</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <nav class="space-y-1">
+                        <a asp-controller="Home" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                            <span class="sidebar-icon e-icons e-home"></span>
+                            <span>Dashboard</span>
+                        </a>
+                        <a asp-controller="Residents" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Residents" ? "active" : "")">
+                            <span class="sidebar-icon e-icons e-people"></span>
+                            <span>Residents</span>
+                        </a>
+                        <a asp-controller="Medications" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Medications" ? "active" : "")">
+                            <span class="sidebar-icon e-icons e-paste-special"></span>
+                            <span>Medications</span>
+                        </a>
+                        <a asp-controller="Vitals" asp-action="Index" class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vitals" ? "active" : "")">
+                            <span class="sidebar-icon e-icons e-chart"></span>
+                            <span>Vitals</span>
+                        </a>
+
+                        <div class="px-4 pt-4 pb-2">
+                            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Developer</div>
+                        </div>
+                        <a asp-controller="Home" asp-action="Demos" class="sidebar-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Demos" ? "active" : "")">
+                            <span class="sidebar-icon e-icons e-code"></span>
+                            <span>ALIS Demos</span>
+                        </a>
+                        <a asp-controller="Home" asp-action="SyncfusionTest" class="sidebar-item @(ViewContext.RouteData.Values["action"]?.ToString() == "SyncfusionTest" ? "active" : "")">
+                            <span class="sidebar-icon e-icons e-settings"></span>
+                            <span>SF Test</span>
+                        </a>
+                    </nav>
+                </div>
+            </e-content-template>
+        </ejs-sidebar>
+
+        <!-- Main Content -->
+        <main class="main-content p-6 min-h-screen">
+            @RenderBody()
+        </main>
+    </div>
 
     <!-- Scripts -->
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Syncfusion Tag Helper generated scripts (ejs.* loaded in head) -->
     <ejs-scripts></ejs-scripts>
-    
+
     <!-- ALIS Framework -->
     <script src="~/lib/alis/alis.js"></script>
-    
+
     <!-- ALIS-Syncfusion Bridge -->
     <script src="~/js/alis-syncfusion-bridge.js" asp-append-version="true"></script>
-    
+
     <!-- Site JavaScript -->
     <script src="~/js/site.js" asp-append-version="true"></script>
-    
+
+    <script>
+        // Sidebar toggle
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.ej2_instances) {
+                sidebar.ej2_instances[0].toggle();
+            }
+        });
+
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const timeEl = document.getElementById('current-time');
+            if (timeEl) {
+                timeEl.textContent = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+        updateTime();
+        setInterval(updateTime, 60000);
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

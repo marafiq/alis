@@ -1,104 +1,90 @@
 @model IEnumerable<VitalsSummary>
 
-<div class="row">
-    @foreach (var summary in Model)
-    {
-        var cardClass = summary.HasCriticalAlerts ? "border-danger" : 
-                        summary.HasWarningAlerts ? "border-warning" : "";
-        var headerClass = summary.HasCriticalAlerts ? "bg-danger text-white" : 
-                          summary.HasWarningAlerts ? "bg-warning" : "bg-light";
-        
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card @cardClass">
-                <div class="card-header @headerClass d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>@summary.ResidentName</strong>
-                        <small class="d-block">Room @summary.RoomNumber</small>
-                    </div>
-                    @if (summary.HasCriticalAlerts)
-                    {
-                        <span class="badge bg-danger">CRITICAL</span>
-                    }
-                    else if (summary.HasWarningAlerts)
-                    {
-                        <span class="badge bg-warning text-dark">WARNING</span>
-                    }
-                </div>
-                <div class="card-body">
-                    @if (summary.LatestVitals != null)
-                    {
-                        var vitals = summary.LatestVitals;
-                        
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <div class="vital-card @vitals.BloodPressureStatus.ToString().ToLower()">
-                                    <div class="vital-value">@vitals.BloodPressureDisplay</div>
-                                    <div class="vital-label">Blood Pressure</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="vital-card @vitals.HeartRateStatus.ToString().ToLower()">
-                                    <div class="vital-value">@vitals.HeartRate</div>
-                                    <div class="vital-label">Heart Rate</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="vital-card @vitals.TemperatureStatus.ToString().ToLower()">
-                                    <div class="vital-value">@vitals.Temperature°</div>
-                                    <div class="vital-label">Temperature</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="vital-card @vitals.OxygenStatus.ToString().ToLower()">
-                                    <div class="vital-value">@vitals.OxygenSaturation%</div>
-                                    <div class="vital-label">SpO2</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <small class="text-muted d-block mb-2">
-                            Last recorded: @vitals.RecordedAt.ToString("MMM d, h:mm tt") by @vitals.RecordedBy
-                        </small>
-                    }
-                    else
-                    {
-                        <div class="text-center text-muted py-3">
-                            <p class="mb-0">No vitals recorded</p>
-                        </div>
-                    }
-                    
-                    <div class="d-flex gap-2">
-                        <!-- ALIS-REVIEW: Using ejs-button for consistency with Syncfusion controls -->
-                        <ejs-button id="recordBtn-@summary.ResidentId"
-                                    cssClass="e-small e-primary flex-fill"
-                                    content="➕ Record"
-                                    data-alis-get="/Vitals/Record?residentId=@summary.ResidentId"
-                                    data-alis-target="#vitalsModalBody"
-                                    data-alis-on-after="showVitalsModal">
-                        </ejs-button>
-                        <ejs-button id="historyBtn-@summary.ResidentId"
-                                    cssClass="e-small e-outline flex-fill"
-                                    content="📊 History"
-                                    data-alis-get="/Vitals/History?residentId=@summary.ResidentId"
-                                    data-alis-target="#vitalsModalBody"
-                                    data-alis-on-after="showVitalsModal">
-                        </ejs-button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-</div>
-
 @if (!Model.Any())
 {
-    <div class="empty-state">
-        <div class="empty-state-icon">❤️</div>
-        <h5>No Residents</h5>
-        <p class="text-muted">Add residents to start tracking vitals</p>
+    <div class="p-12 text-center">
+        <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <span class="e-icons e-chart text-slate-400 text-3xl"></span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-600 mb-2">No Residents</h3>
+        <p class="text-slate-400">Add residents to start tracking vitals</p>
     </div>
 }
+else
+{
+    <div class="p-4">
+        <div class="grid grid-cols-3 gap-4">
+            @foreach (var summary in Model)
+            {
+                var borderClass = summary.HasCriticalAlerts ? "border-red-300 bg-red-50" :
+                                  summary.HasWarningAlerts ? "border-amber-300 bg-amber-50" : "border-slate-200";
+                var headerClass = summary.HasCriticalAlerts ? "bg-red-500 text-white" :
+                                  summary.HasWarningAlerts ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-700";
 
-<!-- Syncfusion controls initialization for ALIS-loaded partial views -->
-<!-- When ALIS swaps this content, ejs-scripts ensures Syncfusion controls are initialized -->
+                <div class="border rounded-lg overflow-hidden @borderClass">
+                    <div class="px-4 py-3 @headerClass flex justify-between items-center">
+                        <div>
+                            <div class="font-semibold">@summary.ResidentName</div>
+                            <div class="text-sm opacity-80">Room @summary.RoomNumber</div>
+                        </div>
+                        @if (summary.HasCriticalAlerts)
+                        {
+                            <span class="px-2 py-1 bg-white/20 rounded text-xs font-medium">CRITICAL</span>
+                        }
+                        else if (summary.HasWarningAlerts)
+                        {
+                            <span class="px-2 py-1 bg-white/20 rounded text-xs font-medium">WARNING</span>
+                        }
+                    </div>
+                    <div class="p-4">
+                        @if (summary.LatestVitals != null)
+                        {
+                            var vitals = summary.LatestVitals;
+                            var bpClass = vitals.BloodPressureStatus.ToString().ToLower() == "critical" ? "bg-red-100 text-red-700 border-red-200" :
+                                          vitals.BloodPressureStatus.ToString().ToLower() == "warning" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-green-100 text-green-700 border-green-200";
+                            var hrClass = vitals.HeartRateStatus.ToString().ToLower() == "critical" ? "bg-red-100 text-red-700 border-red-200" :
+                                          vitals.HeartRateStatus.ToString().ToLower() == "warning" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-green-100 text-green-700 border-green-200";
+                            var tempClass = vitals.TemperatureStatus.ToString().ToLower() == "critical" ? "bg-red-100 text-red-700 border-red-200" :
+                                            vitals.TemperatureStatus.ToString().ToLower() == "warning" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-green-100 text-green-700 border-green-200";
+                            var o2Class = vitals.OxygenStatus.ToString().ToLower() == "critical" ? "bg-red-100 text-red-700 border-red-200" :
+                                          vitals.OxygenStatus.ToString().ToLower() == "warning" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-green-100 text-green-700 border-green-200";
+
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div class="p-2 rounded border @bpClass text-center">
+                                    <div class="text-lg font-bold">@vitals.BloodPressureDisplay</div>
+                                    <div class="text-xs">Blood Pressure</div>
+                                </div>
+                                <div class="p-2 rounded border @hrClass text-center">
+                                    <div class="text-lg font-bold">@vitals.HeartRate</div>
+                                    <div class="text-xs">Heart Rate</div>
+                                </div>
+                                <div class="p-2 rounded border @tempClass text-center">
+                                    <div class="text-lg font-bold">@vitals.Temperature°</div>
+                                    <div class="text-xs">Temperature</div>
+                                </div>
+                                <div class="p-2 rounded border @o2Class text-center">
+                                    <div class="text-lg font-bold">@vitals.OxygenSaturation%</div>
+                                    <div class="text-xs">SpO2</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-500 mb-3">Last: @vitals.RecordedAt.ToString("MMM d, h:mm tt") by @vitals.RecordedBy</div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-slate-400">
+                                <p class="text-sm">No vitals recorded</p>
+                            </div>
+                        }
+                        <div class="flex gap-2">
+                            <ejs-button id="recordBtn-@summary.ResidentId" cssClass="e-small e-primary flex-1" iconCss="e-icons e-plus" content="Record"
+                                        data-alis-get="/Vitals/Record?residentId=@summary.ResidentId" data-alis-target="#vitalsModalBody" data-alis-on-after="showVitalsModal"></ejs-button>
+                            <ejs-button id="historyBtn-@summary.ResidentId" cssClass="e-small e-outline flex-1" iconCss="e-icons e-chart" content="History"
+                                        data-alis-get="/Vitals/History?residentId=@summary.ResidentId" data-alis-target="#vitalsModalBody" data-alis-on-after="showVitalsModal"></ejs-button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
 <ejs-scripts></ejs-scripts>

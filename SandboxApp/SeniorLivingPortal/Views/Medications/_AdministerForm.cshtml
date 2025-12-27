@@ -1,15 +1,5 @@
 @model MedicationAdministrationViewModel
 
-@*
-    ADMINISTER FORM - Demonstrates ALIS Form Features:
-    - data-alis-post for form submission
-    - data-alis-validate="true" for client-side validation
-    - data-alis-swap="none" for JSON response (no DOM update)
-    - data-alis-confirm="administerConfirm" for custom confirmation
-    - data-alis-on-after for result handling
-    - data-alis-duplicate-request="abort" to prevent double-submit
-*@
-
 <form id="administerForm"
       data-alis-post="/Medications/Administer"
       data-alis-validate="true"
@@ -20,28 +10,26 @@
 
     <input type="hidden" name="ScheduleId" value="@Model.ScheduleId" />
 
-    @* Medication Info (Read-only) *@
-    <div class="alert alert-info mb-3">
-        <div class="d-flex justify-content-between">
+    <!-- Medication Info Card -->
+    <div class="bg-sky-50 border border-sky-200 rounded-lg p-4 mb-4">
+        <div class="flex justify-between items-start">
             <div>
-                <strong>@Model.MedicationName</strong>
-                <br />
-                <small>@Model.Dosage</small>
+                <div class="font-semibold text-slate-800">@Model.MedicationName</div>
+                <div class="text-sm text-slate-600">@Model.Dosage</div>
             </div>
-            <div class="text-end">
-                <strong>@Model.ResidentName</strong>
-                <br />
-                <small>Scheduled: @Model.ScheduledTime.ToString("h:mm tt")</small>
+            <div class="text-right">
+                <div class="font-medium text-slate-800">@Model.ResidentName</div>
+                <div class="text-sm text-slate-500">Scheduled: @Model.ScheduledTime.ToString("h:mm tt")</div>
             </div>
         </div>
     </div>
 
-    @* Status Selection *@
-    <div class="mb-3">
-        <label class="form-label">Administration Status <span class="text-danger">*</span></label>
+    <!-- Status Selection -->
+    <div class="mb-4">
         <ejs-dropdownlist id="adminStatus"
                           name="Status"
-                          placeholder="Select status"
+                          floatLabelType="Always"
+                          placeholder="Administration Status *"
                           value='"Given"'
                           data-val="true"
                           data-val-required="Status is required">
@@ -53,49 +41,54 @@
                 new { Text = "Not Available - Medication unavailable", Value = "NotAvailable" }
             })"></e-data-manager>
         </ejs-dropdownlist>
-        <span data-valmsg-for="Status" class="field-validation-valid text-danger"></span>
+        <span data-valmsg-for="Status" class="text-red-500 text-sm"></span>
     </div>
 
-    @* Notes *@
-    <div class="mb-3">
-        <label class="form-label">Notes</label>
+    <!-- Notes -->
+    <div class="mb-4">
         <ejs-textbox id="adminNotes"
                      name="Notes"
-                     placeholder="Add administration notes..."
+                     floatLabelType="Always"
+                     placeholder="Notes"
                      multiline="true"
+                     cssClass="e-outline"
                      data-val="true"
                      data-val-maxlength="Maximum 500 characters"
                      data-val-maxlength-max="500">
         </ejs-textbox>
-        <span data-valmsg-for="Notes" class="field-validation-valid text-danger"></span>
-        <small class="text-muted">Required if status is Refused, Held, or Not Available</small>
+        <span data-valmsg-for="Notes" class="text-red-500 text-sm"></span>
+        <p class="text-xs text-slate-500 mt-1">Required if status is Refused, Held, or Not Available</p>
     </div>
 
-    @* Administered By (read-only for demo) *@
-    <div class="mb-3">
-        <label class="form-label">Administered By</label>
-        <input type="text" class="form-control" name="AdministeredBy" value="Current User" readonly />
-        <small class="text-muted">Auto-populated from logged-in user</small>
+    <!-- Administered By -->
+    <div class="mb-4">
+        <ejs-textbox id="adminBy"
+                     name="AdministeredBy"
+                     floatLabelType="Always"
+                     placeholder="Administered By"
+                     value="Current User"
+                     readonly="true"
+                     cssClass="e-outline">
+        </ejs-textbox>
+        <p class="text-xs text-slate-500 mt-1">Auto-populated from logged-in user</p>
     </div>
 
-    @* Timestamp *@
-    <div class="mb-3">
-        <label class="form-label">Time</label>
-        <input type="text" class="form-control" value="@DateTime.Now.ToString("g")" readonly />
-        <small class="text-muted">Current time will be recorded</small>
+    <!-- Timestamp -->
+    <div class="mb-4">
+        <ejs-textbox id="adminTime"
+                     floatLabelType="Always"
+                     placeholder="Time"
+                     value="@DateTime.Now.ToString("g")"
+                     readonly="true"
+                     cssClass="e-outline">
+        </ejs-textbox>
+        <p class="text-xs text-slate-500 mt-1">Current time will be recorded</p>
     </div>
 
-    <div class="modal-footer px-0 pb-0">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        @* ALIS Feature: Submit with indicator on button *@
-        <ejs-button id="adminSubmitBtn"
-                    type="submit"
-                    cssClass="e-primary"
-                    isPrimary="true"
-                    content="Record Administration"
-                    data-alis-indicator="is-loading">
-        </ejs-button>
+    <!-- Actions -->
+    <div class="flex justify-end gap-2 pt-4 border-t border-slate-200">
+        <ejs-button id="adminCancelBtn" cssClass="e-flat" content="Cancel" type="button" onclick="closeAdministerDialog()"></ejs-button>
+        <ejs-button id="adminSubmitBtn" type="submit" cssClass="e-primary" isPrimary="true" content="Record Administration" data-alis-indicator="is-loading"></ejs-button>
     </div>
 </form>
-
 <ejs-scripts></ejs-scripts>

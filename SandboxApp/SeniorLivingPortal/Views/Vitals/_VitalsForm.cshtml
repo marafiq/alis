@@ -3,185 +3,70 @@
     var resident = ViewBag.Resident as Resident;
 }
 
-<div class="mb-4">
-    <h6 class="text-muted mb-1">Recording vitals for:</h6>
-    <h5 class="mb-0">@resident?.FullName <small class="text-muted">(@resident?.RoomNumber)</small></h5>
+<div class="mb-6 p-4 bg-sky-50 border border-sky-200 rounded-lg">
+    <div class="text-sm text-slate-500">Recording vitals for:</div>
+    <div class="font-semibold text-slate-800">@resident?.FullName <span class="text-slate-400 font-normal">(@resident?.RoomNumber)</span></div>
 </div>
 
-<form data-alis-post="/Vitals/Record"
-      data-alis-validate="true"
-      data-alis-swap="none"
-      data-alis-on-after="handleVitalsFormResult">
-    
+<form data-alis-post="/Vitals/Record" data-alis-validate="true" data-alis-swap="none" data-alis-on-after="handleVitalsFormResult">
     <input type="hidden" name="ResidentId" value="@Model.ResidentId" />
-    
-    <h6 class="text-muted mb-3">Required Measurements</h6>
-    
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Blood Pressure - Systolic (mmHg) <span class="text-danger">*</span></label>
-            <ejs-numerictextbox id="systolicBP"
-                                name="BloodPressureSystolic"
-                                min="60"
-                                max="250"
-                                step="1"
-                                format="n0"
-                                placeholder="120"
-                                data-val="true"
-                                data-val-required="Systolic is required"
-                                data-val-range="Must be between 60 and 250"
-                                data-val-range-min="60"
-                                data-val-range-max="250">
-            </ejs-numerictextbox>
-            <span data-valmsg-for="BloodPressureSystolic" class="field-validation-valid text-danger"></span>
+
+    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Required Measurements</h3>
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div>
+            <ejs-numerictextbox id="systolicBP" name="BloodPressureSystolic" min="60" max="250" step="1" format="n0" placeholder="Systolic (mmHg) *" floatLabelType="Auto" cssClass="e-outline"
+                                data-val="true" data-val-required="Systolic is required" data-val-range="Must be between 60 and 250" data-val-range-min="60" data-val-range-max="250"></ejs-numerictextbox>
+            <span data-valmsg-for="BloodPressureSystolic" class="text-red-500 text-sm"></span>
         </div>
-        <div class="col-md-6 mb-3">
-            <label class="form-label">Blood Pressure - Diastolic (mmHg) <span class="text-danger">*</span></label>
-            <ejs-numerictextbox id="diastolicBP"
-                                name="BloodPressureDiastolic"
-                                min="40"
-                                max="150"
-                                step="1"
-                                format="n0"
-                                placeholder="80"
-                                data-val="true"
-                                data-val-required="Diastolic is required"
-                                data-val-range="Must be between 40 and 150"
-                                data-val-range-min="40"
-                                data-val-range-max="150">
-            </ejs-numerictextbox>
-            <span data-valmsg-for="BloodPressureDiastolic" class="field-validation-valid text-danger"></span>
+        <div>
+            <ejs-numerictextbox id="diastolicBP" name="BloodPressureDiastolic" min="40" max="150" step="1" format="n0" placeholder="Diastolic (mmHg) *" floatLabelType="Auto" cssClass="e-outline"
+                                data-val="true" data-val-required="Diastolic is required" data-val-range="Must be between 40 and 150" data-val-range-min="40" data-val-range-max="150"></ejs-numerictextbox>
+            <span data-valmsg-for="BloodPressureDiastolic" class="text-red-500 text-sm"></span>
         </div>
     </div>
-    
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Heart Rate (bpm) <span class="text-danger">*</span></label>
-            <ejs-numerictextbox id="heartRate"
-                                name="HeartRate"
-                                min="30"
-                                max="220"
-                                step="1"
-                                format="n0"
-                                placeholder="72"
-                                data-val="true"
-                                data-val-required="Heart rate is required"
-                                data-val-range="Must be between 30 and 220"
-                                data-val-range-min="30"
-                                data-val-range-max="220">
-            </ejs-numerictextbox>
-            <span data-valmsg-for="HeartRate" class="field-validation-valid text-danger"></span>
+
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div>
+            <ejs-numerictextbox id="heartRate" name="HeartRate" min="30" max="220" step="1" format="n0" placeholder="Heart Rate (bpm) *" floatLabelType="Auto" cssClass="e-outline"
+                                data-val="true" data-val-required="Heart rate is required" data-val-range="Must be between 30 and 220" data-val-range-min="30" data-val-range-max="220"></ejs-numerictextbox>
+            <span data-valmsg-for="HeartRate" class="text-red-500 text-sm"></span>
         </div>
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Temperature (°F) <span class="text-danger">*</span></label>
-            <ejs-numerictextbox id="temperature"
-                                name="Temperature"
-                                min="95"
-                                max="108"
-                                step="0.1"
-                                format="n1"
-                                placeholder="98.6"
-                                data-val="true"
-                                data-val-required="Temperature is required"
-                                data-val-range="Must be between 95.0 and 108.0"
-                                data-val-range-min="95"
-                                data-val-range-max="108">
-            </ejs-numerictextbox>
-            <span data-valmsg-for="Temperature" class="field-validation-valid text-danger"></span>
+        <div>
+            <ejs-numerictextbox id="temperature" name="Temperature" min="95" max="108" step="0.1" format="n1" placeholder="Temperature (°F) *" floatLabelType="Auto" cssClass="e-outline"
+                                data-val="true" data-val-required="Temperature is required" data-val-range="Must be between 95 and 108" data-val-range-min="95" data-val-range-max="108"></ejs-numerictextbox>
+            <span data-valmsg-for="Temperature" class="text-red-500 text-sm"></span>
         </div>
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Oxygen Saturation (%) <span class="text-danger">*</span></label>
-            <ejs-numerictextbox id="oxygenSat"
-                                name="OxygenSaturation"
-                                min="70"
-                                max="100"
-                                step="1"
-                                format="n0"
-                                placeholder="98"
-                                data-val="true"
-                                data-val-required="SpO2 is required"
-                                data-val-range="Must be between 70 and 100"
-                                data-val-range-min="70"
-                                data-val-range-max="100">
-            </ejs-numerictextbox>
-            <span data-valmsg-for="OxygenSaturation" class="field-validation-valid text-danger"></span>
+        <div>
+            <ejs-numerictextbox id="oxygenSat" name="OxygenSaturation" min="70" max="100" step="1" format="n0" placeholder="SpO2 (%) *" floatLabelType="Auto" cssClass="e-outline"
+                                data-val="true" data-val-required="SpO2 is required" data-val-range="Must be between 70 and 100" data-val-range-min="70" data-val-range-max="100"></ejs-numerictextbox>
+            <span data-valmsg-for="OxygenSaturation" class="text-red-500 text-sm"></span>
         </div>
     </div>
-    
-    <h6 class="text-muted mb-3 mt-4">Optional Measurements</h6>
-    
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Respiratory Rate</label>
-            <ejs-numerictextbox id="respiratoryRate"
-                                name="RespiratoryRate"
-                                min="8"
-                                max="40"
-                                step="1"
-                                format="n0"
-                                placeholder="16"
-                                data-val="true"
-                                data-val-range="Must be between 8 and 40"
-                                data-val-range-min="8"
-                                data-val-range-max="40">
-            </ejs-numerictextbox>
-            <span data-valmsg-for="RespiratoryRate" class="field-validation-valid text-danger"></span>
+
+    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Optional Measurements</h3>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div>
+            <ejs-numerictextbox id="respiratoryRate" name="RespiratoryRate" min="8" max="40" step="1" format="n0" placeholder="Respiratory Rate" floatLabelType="Auto" cssClass="e-outline"
+                                data-val="true" data-val-range="Must be between 8 and 40" data-val-range-min="8" data-val-range-max="40"></ejs-numerictextbox>
         </div>
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Pain Level (0-10)</label>
-            <ejs-numerictextbox id="painLevel"
-                                name="PainLevel"
-                                min="0"
-                                max="10"
-                                step="1"
-                                format="n0"
-                                placeholder="0"
-                                data-val="true"
-                                data-val-range="Must be between 0 and 10"
-                                data-val-range-min="0"
-                                data-val-range-max="10">
-            </ejs-numerictextbox>
-            <span data-valmsg-for="PainLevel" class="field-validation-valid text-danger"></span>
+        <div>
+            <ejs-numerictextbox id="painLevel" name="PainLevel" min="0" max="10" step="1" format="n0" placeholder="Pain Level (0-10)" floatLabelType="Auto" cssClass="e-outline"
+                                data-val="true" data-val-range="Must be between 0 and 10" data-val-range-min="0" data-val-range-max="10"></ejs-numerictextbox>
         </div>
-        <div class="col-md-4 mb-3">
-            <label class="form-label">Weight (lbs)</label>
-            <ejs-numerictextbox id="weight"
-                                name="Weight"
-                                min="50"
-                                max="500"
-                                step="0.1"
-                                format="n1"
-                                placeholder="150"
-                                data-val="true"
-                                data-val-range="Must be between 50 and 500"
-                                data-val-range-min="50"
-                                data-val-range-max="500">
-            </ejs-numerictextbox>
-            <span data-valmsg-for="Weight" class="field-validation-valid text-danger"></span>
+        <div>
+            <ejs-numerictextbox id="weight" name="Weight" min="50" max="500" step="0.1" format="n1" placeholder="Weight (lbs)" floatLabelType="Auto" cssClass="e-outline"
+                                data-val="true" data-val-range="Must be between 50 and 500" data-val-range-min="50" data-val-range-max="500"></ejs-numerictextbox>
         </div>
     </div>
-    
-    <div class="mb-3">
-        <label class="form-label">Notes</label>
-        <ejs-textbox id="notes"
-                     name="Notes"
-                     multiline="true"
-                     placeholder="Any observations or concerns..."
-                     data-val="true"
-                     data-val-maxlength="Maximum 500 characters"
-                     data-val-maxlength-max="500">
-        </ejs-textbox>
-        <span data-valmsg-for="Notes" class="field-validation-valid text-danger"></span>
+
+    <div class="mb-6">
+        <ejs-textbox id="notes" name="Notes" multiline="true" placeholder="Notes (observations, concerns...)" floatLabelType="Auto" cssClass="e-outline"
+                     data-val="true" data-val-maxlength="Maximum 500 characters" data-val-maxlength-max="500"></ejs-textbox>
     </div>
-    
-    <div class="modal-footer px-0 pb-0">
-        <!-- ALIS-REVIEW: Using Bootstrap button for Cancel because ejs-button requires special handling for data-bs-dismiss -->
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <ejs-button id="submitVitalsBtn" type="submit" cssClass="e-primary" isPrimary="true" content="Record Vitals">
-        </ejs-button>
+
+    <div class="flex justify-end gap-2 pt-4 border-t border-slate-200">
+        <ejs-button id="cancelVitalsBtn" cssClass="e-flat" content="Cancel" type="button" onclick="closeVitalsModal()"></ejs-button>
+        <ejs-button id="submitVitalsBtn" type="submit" cssClass="e-primary" isPrimary="true" content="Record Vitals"></ejs-button>
     </div>
 </form>
-
-<!-- Syncfusion controls initialization for ALIS-loaded partial views -->
-<!-- When ALIS swaps this content, ejs-scripts ensures Syncfusion controls are initialized -->
 <ejs-scripts></ejs-scripts>

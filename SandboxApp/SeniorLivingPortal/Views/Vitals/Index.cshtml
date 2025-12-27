@@ -1,68 +1,145 @@
 @model IEnumerable<VitalsSummary>
 @{
     ViewData["Title"] = "Vitals Dashboard";
-}
-
-<div class="row mb-4">
-    <div class="col-md-6">
-        <h2 class="mb-0">Vitals Dashboard</h2>
-        <p class="text-muted">Monitor resident health status in real-time</p>
-    </div>
-    <div class="col-md-6 text-end">
-        <!-- ALIS-REVIEW: ejs-button works well with ALIS attributes for refresh -->
-        <ejs-button id="refreshDashboardBtn"
-                    cssClass="e-primary"
-                    iconCss="e-icons e-refresh"
-                    content="Refresh Dashboard"
-                    data-alis-get="/Vitals/Dashboard"
-                    data-alis-target="#vitals-dashboard"
-                    data-alis-indicator="is-loading">
-        </ejs-button>
-    </div>
-</div>
-
-<!-- Alert Summary -->
-@{
     var criticalCount = Model.Count(s => s.HasCriticalAlerts);
     var warningCount = Model.Count(s => s.HasWarningAlerts && !s.HasCriticalAlerts);
 }
 
+<!-- Page Header -->
+<div class="page-header mb-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Vitals Dashboard</h1>
+            <p class="text-sky-100 mt-1">Monitor resident health status in real-time</p>
+        </div>
+        <ejs-button id="refreshDashboardBtn" cssClass="e-info" iconCss="e-icons e-refresh" content="Refresh Dashboard"
+                    data-alis-get="/Vitals/Dashboard" data-alis-target="#vitals-dashboard" data-alis-indicator="is-loading"></ejs-button>
+    </div>
+</div>
+
+<!-- Alert Summary -->
 @if (criticalCount > 0 || warningCount > 0)
 {
-    <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
-        <span class="me-3" style="font-size: 1.5rem;">⚠️</span>
-        <div>
-            <strong>Attention Required!</strong>
-            @if (criticalCount > 0)
-            {
-                <span class="badge bg-danger ms-2">@criticalCount Critical</span>
-            }
-            @if (warningCount > 0)
-            {
-                <span class="badge bg-warning text-dark ms-2">@warningCount Warning</span>
-            }
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+            <span class="e-icons e-warning text-red-600 text-2xl"></span>
         </div>
+        <div class="flex-1">
+            <h3 class="font-semibold text-red-800">Attention Required!</h3>
+            <div class="flex gap-2 mt-1">
+                @if (criticalCount > 0)
+                {
+                    <span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-medium">@criticalCount Critical</span>
+                }
+                @if (warningCount > 0)
+                {
+                    <span class="px-2 py-1 bg-amber-500 text-white rounded text-xs font-medium">@warningCount Warning</span>
+                }
+            </div>
+        </div>
+        <ejs-button id="viewCriticalBtn" cssClass="e-danger" content="View Critical" onclick="filterCritical()"></ejs-button>
     </div>
 }
 
-<div id="vitals-dashboard">
-    @await Html.PartialAsync("_VitalsDashboard", Model)
-</div>
-
-<!-- Record Vitals Modal -->
-<!-- ALIS-REVIEW: Bootstrap modal works fine - ALIS loads content into #vitalsModalBody -->
-<div class="modal fade" id="vitalsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Record Vitals</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Stats Row -->
+<div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="stat-card">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-sky-100 flex items-center justify-center">
+                <span class="e-icons e-people text-sky-600 text-xl"></span>
             </div>
-            <div class="modal-body" id="vitalsModalBody">
-                <!-- Content loaded via ALIS -->
+            <div>
+                <div class="text-2xl font-bold text-slate-800">@Model.Count()</div>
+                <div class="text-sm text-slate-500">Total Residents</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <span class="e-icons e-check text-green-600 text-xl"></span>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-green-600">@Model.Count(s => !s.HasCriticalAlerts && !s.HasWarningAlerts)</div>
+                <div class="text-sm text-slate-500">Normal</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <span class="e-icons e-comment-show text-amber-600 text-xl"></span>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-amber-600">@warningCount</div>
+                <div class="text-sm text-slate-500">Warning</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <span class="e-icons e-warning text-red-600 text-xl"></span>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-red-600">@criticalCount</div>
+                <div class="text-sm text-slate-500">Critical</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Note: Syncfusion scripts are loaded via <ejs-scripts> in _Layout.cshtml -->
+<!-- Vitals Dashboard -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-slate-800">Resident Vitals</h2>
+        <span class="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-sm font-medium">@Model.Count() residents</span>
+    </div>
+    <div id="vitals-dashboard">
+        @await Html.PartialAsync("_VitalsDashboard", Model)
+    </div>
+</div>
+
+<!-- Syncfusion Dialog for Record Vitals -->
+<ejs-dialog id="vitalsDialog" header="Record Vitals" width="600px" isModal="true" visible="false" showCloseIcon="true" closeOnEscape="true"
+            animationSettings="@(new Syncfusion.EJ2.Popups.DialogAnimationSettings { Effect = Syncfusion.EJ2.Popups.DialogEffect.Zoom })">
+    <e-content-template>
+        <div id="vitalsModalBody"></div>
+    </e-content-template>
+</ejs-dialog>
+
+<ejs-scripts></ejs-scripts>
+
+@section Scripts {
+<script>
+    let vitalsDialog;
+    document.addEventListener('DOMContentLoaded', function() {
+        vitalsDialog = document.getElementById('vitalsDialog')?.ej2_instances?.[0];
+    });
+
+    window.showVitalsModal = function(ctx) {
+        if (typeof initSyncfusionControls === 'function') {
+            initSyncfusionControls({ target: '#vitalsModalBody' });
+        }
+        if (vitalsDialog) vitalsDialog.show();
+    };
+
+    window.closeVitalsModal = function() {
+        if (vitalsDialog) vitalsDialog.hide();
+    };
+
+    window.handleVitalsSaved = function(ctx) {
+        if (ctx.error) return;
+        closeVitalsModal();
+        if (typeof ALIS !== 'undefined') {
+            ALIS.request({ url: '/Vitals/Dashboard', method: 'GET', target: '#vitals-dashboard', swap: 'innerHTML' });
+        }
+    };
+
+    function filterCritical() {
+        // Scroll to critical residents
+        const critical = document.querySelector('.border-red-300');
+        if (critical) critical.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+}

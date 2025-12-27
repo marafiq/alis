@@ -4,71 +4,66 @@
     var days = ViewBag.Days as int? ?? 7;
 }
 
-<div id="resident-details" class="card-body">
+<div id="resident-details" class="p-6">
     @if (resident == null)
     {
-        <p class="text-muted">Resident not found</p>
+        <div class="text-center py-4 text-slate-400">
+            <span class="e-icons e-warning text-2xl mb-2 block"></span>
+            <p>Resident not found</p>
+        </div>
     }
     else
     {
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <h6 class="mb-1">@resident.FullName - History</h6>
-                <small class="text-muted">Last @days days</small>
+        <div class="space-y-4">
+            <!-- Header with Back Button -->
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="font-semibold text-slate-800">@resident.FullName - History</h3>
+                    <p class="text-sm text-slate-500">Last @days days</p>
+                </div>
+                <ejs-button id="backBtn" cssClass="e-outline e-small" content="Back"
+                            data-alis-get="/Medications/ByResident?residentId=@resident.Id" data-alis-target="#resident-details"
+                            data-alis-swap="outerHTML" data-alis-indicator="is-loading"></ejs-button>
             </div>
-            @* ALIS: Back button with swap - 100% Syncfusion *@
-            <ejs-button id="backBtn"
-                        cssClass="e-outline e-small"
-                        content="Back"
-                        data-alis-get="/Medications/ByResident?residentId=@resident.Id"
-                        data-alis-target="#resident-details"
-                        data-alis-swap="outerHTML"
-                        data-alis-indicator="is-loading">
-            </ejs-button>
-        </div>
 
-        @* Days filter using ALIS - 100% Syncfusion buttons *@
-        <div class="mb-3">
-            <div class="btn-group btn-group-sm w-100">
+            <!-- Days Filter -->
+            <div class="flex gap-1">
                 @foreach (var d in new[] { 1, 7, 14, 30 })
                 {
                     var btnId = $"daysBtn-{d}";
                     var isActive = d == days;
-                    <ejs-button id="@btnId"
-                                cssClass="@(isActive ? "e-primary e-small" : "e-outline e-small")"
-                                content="@(d == 1 ? "1 Day" : $"{d} Days")"
-                                data-alis-get="/Medications/History?residentId=@resident.Id&days=@d"
-                                data-alis-target="#resident-details"
-                                data-alis-swap="outerHTML"
-                                data-alis-indicator="is-loading">
-                    </ejs-button>
+                    <ejs-button id="@btnId" cssClass="@(isActive ? "e-primary e-small" : "e-outline e-small")" content="@(d == 1 ? "1 Day" : $"{d} Days")"
+                                data-alis-get="/Medications/History?residentId=@resident.Id&days=@d" data-alis-target="#resident-details"
+                                data-alis-swap="outerHTML" data-alis-indicator="is-loading"></ejs-button>
                 }
             </div>
-        </div>
 
-        @if (Model.Any())
-        {
-            <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
-                @foreach (var schedule in Model)
-                {
-                    <div class="list-group-item px-0">
-                        <div class="d-flex justify-content-between">
-                            <strong>@schedule.Medication?.Name</strong>
-                            <small>@schedule.ScheduledTime.ToString("h:mm tt")</small>
+            @if (Model.Any())
+            {
+                <!-- History List -->
+                <div class="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                    @foreach (var schedule in Model)
+                    {
+                        <div class="py-3">
+                            <div class="flex justify-between items-start">
+                                <div class="font-medium text-slate-800">@schedule.Medication?.Name</div>
+                                <div class="text-sm text-slate-500">@schedule.ScheduledTime.ToString("h:mm tt")</div>
+                            </div>
+                            <div class="text-sm text-slate-500">@schedule.Medication?.Dosage</div>
+                            <div class="mt-1">
+                                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">Scheduled</span>
+                            </div>
                         </div>
-                        <small class="text-muted">@schedule.Medication?.Dosage</small>
-                        <div class="mt-1">
-                            <span class="badge bg-secondary">Scheduled</span>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            <p class="text-muted">No medication records for this period</p>
-        }
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-slate-400">
+                    <p>No medication records for this period</p>
+                </div>
+            }
+        </div>
     }
 </div>
-
 <ejs-scripts></ejs-scripts>

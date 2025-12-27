@@ -1,145 +1,157 @@
-﻿@{
+@{
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="row mb-4">
-    <div class="col-12">
-        <h2 class="mb-0">Dashboard</h2>
-        <p class="text-muted">Welcome to Senior Living Portal</p>
-    </div>
-</div>
-
-<!-- Stats Row -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card stat-card primary">
-            <div class="stat-value">@ViewBag.TotalResidents</div>
-            <div class="stat-label">Total Residents</div>
+<!-- Page Header -->
+<div class="page-header mb-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Dashboard</h1>
+            <p class="text-sky-100 mt-1">Welcome to Senior Living Portal</p>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card danger">
-            <div class="stat-value">@ViewBag.CriticalAlerts</div>
-            <div class="stat-label">Critical Alerts</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card warning">
-            <div class="stat-value">@ViewBag.WarningAlerts</div>
-            <div class="stat-label">Warning Alerts</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card success">
-            <div class="stat-value">98%</div>
-            <div class="stat-label">Occupancy Rate</div>
+        <div class="text-right text-sky-100">
+            <div class="text-sm">@DateTime.Now.ToString("dddd, MMMM d, yyyy")</div>
         </div>
     </div>
 </div>
 
-<div class="row">
+<!-- Stats Cards -->
+<div class="grid grid-cols-4 gap-6 mb-6">
+    <div class="stat-card">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-sky-100 flex items-center justify-center">
+                <span class="e-icons e-people text-sky-600 text-2xl"></span>
+            </div>
+            <div>
+                <div class="text-3xl font-bold text-slate-800">@ViewBag.TotalResidents</div>
+                <div class="text-sm text-slate-500">Total Residents</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                <span class="e-icons e-warning text-red-600 text-2xl"></span>
+            </div>
+            <div>
+                <div class="text-3xl font-bold text-red-600">@ViewBag.CriticalAlerts</div>
+                <div class="text-sm text-slate-500">Critical Alerts</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
+                <span class="e-icons e-comment-show text-amber-600 text-2xl"></span>
+            </div>
+            <div>
+                <div class="text-3xl font-bold text-amber-600">@ViewBag.WarningAlerts</div>
+                <div class="text-sm text-slate-500">Warning Alerts</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+                <span class="e-icons e-check text-green-600 text-2xl"></span>
+            </div>
+            <div>
+                <div class="text-3xl font-bold text-green-600">98%</div>
+                <div class="text-sm text-slate-500">Occupancy Rate</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-6">
     <!-- Quick Actions -->
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Quick Actions</span>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <!-- ALIS-REVIEW: Standard links work fine, but could use ejs-button for consistency -->
-                    <ejs-button id="manageResidentsBtn"
-                                cssClass="e-outline e-primary w-100"
-                                content="👥 Manage Residents"
-                                onclick="window.location.href='/Residents'">
-                    </ejs-button>
-                    <ejs-button id="recordVitalsBtn"
-                                cssClass="e-outline e-primary w-100"
-                                content="❤️ Record Vitals"
-                                onclick="window.location.href='/Vitals'">
-                    </ejs-button>
-                    <ejs-button id="viewDemosBtn"
-                                cssClass="e-outline w-100"
-                                content="🔧 ALIS Demos"
-                                onclick="window.location.href='/Home/Demos'">
-                    </ejs-button>
-                </div>
-            </div>
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200">
+            <h2 class="text-lg font-semibold text-slate-800">Quick Actions</h2>
+        </div>
+        <div class="p-6 space-y-3">
+            <ejs-button id="manageResidentsBtn" cssClass="e-outline e-primary w-full" iconCss="e-icons e-people" content="Manage Residents" onclick="window.location.href='/Residents'"></ejs-button>
+            <ejs-button id="recordVitalsBtn" cssClass="e-outline e-info w-full" iconCss="e-icons e-chart" content="Record Vitals" onclick="window.location.href='/Vitals'"></ejs-button>
+            <ejs-button id="manageMedsBtn" cssClass="e-outline e-success w-full" iconCss="e-icons e-paste-special" content="Medications" onclick="window.location.href='/Medications'"></ejs-button>
+            <ejs-button id="viewDemosBtn" cssClass="e-outline w-full" iconCss="e-icons e-code" content="ALIS Demos" onclick="window.location.href='/Home/Demos'"></ejs-button>
         </div>
     </div>
 
     <!-- Recent Alerts -->
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Recent Alerts</span>
-                <!-- ALIS-REVIEW: ejs-button with ALIS attributes for refresh functionality -->
-                <ejs-button id="refreshAlertsBtn"
-                            cssClass="e-small e-outline"
-                            iconCss="e-icons e-refresh"
-                            content="Refresh"
-                            data-alis-get="/Vitals/Alerts"
-                            data-alis-target="#alerts-container"
-                            data-alis-indicator="is-loading">
-                </ejs-button>
-            </div>
-            <div class="card-body" id="alerts-container">
-                @if (ViewBag.CriticalAlerts > 0 || ViewBag.WarningAlerts > 0)
-                {
-                    <div class="alert-item critical">
-                        <span class="badge bg-danger me-2">CRITICAL</span>
-                        <span>@ViewBag.CriticalAlerts resident(s) with critical vitals</span>
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-slate-800">Recent Alerts</h2>
+            <ejs-button id="refreshAlertsBtn" cssClass="e-small e-outline" iconCss="e-icons e-refresh" content="Refresh"
+                        data-alis-get="/Vitals/Alerts" data-alis-target="#alerts-container" data-alis-indicator="is-loading"></ejs-button>
+        </div>
+        <div class="p-6" id="alerts-container">
+            @if (ViewBag.CriticalAlerts > 0 || ViewBag.WarningAlerts > 0)
+            {
+                <div class="space-y-3">
+                    @if (ViewBag.CriticalAlerts > 0)
+                    {
+                        <div class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-medium">CRITICAL</span>
+                            <span class="text-slate-700">@ViewBag.CriticalAlerts resident(s) with critical vitals</span>
+                        </div>
+                    }
+                    @if (ViewBag.WarningAlerts > 0)
+                    {
+                        <div class="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <span class="px-2 py-1 bg-amber-500 text-white rounded text-xs font-medium">WARNING</span>
+                            <span class="text-slate-700">@ViewBag.WarningAlerts resident(s) need attention</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-8 text-slate-400">
+                    <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                        <span class="e-icons e-check text-green-600 text-3xl"></span>
                     </div>
-                    <div class="alert-item warning">
-                        <span class="badge bg-warning me-2">WARNING</span>
-                        <span>@ViewBag.WarningAlerts resident(s) need attention</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="empty-state">
-                        <div class="empty-state-icon">✓</div>
-                        <p>No alerts at this time</p>
-                    </div>
-                }
-            </div>
+                    <p>No alerts at this time</p>
+                </div>
+            }
         </div>
     </div>
 </div>
 
 <!-- ALIS Feature Highlight -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <span>🚀 Powered by ALIS Framework</span>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">
-                    This portal demonstrates the <strong>ALIS (AJAX-Like Intelligent System)</strong> framework 
-                    for building modern, interactive web applications with ASP.NET Core MVC.
-                </p>
-                <div class="row">
-                    <div class="col-md-4">
-                        <h6>✨ Declarative AJAX</h6>
-                        <p class="text-muted small">Use data-alis-* attributes for seamless partial updates</p>
-                    </div>
-                    <div class="col-md-4">
-                        <h6>⚡ Client-Side Validation</h6>
-                        <p class="text-muted small">Syncfusion adapter for rich control validation</p>
-                    </div>
-                    <div class="col-md-4">
-                        <h6>🔄 Real-time Updates</h6>
-                        <p class="text-muted small">Debounced search and auto-refresh capabilities</p>
-                    </div>
+<div class="bg-white rounded-xl shadow-sm overflow-hidden mt-6">
+    <div class="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-sky-500 to-sky-600">
+        <h2 class="text-lg font-semibold text-white">Powered by ALIS Framework</h2>
+    </div>
+    <div class="p-6">
+        <p class="text-slate-600 mb-4">
+            This portal demonstrates the <strong class="text-slate-800">ALIS (AJAX-Like Intelligent System)</strong> framework
+            for building modern, interactive web applications with ASP.NET Core MVC and Syncfusion EJ2 controls.
+        </p>
+        <div class="grid grid-cols-3 gap-6 mb-4">
+            <div class="p-4 bg-slate-50 rounded-lg">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="e-icons e-code text-sky-600"></span>
+                    <h3 class="font-semibold text-slate-800">Declarative AJAX</h3>
                 </div>
-                <ejs-button id="exploreDemosBtn"
-                            cssClass="e-primary mt-2"
-                            content="Explore ALIS Demos →"
-                            onclick="window.location.href='/Home/Demos'">
-                </ejs-button>
+                <p class="text-sm text-slate-500">Use data-alis-* attributes for seamless partial updates</p>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-lg">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="e-icons e-check text-sky-600"></span>
+                    <h3 class="font-semibold text-slate-800">Client Validation</h3>
+                </div>
+                <p class="text-sm text-slate-500">Syncfusion adapter for rich control validation</p>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-lg">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="e-icons e-refresh text-sky-600"></span>
+                    <h3 class="font-semibold text-slate-800">Real-time Updates</h3>
+                </div>
+                <p class="text-sm text-slate-500">Debounced search and auto-refresh capabilities</p>
             </div>
         </div>
+        <ejs-button id="exploreDemosBtn" cssClass="e-primary" content="Explore ALIS Demos" onclick="window.location.href='/Home/Demos'"></ejs-button>
     </div>
 </div>
 
-<!-- Note: Syncfusion scripts are loaded via <ejs-scripts> in _Layout.cshtml -->
+<ejs-scripts></ejs-scripts>
