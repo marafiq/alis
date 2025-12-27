@@ -264,6 +264,72 @@ public class HomeController : Controller
         return Content($"Form submitted: {model.FirstName}, {model.Email}", "text/html");
     }
 
+    /// <summary>
+    /// Complex form submission - tests collecting multiple Syncfusion controls
+    /// </summary>
+    [HttpPost]
+    public IActionResult SubmitResidentForm([FromForm] ResidentFormModel model)
+    {
+        var result = new
+        {
+            success = true,
+            data = new
+            {
+                name = $"{model.FirstName} {model.LastName}",
+                email = model.Email,
+                phone = model.Phone,
+                birthDate = model.BirthDate?.ToString("yyyy-MM-dd"),
+                moveInDate = model.MoveInDate?.ToString("yyyy-MM-dd"),
+                careLevel = model.CareLevel,
+                roomType = model.RoomType,
+                dietaryNeeds = model.DietaryNeeds,
+                emergencyContact = model.EmergencyContact,
+                medications = model.Medications,
+                monthlyBudget = model.MonthlyBudget,
+                mobilityScore = model.MobilityScore,
+                requiresAssistance = model.RequiresAssistance,
+                hasInsurance = model.HasInsurance,
+                preferredColor = model.PreferredColor,
+                notes = model.Notes
+            }
+        };
+        return Json(result);
+    }
+
+    /// <summary>
+    /// Dynamic field update based on care level
+    /// </summary>
+    [HttpGet]
+    public IActionResult GetCareLevelDetails(string careLevel)
+    {
+        var details = careLevel switch
+        {
+            "independent" => new {
+                description = "Independent Living - Minimal assistance",
+                services = new[] { "Meals", "Housekeeping" },
+                priceRange = "$2,000 - $3,500/month"
+            },
+            "assisted" => new {
+                description = "Assisted Living - Daily assistance available",
+                services = new[] { "Meals", "Housekeeping", "Medication Management", "Personal Care" },
+                priceRange = "$3,500 - $5,500/month"
+            },
+            "memory" => new {
+                description = "Memory Care - Specialized dementia care",
+                services = new[] { "24/7 Supervision", "Meals", "Medication", "Therapy", "Security" },
+                priceRange = "$5,500 - $8,000/month"
+            },
+            "skilled" => new {
+                description = "Skilled Nursing - Medical care required",
+                services = new[] { "Nursing Care", "Physical Therapy", "Medical Monitoring" },
+                priceRange = "$7,000 - $12,000/month"
+            },
+            _ => new { description = "Select a care level", services = Array.Empty<string>(), priceRange = "" }
+        };
+
+        return PartialView("_CareLevelDetails", details);
+    }
+
     [HttpGet]
     public IActionResult TestPartialView()
     {
@@ -292,4 +358,49 @@ public class TestFormModel
     public DateTime? BirthDate { get; set; }
     public DateTime? Date { get; set; }
     public bool Agree { get; set; }
+}
+
+/// <summary>
+/// Complex resident form model - tests multiple Syncfusion control types
+/// </summary>
+public class ResidentFormModel
+{
+    // TextBox
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? Email { get; set; }
+
+    // MaskedTextBox
+    public string? Phone { get; set; }
+
+    // DatePicker
+    public DateTime? BirthDate { get; set; }
+    public DateTime? MoveInDate { get; set; }
+
+    // DropDownList
+    public string? CareLevel { get; set; }
+    public string? RoomType { get; set; }
+
+    // MultiSelect
+    public string? DietaryNeeds { get; set; }
+    public string? Medications { get; set; }
+
+    // NumericTextBox
+    public decimal? MonthlyBudget { get; set; }
+
+    // Slider
+    public int? MobilityScore { get; set; }
+
+    // Checkbox/Switch
+    public bool RequiresAssistance { get; set; }
+    public bool HasInsurance { get; set; }
+
+    // ColorPicker
+    public string? PreferredColor { get; set; }
+
+    // TextArea/RichText
+    public string? Notes { get; set; }
+
+    // Contact info
+    public string? EmergencyContact { get; set; }
 }
