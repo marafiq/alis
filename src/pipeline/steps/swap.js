@@ -4,6 +4,10 @@ import { getSwapStrategy } from '../../registry/swap.js';
  * @param {import('../context.js').PipelineContext} ctx
  */
 export function swapStep(ctx) {
+  if (ctx.error) {
+    return ctx;
+  }
+
   if (typeof ctx.config.target !== 'string' || ctx.body == null) {
     return ctx;
   }

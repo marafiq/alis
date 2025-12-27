@@ -1,17 +1,18 @@
 import { executeWithRetry } from '../../retry/executor.js';
 import { getRetryPolicy } from '../../registry/retry.js';
+import { ConfigError } from '../../errors/types.js';
 
 /**
  * @param {import('../context.js').PipelineContext} ctx
  */
 export async function requestExecuteStep(ctx) {
-  // Skip if there's already an error (e.g., from validation)
   if (ctx.error) {
     return ctx;
   }
-  
+
   if (!ctx.request) {
-    throw new Error('requestExecuteStep: request not built');
+    ctx.error = new ConfigError('Request not built');
+    return ctx;
   }
 
   const request = ctx.request;
