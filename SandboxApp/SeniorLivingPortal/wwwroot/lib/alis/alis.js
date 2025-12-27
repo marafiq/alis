@@ -4248,6 +4248,10 @@ var ALISBundle = (function (exports) {
     },
 
     getFieldName(element) {
+      // First check for explicit data-alis-name attribute (highest priority)
+      const alisName = element.getAttribute('data-alis-name');
+      if (alisName) return alisName;
+
       const instance = getInstance(element);
       if (!instance) return null;
 
@@ -4260,7 +4264,11 @@ var ALISBundle = (function (exports) {
       }
 
       // Fallback to element's name attribute
-      return element.getAttribute('name');
+      const elName = element.getAttribute('name');
+      if (elName) return elName;
+
+      // Final fallback: use element id (Syncfusion controls always have IDs)
+      return element.id || null;
     },
 
     getValue(element) {
@@ -4272,11 +4280,47 @@ var ALISBundle = (function (exports) {
       // RadioButton: return value only if checked, else null (skip unchecked radios)
       // Radio buttons have both 'checked' and 'value' properties
       if (constructorName.includes('Radio') || element.type === 'radio') {
-        if (instance.checked) {
-          // Try multiple sources for the value
-          return instance.value || element.value || element.getAttribute('value') || 'true';
+        // Check if this radio is checked - try multiple sources
+        const internalInput = element.querySelector('input[type="radio"]');
+        const isChecked = instance.checked || (internalInput && internalInput.checked);
+
+        if (isChecked) {
+          // Check for data-alis-value first (explicit override)
+          const alisValue = element.getAttribute('data-alis-value');
+          if (alisValue) return alisValue;
+
+          // Try instance.value (if not null/undefined/empty)
+          if (instance.value !== undefined && instance.value !== null && instance.value !== '') {
+            return instance.value;
+          }
+
+          // Look for internal input element's value
+          if (internalInput) {
+            const inputValue = internalInput.value || internalInput.getAttribute('value');
+            if (inputValue) return inputValue;
+          }
+
+          // Fallback to element's own value attribute
+          return element.getAttribute('value') || 'true';
         }
         return null;
+      }
+
+      // ListBox: use getSelectedItems() or selectedItems
+      if (constructorName.includes('ListBox')) {
+        // Try getSelectedItems method first
+        if (typeof instance.getSelectedItems === 'function') {
+          const selected = instance.getSelectedItems();
+          if (selected && selected.length > 0) {
+            // Return the value of the first selected item
+            return selected[0].value || selected[0].text;
+          }
+        }
+        // Fallback to value property (may be an array)
+        if (Array.isArray(instance.value)) {
+          return instance.value[0];
+        }
+        return instance.value;
       }
 
       // Slider: handle range slider (array values) before generic 'value' check

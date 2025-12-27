@@ -33,6 +33,7 @@
                 <label class="form-label">NumericTextBox (change trigger)</label>
                 <ejs-numerictextbox id="testNumeric"
                                     name="numericValue"
+                                    data-alis-name="numericValue"
                                     min="0"
                                     max="1000"
                                     step="10"
@@ -160,6 +161,7 @@
                 <label class="form-label">ListBox</label>
                 <ejs-listbox id="testListbox"
                              name="listboxValue"
+                             data-alis-name="listboxValue"
                              height="120px"
                              data-alis-get="/Home/TestListbox"
                              data-alis-trigger="alis:trigger"
@@ -287,9 +289,9 @@
                      data-alis-trigger="change"
                      data-alis-target="#radio-result"
                      data-alis-collect="#radioGroup">
-                    <ejs-radiobutton id="radio1" name="radioValue" value="option1" label="Option 1" checked="true"></ejs-radiobutton>
-                    <ejs-radiobutton id="radio2" name="radioValue" value="option2" label="Option 2"></ejs-radiobutton>
-                    <ejs-radiobutton id="radio3" name="radioValue" value="option3" label="Option 3"></ejs-radiobutton>
+                    <ejs-radiobutton id="radio1" name="radioValue" data-alis-name="radioValue" data-alis-value="option1" value="option1" label="Option 1" checked="true"></ejs-radiobutton>
+                    <ejs-radiobutton id="radio2" name="radioValue" data-alis-name="radioValue" data-alis-value="option2" value="option2" label="Option 2"></ejs-radiobutton>
+                    <ejs-radiobutton id="radio3" name="radioValue" data-alis-name="radioValue" data-alis-value="option3" value="option3" label="Option 3"></ejs-radiobutton>
                 </div>
                 <div id="radio-result" class="mt-2 small text-muted"></div>
             </div>
@@ -308,6 +310,7 @@
                 <label class="form-label">Slider (single value)</label>
                 <ejs-slider id="testSlider"
                             name="sliderValue"
+                            data-alis-name="sliderValue"
                             min="0"
                             max="100"
                             value="50"
@@ -324,6 +327,7 @@
                 <label class="form-label">Slider (range)</label>
                 <ejs-slider id="testRangeSlider"
                             name="rangeSliderValue"
+                            data-alis-name="rangeSliderValue"
                             min="0"
                             max="100"
                             value="new int[] {20, 80}"
