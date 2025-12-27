@@ -1,82 +1,50 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
-  SYNCFUSION_WRAPPER_CLASSES,
-  SYNCFUSION_INPUT_CLASSES,
-  isSyncfusionWrapper,
-  isSyncfusionInput,
-  findSyncfusionWrapper,
   hasSyncfusionInstance,
   getSyncfusionInstance,
-  getSyncfusionValue
+  getSyncfusionValue,
+  getSyncfusionVisibleElement,
+  isSyncfusionInput,
+  findSyncfusionWrapper,
+  isSyncfusionWrapper
 } from '../../../src/syncfusion/constants.js';
 
-describe('Syncfusion constants', () => {
-  describe('SYNCFUSION_WRAPPER_CLASSES', () => {
-    it('should include common wrapper classes', () => {
-      expect(SYNCFUSION_WRAPPER_CLASSES).toContain('e-input-group');
-      expect(SYNCFUSION_WRAPPER_CLASSES).toContain('e-control-wrapper');
-      expect(SYNCFUSION_WRAPPER_CLASSES).toContain('e-checkbox-wrapper');
-    });
-  });
+/**
+ * Helper to create a mock Syncfusion component structure.
+ * Mirrors how Syncfusion actually creates components:
+ * - Hidden input with ej2_instances array
+ * - Instance has inputWrapper.container or wrapper for visible element
+ * - Instance has element or inputElement for the actual input
+ */
+function createMockSyncfusionComponent(type: 'textbox' | 'checkbox' | 'dropdown' = 'textbox') {
+  const hiddenInput = document.createElement('input');
+  hiddenInput.type = 'hidden';
+  hiddenInput.id = 'testField';
+  hiddenInput.name = 'testField';
 
-  describe('SYNCFUSION_INPUT_CLASSES', () => {
-    it('should include common input classes', () => {
-      expect(SYNCFUSION_INPUT_CLASSES).toContain('e-input');
-      expect(SYNCFUSION_INPUT_CLASSES).toContain('e-dropdownlist');
-    });
-  });
-});
+  const wrapper = document.createElement('div');
+  const visibleInput = document.createElement('input');
 
-describe('isSyncfusionWrapper', () => {
-  it('should return true for elements with wrapper class', () => {
-    const div = document.createElement('div');
-    div.classList.add('e-input-group');
-    expect(isSyncfusionWrapper(div)).toBe(true);
-  });
+  wrapper.appendChild(hiddenInput);
+  wrapper.appendChild(visibleInput);
 
-  it('should return false for elements without wrapper class', () => {
-    const div = document.createElement('div');
-    expect(isSyncfusionWrapper(div)).toBe(false);
-  });
-});
+  const instance: any = {
+    element: hiddenInput,
+    inputElement: visibleInput,
+  };
 
-describe('isSyncfusionInput', () => {
-  it('should return true for elements with input class', () => {
-    const input = document.createElement('input');
-    input.classList.add('e-input');
-    expect(isSyncfusionInput(input)).toBe(true);
-  });
+  if (type === 'textbox' || type === 'dropdown') {
+    instance.value = 'test-value';
+    instance.inputWrapper = { container: wrapper };
+  } else if (type === 'checkbox') {
+    instance.checked = true;
+    instance.wrapper = wrapper;
+  }
 
-  it('should return false for elements without input class', () => {
-    const input = document.createElement('input');
-    expect(isSyncfusionInput(input)).toBe(false);
-  });
-});
+  (hiddenInput as any).ej2_instances = [instance];
 
-describe('findSyncfusionWrapper', () => {
-  it('should find parent wrapper element', () => {
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('e-input-group');
-    const input = document.createElement('input');
-    wrapper.appendChild(input);
-    document.body.appendChild(wrapper);
-
-    const found = findSyncfusionWrapper(input);
-    expect(found).toBe(wrapper);
-
-    document.body.removeChild(wrapper);
-  });
-
-  it('should return null if no wrapper found', () => {
-    const input = document.createElement('input');
-    document.body.appendChild(input);
-
-    const found = findSyncfusionWrapper(input);
-    expect(found).toBeNull();
-
-    document.body.removeChild(input);
-  });
-});
+  return { hiddenInput, wrapper, visibleInput, instance };
+}
 
 describe('hasSyncfusionInstance', () => {
   it('should return true for elements with ej2_instances', () => {
@@ -115,10 +83,9 @@ describe('getSyncfusionInstance', () => {
 describe('getSyncfusionValue', () => {
   describe('checkbox components', () => {
     it('should return checked state as boolean with isCheckbox flag', () => {
-      const input = document.createElement('input');
-      (input as any).ej2_instances = [{ checked: true }];
+      const { hiddenInput } = createMockSyncfusionComponent('checkbox');
 
-      const result = getSyncfusionValue(input);
+      const result = getSyncfusionValue(hiddenInput);
       expect(result).toEqual({ value: true, isCheckbox: true });
     });
 
@@ -133,10 +100,9 @@ describe('getSyncfusionValue', () => {
 
   describe('value components', () => {
     it('should return value with isCheckbox false', () => {
-      const input = document.createElement('input');
-      (input as any).ej2_instances = [{ value: 'test-value' }];
+      const { hiddenInput } = createMockSyncfusionComponent('textbox');
 
-      const result = getSyncfusionValue(input);
+      const result = getSyncfusionValue(hiddenInput);
       expect(result).toEqual({ value: 'test-value', isCheckbox: false });
     });
 
@@ -167,5 +133,74 @@ describe('getSyncfusionValue', () => {
     (input as any).ej2_instances = [{ otherProp: 'test' }];
 
     expect(getSyncfusionValue(input)).toBeNull();
+  });
+});
+
+describe('getSyncfusionVisibleElement', () => {
+  it('should return inputWrapper.container for input-based controls', () => {
+    const { hiddenInput, wrapper } = createMockSyncfusionComponent('textbox');
+
+    expect(getSyncfusionVisibleElement(hiddenInput)).toBe(wrapper);
+  });
+
+  it('should return wrapper for checkbox-like controls', () => {
+    const { hiddenInput, wrapper } = createMockSyncfusionComponent('checkbox');
+
+    expect(getSyncfusionVisibleElement(hiddenInput)).toBe(wrapper);
+  });
+
+  it('should return element itself if no wrapper properties', () => {
+    const input = document.createElement('input');
+    (input as any).ej2_instances = [{ value: 'test' }];
+
+    expect(getSyncfusionVisibleElement(input)).toBe(input);
+  });
+
+  it('should return element itself if no instance', () => {
+    const input = document.createElement('input');
+    expect(getSyncfusionVisibleElement(input)).toBe(input);
+  });
+});
+
+describe('isSyncfusionInput', () => {
+  it('should return true for elements with ej2_instances', () => {
+    const { hiddenInput } = createMockSyncfusionComponent();
+    expect(isSyncfusionInput(hiddenInput)).toBe(true);
+  });
+
+  it('should return false for regular elements', () => {
+    const input = document.createElement('input');
+    expect(isSyncfusionInput(input)).toBe(false);
+  });
+});
+
+describe('findSyncfusionWrapper', () => {
+  it('should find wrapper for element with ej2_instances', () => {
+    const { hiddenInput, wrapper } = createMockSyncfusionComponent();
+
+    const found = findSyncfusionWrapper(hiddenInput);
+    expect(found).toBe(wrapper);
+  });
+
+  it('should return null for regular elements', () => {
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+
+    const found = findSyncfusionWrapper(input);
+    expect(found).toBeNull();
+
+    document.body.removeChild(input);
+  });
+});
+
+describe('isSyncfusionWrapper (legacy)', () => {
+  it('should return true for elements with ej2_instances', () => {
+    const { hiddenInput } = createMockSyncfusionComponent();
+    expect(isSyncfusionWrapper(hiddenInput)).toBe(true);
+  });
+
+  it('should return false for regular elements', () => {
+    const div = document.createElement('div');
+    expect(isSyncfusionWrapper(div)).toBe(false);
   });
 });

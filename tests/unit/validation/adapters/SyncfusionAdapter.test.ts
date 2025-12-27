@@ -10,24 +10,32 @@ describe('SyncfusionAdapter', () => {
     document.body.appendChild(form);
   });
 
-  function createSyncfusionInput(value: unknown, wrapperClass = 'e-input-group') {
+  /**
+   * Creates a mock Syncfusion component with proper instance properties.
+   * Mirrors actual Syncfusion structure with inputWrapper.container and inputElement.
+   */
+  function createSyncfusionInput(value: unknown) {
     const wrapper = document.createElement('div');
-    wrapper.className = wrapperClass;
-    
+
     const input = document.createElement('input');
     input.type = 'hidden';
-    
-    // Mock ej2_instances
-    (input as unknown as { ej2_instances: Array<{ value: unknown }> }).ej2_instances = [{ value }];
-    
+
     const visibleInput = document.createElement('input');
-    visibleInput.className = 'e-input';
-    
+
     wrapper.appendChild(input);
     wrapper.appendChild(visibleInput);
     form.appendChild(wrapper);
-    
-    return { wrapper, input, visibleInput };
+
+    // Mock ej2_instances with proper Syncfusion instance structure
+    const instance = {
+      value,
+      element: input,
+      inputElement: visibleInput,
+      inputWrapper: { container: wrapper }
+    };
+    (input as any).ej2_instances = [instance];
+
+    return { wrapper, input, visibleInput, instance };
   }
 
   it('detects Syncfusion element by ej2_instances', () => {
@@ -59,15 +67,21 @@ describe('SyncfusionAdapter', () => {
 
   it('getValue from CheckBox returns ej2_instances[0].checked', () => {
     const wrapper = document.createElement('div');
-    wrapper.className = 'e-checkbox-wrapper';
-    
+
     const input = document.createElement('input');
     input.type = 'hidden';
-    (input as unknown as { ej2_instances: Array<{ checked: boolean }> }).ej2_instances = [{ checked: true }];
-    
+
     wrapper.appendChild(input);
     form.appendChild(wrapper);
-    
+
+    // Mock checkbox with proper Syncfusion instance structure
+    const instance = {
+      checked: true,
+      element: input,
+      wrapper: wrapper
+    };
+    (input as any).ej2_instances = [instance];
+
     expect(SyncfusionAdapter.getValue(input)).toBe(true);
   });
 

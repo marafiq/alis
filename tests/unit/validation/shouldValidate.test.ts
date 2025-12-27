@@ -76,30 +76,52 @@ describe('shouldValidate', () => {
   it('returns true for Syncfusion hidden input with visible wrapper', () => {
     // Syncfusion renders hidden input + visible wrapper
     const wrapper = document.createElement('div');
-    wrapper.className = 'e-input-group';
-    
+
     const input = document.createElement('input');
     input.type = 'hidden';
     input.setAttribute('data-val', 'true');
-    
+
+    const visibleInput = document.createElement('input');
+
     wrapper.appendChild(input);
+    wrapper.appendChild(visibleInput);
     form.appendChild(wrapper);
-    
+
+    // Mock Syncfusion instance with proper structure
+    const instance = {
+      value: 'test',
+      element: input,
+      inputElement: visibleInput,
+      inputWrapper: { container: wrapper }
+    };
+    (input as any).ej2_instances = [instance];
+
     expect(shouldValidate(input)).toBe(true);
   });
 
   it('returns false for Syncfusion hidden input with hidden wrapper', () => {
     const wrapper = document.createElement('div');
-    wrapper.className = 'e-input-group';
     wrapper.style.display = 'none';
-    
+
     const input = document.createElement('input');
     input.type = 'hidden';
     input.setAttribute('data-val', 'true');
-    
+
+    const visibleInput = document.createElement('input');
+
     wrapper.appendChild(input);
+    wrapper.appendChild(visibleInput);
     form.appendChild(wrapper);
-    
+
+    // Mock Syncfusion instance with proper structure
+    const instance = {
+      value: 'test',
+      element: input,
+      inputElement: visibleInput,
+      inputWrapper: { container: wrapper }
+    };
+    (input as any).ej2_instances = [instance];
+
     expect(shouldValidate(input)).toBe(false);
   });
 

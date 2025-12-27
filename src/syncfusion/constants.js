@@ -1,68 +1,14 @@
 /**
- * Syncfusion wrapper class patterns - these wrap actual input elements.
- * Used across the codebase for:
- * - Finding the original ALIS element for Syncfusion controls
- * - Error display styling
- * - Validation visibility checks
+ * Syncfusion Integration Utilities
+ *
+ * This module provides utilities for integrating with Syncfusion EJ2 components.
+ * All detection and value access is done through the Syncfusion instance (ej2_instances)
+ * rather than CSS class detection, which is fragile and can break with updates.
  */
-export const SYNCFUSION_WRAPPER_CLASSES = [
-  'e-input-group',
-  'e-control-wrapper',
-  'e-ddl',
-  'e-numerictextbox',
-  'e-datepicker',
-  'e-checkbox-wrapper',
-  'e-radio-wrapper'
-];
-
-/**
- * Syncfusion input class patterns - visible input elements created by Syncfusion.
- */
-export const SYNCFUSION_INPUT_CLASSES = [
-  'e-input',
-  'e-dropdownlist',
-  'e-numerictextbox',
-  'e-datepicker'
-];
-
-/**
- * Check if element is a Syncfusion wrapper.
- * @param {Element} element
- * @returns {boolean}
- */
-export function isSyncfusionWrapper(element) {
-  return SYNCFUSION_WRAPPER_CLASSES.some(cls => element.classList.contains(cls));
-}
-
-/**
- * Check if element is a Syncfusion input.
- * @param {Element} element
- * @returns {boolean}
- */
-export function isSyncfusionInput(element) {
-  return SYNCFUSION_INPUT_CLASSES.some(cls => element.classList.contains(cls));
-}
-
-/**
- * Find Syncfusion wrapper for an element.
- * @param {Element} element
- * @returns {Element | null}
- */
-export function findSyncfusionWrapper(element) {
-  let parent = element.parentElement;
-
-  while (parent) {
-    if (isSyncfusionWrapper(parent)) {
-      return parent;
-    }
-    parent = parent.parentElement;
-  }
-
-  return null;
-}
 
 /**
  * Check if element has Syncfusion ej2_instances.
+ * This is the authoritative way to detect Syncfusion components.
  * @param {Element} element
  * @returns {boolean}
  */
@@ -110,4 +56,90 @@ export function getSyncfusionValue(element) {
   }
 
   return null;
+}
+
+/**
+ * Get the visible wrapper element for a Syncfusion component.
+ * Uses instance properties (inputWrapper, wrapper) instead of class detection.
+ * @param {Element} element
+ * @returns {Element}
+ */
+export function getSyncfusionVisibleElement(element) {
+  const instance = getSyncfusionInstance(element);
+  if (!instance) {
+    return element;
+  }
+
+  // Syncfusion components expose their wrapper through instance properties:
+  // - inputWrapper: { container } for input-based controls (TextBox, NumericTextBox, etc.)
+  // - wrapper: for other controls (CheckBox, etc.)
+  if (instance.inputWrapper?.container instanceof Element) {
+    return instance.inputWrapper.container;
+  }
+  if (instance.wrapper instanceof Element) {
+    return instance.wrapper;
+  }
+
+  // Fallback to the element itself
+  return element;
+}
+
+/**
+ * Check if element is a visible Syncfusion input (not the hidden original).
+ * Uses instance properties to find the visible input element.
+ * @param {Element} element
+ * @returns {boolean}
+ */
+export function isSyncfusionInput(element) {
+  // Check if this element is a Syncfusion component directly
+  if (hasSyncfusionInstance(element)) {
+    return true;
+  }
+
+  // Check if this is the visible input within a Syncfusion wrapper
+  // by looking for a parent/sibling with ej2_instances
+  const parent = element.closest('[id]');
+  if (parent && hasSyncfusionInstance(parent)) {
+    const instance = getSyncfusionInstance(parent);
+    // Check if this element is the visible input from the instance
+    if (instance?.element === element || instance?.inputElement === element) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Find Syncfusion wrapper for an element using instance properties.
+ * @param {Element} element
+ * @returns {Element | null}
+ */
+export function findSyncfusionWrapper(element) {
+  // First check if element itself has an instance
+  if (hasSyncfusionInstance(element)) {
+    const visible = getSyncfusionVisibleElement(element);
+    return visible !== element ? visible : null;
+  }
+
+  // Walk up to find a parent with Syncfusion instance
+  let parent = element.parentElement;
+  while (parent) {
+    if (hasSyncfusionInstance(parent)) {
+      return getSyncfusionVisibleElement(parent);
+    }
+    parent = parent.parentElement;
+  }
+
+  return null;
+}
+
+/**
+ * @deprecated Use hasSyncfusionInstance instead.
+ * Legacy function that checks if element is part of a Syncfusion component.
+ * @param {Element} element
+ * @returns {boolean}
+ */
+export function isSyncfusionWrapper(element) {
+  return hasSyncfusionInstance(element) || findSyncfusionWrapper(element) !== null;
 }

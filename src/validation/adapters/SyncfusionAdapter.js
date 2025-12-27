@@ -1,8 +1,9 @@
-import { findSyncfusionWrapper, hasSyncfusionInstance, getSyncfusionValue } from '../../syncfusion/constants.js';
+import { hasSyncfusionInstance, getSyncfusionInstance, getSyncfusionValue, getSyncfusionVisibleElement } from '../../syncfusion/constants.js';
 
 /**
  * Adapter for Syncfusion Essential JS 2 components.
  * Syncfusion components render hidden inputs with ej2_instances array.
+ * All detection uses instance properties, not CSS classes.
  * @type {import('./types.js').Adapter}
  */
 export const SyncfusionAdapter = {
@@ -30,26 +31,35 @@ export const SyncfusionAdapter = {
 
   /**
    * Returns the visible wrapper element for error styling.
+   * Uses instance.inputWrapper or instance.wrapper properties.
    * @param {Element} element
    * @returns {Element}
    */
   getVisibleElement(element) {
-    return findSyncfusionWrapper(element) || element;
+    return getSyncfusionVisibleElement(element);
   },
-  
+
   /**
    * Returns the focusable element for blur events.
+   * Uses instance.inputElement or instance.element properties.
    * @param {Element} element
    * @returns {Element}
    */
   getBlurTarget(element) {
-    // Look for the visible input element within the wrapper
-    const wrapper = SyncfusionAdapter.getVisibleElement(element);
-    
-    // Try common Syncfusion focusable element selectors
-    const focusable = wrapper.querySelector('.e-input, .e-checkbox, .e-radio, input:not([type="hidden"])');
-    
-    return focusable || element;
+    const instance = getSyncfusionInstance(element);
+    if (!instance) {
+      return element;
+    }
+
+    // Syncfusion exposes the input element through instance properties
+    if (instance.inputElement instanceof Element) {
+      return instance.inputElement;
+    }
+    if (instance.element instanceof Element) {
+      return instance.element;
+    }
+
+    return element;
   }
 };
 
