@@ -2,44 +2,31 @@ import { matchesTrigger } from './matcher.js';
 import { getDefaultTrigger } from '../triggers/defaults.js';
 import { parseTrigger } from './parser.js';
 import { FORCE_TRIGGER_EVENT } from './constants.js';
-import { isSyncfusionWrapper, isSyncfusionInput } from '../syncfusion/constants.js';
+import { hasSyncfusionInstance, isSyncfusionInput, getSyncfusionVisibleElement } from '../syncfusion/constants.js';
 
 /**
  * Find the original ALIS element for a Syncfusion control.
  * Syncfusion's appendTo() transforms the original element, but the original
- * element (with ALIS attributes) can be found via the wrapper's ID or
- * by looking for elements with ej2_instances.
+ * element (with ALIS attributes) can be found via ej2_instances.
  * @param {Element} target - The event target (Syncfusion's visible input)
  * @returns {Element | null}
  */
 function findSyncfusionAlisElement(target) {
-  // Look for the closest Syncfusion wrapper
-  const wrapper = target.closest('.e-input-group, .e-control-wrapper, .e-ddl');
-  if (!wrapper) return null;
-  
-  // The wrapper might have an ID that matches the original element
-  // Or there might be a hidden input with the ID and ALIS attributes
-  const wrapperId = wrapper.id;
-  if (wrapperId) {
-    const original = document.getElementById(wrapperId);
-    if (original && isAlisElement(original)) {
-      return original;
+  // Walk up the DOM looking for elements with ej2_instances that have ALIS attributes
+  let current = target.parentElement;
+  while (current && current !== document.body) {
+    if (hasSyncfusionInstance(current) && isAlisElement(current)) {
+      return current;
     }
-  }
-  
-  // Look for any element with ej2_instances inside the wrapper that has ALIS attrs
-  const elementsWithInstances = wrapper.querySelectorAll('[id]');
-  for (const el of elementsWithInstances) {
-    if (/** @type {any} */ (el).ej2_instances && isAlisElement(el)) {
-      return el;
+    // Also check for hidden inputs with ej2_instances
+    const children = current.querySelectorAll('[id]');
+    for (const el of children) {
+      if (hasSyncfusionInstance(el) && isAlisElement(el)) {
+        return el;
+      }
     }
+    current = current.parentElement;
   }
-  
-  // Check if the wrapper itself has ALIS attributes
-  if (isAlisElement(wrapper)) {
-    return wrapper;
-  }
-  
   return null;
 }
 
@@ -128,11 +115,11 @@ function shouldHandleEvent(element, event) {
     return matchesTrigger(element, event);
   }
   
-  // For Syncfusion wrappers, also accept input/change events from inner elements
-  // since the wrapper contains the actual input but ALIS attrs are on the wrapper
-  if (isSyncfusionWrapper(element)) {
+  // For Syncfusion components, also accept input/change events from inner elements
+  // since the component contains the actual input but ALIS attrs are on the original element
+  if (hasSyncfusionInstance(element)) {
     const eventType = normalizeEvent(event.type);
-    // Accept input, change, blur events for Syncfusion wrappers
+    // Accept input, change, blur events for Syncfusion components
     if (['input', 'change', 'blur', 'focus'].includes(eventType)) {
       return true;
     }

@@ -1,4 +1,4 @@
-import { createContextForElement, extractData } from './context.js';
+import { createContextForElement } from './context.js';
 import { runDefaultPipeline } from './pipeline.js';
 
 /**
@@ -8,10 +8,6 @@ import { runDefaultPipeline } from './pipeline.js';
  */
 export function trigger(element, overrides = {}, globalConfig = {}) {
   const ctx = createContextForElement(element, overrides, globalConfig);
-  const data = extractData(overrides);
-  if (data !== undefined) {
-    ctx.collect = { source: element, data };
-  }
   return runDefaultPipeline(ctx);
 }
 

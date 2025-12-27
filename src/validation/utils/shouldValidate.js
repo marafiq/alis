@@ -19,13 +19,7 @@ export function shouldValidate(element) {
   }
 
   // Disabled elements are skipped
-  if (element instanceof HTMLInputElement && element.disabled) {
-    return false;
-  }
-  if (element instanceof HTMLSelectElement && element.disabled) {
-    return false;
-  }
-  if (element instanceof HTMLTextAreaElement && element.disabled) {
+  if ('disabled' in element && /** @type {HTMLInputElement} */ (element).disabled) {
     return false;
   }
 

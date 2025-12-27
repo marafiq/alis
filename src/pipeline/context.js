@@ -12,6 +12,7 @@ let contextCounter = 0;
  * @property {Element | null} element
  * @property {Record<string, unknown>} config
  * @property {string} trigger
+ * @property {AbortController} abortController
  * @property {{ attempts: number; aborted: boolean; startTime: number | null; endTime: number | null; duration: number | null }} state
  * @property {{ url: string; method: string; headers: Record<string, string>; body: any } | null} request
  * @property {Response | null} response
@@ -58,9 +59,6 @@ export function createContext(element, overrides = {}) {
   };
 }
 
-/**
- * @param {{ element?: Element | null; config?: Record<string, unknown>; trigger?: string; id?: string }} options
- */
 /**
  * @param {{ element?: Element | null; config?: Record<string, unknown>; trigger?: string; id?: string }} options
  * @returns {PipelineContext}
