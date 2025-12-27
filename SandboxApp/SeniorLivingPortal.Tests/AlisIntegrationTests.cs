@@ -293,7 +293,7 @@ public class AlisIntegrationTests : PageTest
     #region Section 1: Text Input Controls Tests
 
     [Test]
-    public async Task TextBox_InputTrigger_TriggersALISRequest()
+    public async Task TextBox_InputTrigger_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#textbox-result");
 
@@ -302,23 +302,24 @@ public class AlisIntegrationTests : PageTest
         await Page.WaitForTimeoutAsync(600); // Wait for debounce
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Searched:"), "TextBox input should trigger ALIS request");
+        Assert.That(content, Does.Contain("Searched: hello world"),
+            "TextBox should send the entered value to the server");
     }
 
     [Test]
-    public async Task NumericTextBox_ChangeTrigger_TriggersALISRequest()
+    public async Task NumericTextBox_ChangeTrigger_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#numeric-result");
-        var initialContent = await resultDiv.TextContentAsync();
 
         await SetNumericTextBoxValue("testNumeric", 250);
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Numeric:"), "NumericTextBox should trigger ALIS request");
+        Assert.That(content, Does.Contain("Numeric: $250.00"),
+            "NumericTextBox should send the numeric value formatted as currency");
     }
 
     [Test]
-    public async Task MaskedTextBox_ChangeTrigger_TriggersALISRequest()
+    public async Task MaskedTextBox_ChangeTrigger_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#masked-result");
 
@@ -334,7 +335,8 @@ public class AlisIntegrationTests : PageTest
         await Page.WaitForTimeoutAsync(500);
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Phone:"), "MaskedTextBox should trigger ALIS request on change");
+        Assert.That(content, Does.Contain("Phone:").And.Contain("555"),
+            "MaskedTextBox should send the masked value to the server");
     }
 
     #endregion
@@ -342,31 +344,32 @@ public class AlisIntegrationTests : PageTest
     #region Section 2: Selection Controls Tests
 
     [Test]
-    public async Task DropDownList_SelectionChange_TriggersALISRequest()
+    public async Task DropDownList_SelectionChange_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#dropdown-result");
 
         await OpenAndSelectDropdownItem("testDropdown", "Option 2");
 
         var content = await resultDiv.TextContentAsync();
-        // ALIS triggers the request - value extraction is a known framework limitation
-        Assert.That(content, Does.Contain("Selected:"),
-            "DropDownList should trigger ALIS request on selection change");
+        // Verify the ACTUAL value is sent to the server, not just that trigger fired
+        Assert.That(content, Does.Contain("Selected: 2"),
+            "DropDownList should send the selected value (2) to the server");
     }
 
     [Test]
-    public async Task ComboBox_SelectionChange_TriggersALISRequest()
+    public async Task ComboBox_SelectionChange_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#combobox-result");
 
         await SelectSyncfusionDropdownItem("testCombobox", "banana");
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Combo:"), "ComboBox should trigger ALIS request");
+        Assert.That(content, Does.Contain("Combo: banana"),
+            "ComboBox should send the selected value (banana) to the server");
     }
 
     [Test]
-    public async Task AutoComplete_SelectionChange_TriggersALISRequest()
+    public async Task AutoComplete_SelectionChange_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#autocomplete-result");
 
@@ -374,7 +377,7 @@ public class AlisIntegrationTests : PageTest
         await Page.EvaluateAsync(@"() => {
             const el = document.getElementById('testAutocomplete');
             if (el && el.ej2_instances && el.ej2_instances[0]) {
-                el.ej2_instances[0].value = 'JavaScript';
+                el.ej2_instances[0].value = 'js';
                 el.ej2_instances[0].dataBind();
                 el.dispatchEvent(new CustomEvent('alis:trigger', { bubbles: true }));
             }
@@ -382,29 +385,33 @@ public class AlisIntegrationTests : PageTest
         await Page.WaitForTimeoutAsync(500);
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Autocomplete:"), "AutoComplete should trigger ALIS request");
+        Assert.That(content, Does.Contain("Autocomplete: js"),
+            "AutoComplete should send the selected value (js) to the server");
     }
 
     [Test]
-    public async Task MultiSelect_SelectionChange_TriggersALISRequest()
+    public async Task MultiSelect_SelectionChange_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#multiselect-result");
 
         await AddMultiselectItems("testMultiselect", new[] { "red", "blue" });
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Multi:"), "MultiSelect should trigger ALIS request");
+        // MultiSelect sends comma-separated or array values
+        Assert.That(content, Does.Contain("Multi:").And.Contain("red"),
+            "MultiSelect should send selected values to the server");
     }
 
     [Test]
-    public async Task ListBox_SelectionChange_TriggersALISRequest()
+    public async Task ListBox_SelectionChange_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#listbox-result");
 
         await SelectListBoxItem("testListbox", "item2");
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("List:"), "ListBox should trigger ALIS request");
+        Assert.That(content, Does.Contain("List: item2"),
+            "ListBox should send the selected value (item2) to the server");
     }
 
     #endregion
@@ -470,29 +477,31 @@ public class AlisIntegrationTests : PageTest
     #region Section 4: Toggle/Boolean Controls Tests
 
     [Test]
-    public async Task Checkbox_Toggle_TriggersALISRequest()
+    public async Task Checkbox_Toggle_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#checkbox-result");
 
         await ToggleCheckbox("testCheckbox", true);
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Checkbox:"), "Checkbox should trigger ALIS request");
+        Assert.That(content, Does.Contain("Checkbox: true"),
+            "Checkbox should send 'true' when checked");
     }
 
     [Test]
-    public async Task Switch_Toggle_TriggersALISRequest()
+    public async Task Switch_Toggle_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#switch-result");
 
         await ToggleSwitch("testSwitch", true);
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Switch:"), "Switch should trigger ALIS request");
+        Assert.That(content, Does.Contain("Switch: true"),
+            "Switch should send 'true' when toggled on");
     }
 
     [Test]
-    public async Task RadioButton_Selection_TriggersALISRequest()
+    public async Task RadioButton_Selection_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#radio-result");
 
@@ -512,7 +521,8 @@ public class AlisIntegrationTests : PageTest
         await Page.WaitForTimeoutAsync(500);
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Radio:"), "RadioButton should trigger ALIS request");
+        Assert.That(content, Does.Contain("Radio: option2"),
+            "RadioButton should send the selected value (option2)");
     }
 
     #endregion
@@ -520,18 +530,19 @@ public class AlisIntegrationTests : PageTest
     #region Section 5: Range/Slider Controls Tests
 
     [Test]
-    public async Task Slider_ValueChange_TriggersALISRequest()
+    public async Task Slider_ValueChange_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#slider-result");
 
         await SetSliderValue("testSlider", 75);
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Slider:"), "Slider should trigger ALIS request");
+        Assert.That(content, Does.Contain("Slider: 75"),
+            "Slider should send the value (75) to the server");
     }
 
     [Test]
-    public async Task RangeSlider_ValueChange_TriggersALISRequest()
+    public async Task RangeSlider_ValueChange_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#rangeslider-result");
 
@@ -547,7 +558,8 @@ public class AlisIntegrationTests : PageTest
         await Page.WaitForTimeoutAsync(300);
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Range Slider:"), "Range Slider should trigger ALIS request");
+        Assert.That(content, Does.Contain("Range Slider:").And.Contain("30"),
+            "Range Slider should send the range values to the server");
     }
 
     #endregion
@@ -555,14 +567,15 @@ public class AlisIntegrationTests : PageTest
     #region Section 6: Color/Special Controls Tests
 
     [Test]
-    public async Task ColorPicker_SelectColor_TriggersALISRequest()
+    public async Task ColorPicker_SelectColor_SendsCorrectValue()
     {
         var resultDiv = Page.Locator("#colorpicker-result");
 
         await SetColorPickerValue("testColorpicker", "#ff5733");
 
         var content = await resultDiv.TextContentAsync();
-        Assert.That(content, Does.Contain("Color:"), "ColorPicker should trigger ALIS request");
+        Assert.That(content, Does.Contain("Color: #ff5733"),
+            "ColorPicker should send the selected color to the server");
     }
 
     [Test]

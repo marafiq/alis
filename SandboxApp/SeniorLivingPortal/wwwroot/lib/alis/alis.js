@@ -840,6 +840,60 @@ var ALISBundle = (function (exports) {
   }
 
   /**
+   * Get the field name for an element, handling Syncfusion special cases.
+   * Syncfusion may move the name attribute to a hidden element.
+   *
+   * @param {Element} element
+   * @returns {string | null}
+   */
+  function getFieldName(element) {
+    // Direct name attribute (most common)
+    const directName = element.getAttribute('name');
+    if (directName) {
+      return directName;
+    }
+
+    // For Syncfusion elements, check instance properties and hidden elements
+    if (hasSyncfusionInstance(element)) {
+      const instance = getSyncfusionInstance(element);
+      if (instance) {
+        // Check instance.name property (some SF controls expose this)
+        if (instance.name) {
+          return instance.name;
+        }
+        // Check the base element if different
+        if (instance.element && instance.element !== element) {
+          const baseName = instance.element.getAttribute?.('name');
+          if (baseName) {
+            return baseName;
+          }
+        }
+        // Check hidden element (DropDownList creates id_hidden for form submission)
+        if (instance.hiddenElement) {
+          const hiddenName = instance.hiddenElement.getAttribute?.('name');
+          if (hiddenName) {
+            return hiddenName;
+          }
+        }
+      }
+
+      // Fallback: look for hidden element by convention (id + '_hidden')
+      const id = element.getAttribute('id');
+      if (id) {
+        const hidden = document.getElementById(id + '_hidden');
+        if (hidden) {
+          const hiddenName = hidden.getAttribute('name');
+          if (hiddenName) {
+            return hiddenName;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Read value from a form field element.
    * Supports native HTML elements, Syncfusion components, and custom value attributes.
    *
@@ -847,7 +901,7 @@ var ALISBundle = (function (exports) {
    * @returns {{ name: string; value: unknown } | null}
    */
   function readValue(element) {
-    const name = element.getAttribute('name');
+    const name = getFieldName(element);
     if (!name) {
       return null;
     }
@@ -871,7 +925,8 @@ var ALISBundle = (function (exports) {
       }
     }
 
-    // Syncfusion component
+    // Syncfusion component - check this BEFORE native elements
+    // because SF wraps native elements and the instance has the real value
     if (hasSyncfusionInstance(element)) {
       const sfValue = getSyncfusionValue(element);
       if (sfValue) {
@@ -1082,6 +1137,26 @@ var ALISBundle = (function (exports) {
   }
 
   /**
+   * Check if element should be treated as a single field for collection.
+   * This includes elements with name attributes and Syncfusion components.
+   *
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function isSingleFieldElement(element) {
+    // Direct name attribute
+    if (element.getAttribute('name')) {
+      return true;
+    }
+    // Syncfusion components might not have name directly on element
+    // but readValue handles finding the name from hidden elements
+    if (hasSyncfusionInstance(element)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * @param {Element | null} element
    * @param {{ collect?: string }} options
    */
@@ -1098,7 +1173,8 @@ var ALISBundle = (function (exports) {
       };
     }
 
-    if (source === element && element && element.getAttribute('name')) {
+    // For self collection, treat element as single field if it has name or is Syncfusion
+    if (source === element && element && isSingleFieldElement(element)) {
       const field = readValue(element);
       return {
         source: element,
