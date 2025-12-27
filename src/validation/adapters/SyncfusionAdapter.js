@@ -1,4 +1,4 @@
-import { findSyncfusionWrapper } from '../../syncfusion/constants.js';
+import { findSyncfusionWrapper, hasSyncfusionInstance, getSyncfusionValue } from '../../syncfusion/constants.js';
 
 /**
  * Adapter for Syncfusion Essential JS 2 components.
@@ -14,34 +14,18 @@ export const SyncfusionAdapter = {
    * @returns {boolean}
    */
   matches(element) {
-    const instances = /** @type {unknown} */ (element)['ej2_instances'];
-    return Array.isArray(instances) && instances.length > 0;
+    return hasSyncfusionInstance(element);
   },
 
   /**
    * Gets the value from Syncfusion component instance.
+   * For validation, returns the raw value (boolean for checkboxes).
    * @param {Element} element
    * @returns {unknown}
    */
   getValue(element) {
-    const instances = /** @type {unknown} */ (element)['ej2_instances'];
-    if (!Array.isArray(instances) || instances.length === 0) {
-      return null;
-    }
-
-    const instance = instances[0];
-
-    // CheckBox uses 'checked' property
-    if ('checked' in instance) {
-      return instance.checked;
-    }
-
-    // Most components use 'value' property
-    if ('value' in instance) {
-      return instance.value;
-    }
-
-    return null;
+    const result = getSyncfusionValue(element);
+    return result ? result.value : null;
   },
 
   /**

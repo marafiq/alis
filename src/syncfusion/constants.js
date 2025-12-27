@@ -60,3 +60,54 @@ export function findSyncfusionWrapper(element) {
 
   return null;
 }
+
+/**
+ * Check if element has Syncfusion ej2_instances.
+ * @param {Element} element
+ * @returns {boolean}
+ */
+export function hasSyncfusionInstance(element) {
+  const instances = /** @type {any} */ (element)['ej2_instances'];
+  return Array.isArray(instances) && instances.length > 0;
+}
+
+/**
+ * Get the Syncfusion component instance for an element.
+ * @param {Element} element
+ * @returns {any | null}
+ */
+export function getSyncfusionInstance(element) {
+  const instances = /** @type {any} */ (element)['ej2_instances'];
+  if (!Array.isArray(instances) || instances.length === 0) {
+    return null;
+  }
+  return instances[0];
+}
+
+/**
+ * Get value from a Syncfusion component.
+ * Returns the raw value from the component instance.
+ * - CheckBox/Switch: returns boolean (checked state)
+ * - Other components: returns the value property
+ *
+ * @param {Element} element
+ * @returns {{ value: unknown; isCheckbox: boolean } | null}
+ */
+export function getSyncfusionValue(element) {
+  const instance = getSyncfusionInstance(element);
+  if (!instance) {
+    return null;
+  }
+
+  // CheckBox and Switch use 'checked' property
+  if ('checked' in instance) {
+    return { value: instance.checked, isCheckbox: true };
+  }
+
+  // Most components use 'value' property
+  if ('value' in instance) {
+    return { value: instance.value, isCheckbox: false };
+  }
+
+  return null;
+}

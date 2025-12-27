@@ -1,3 +1,5 @@
+import { getSyncfusionValue } from '../syncfusion/constants.js';
+
 /**
  * @param {Element} element
  * @returns {{ name: string; value: unknown } | null}
@@ -29,17 +31,14 @@ export function readValue(element) {
   }
 
   // Check for Syncfusion component (ej2_instances array)
-  const ej2Instances = /** @type {any} */ (element)['ej2_instances'];
-  if (Array.isArray(ej2Instances) && ej2Instances.length > 0) {
-    const instance = ej2Instances[0];
-    // CheckBox uses 'checked' property
-    if ('checked' in instance) {
-      return instance.checked ? { name, value: 'true' } : null;
+  const sfValue = getSyncfusionValue(element);
+  if (sfValue !== null) {
+    if (sfValue.isCheckbox) {
+      // For form submission, unchecked checkboxes should not be included
+      // Checked checkboxes submit 'true' (ASP.NET Core model binding convention)
+      return sfValue.value ? { name, value: 'true' } : null;
     }
-    // Most components use 'value' property
-    if ('value' in instance) {
-      return { name, value: instance.value };
-    }
+    return { name, value: sfValue.value };
   }
 
   if (element instanceof HTMLInputElement) {
