@@ -1,0 +1,71 @@
+@model IEnumerable<MedicationSchedule>
+@{
+    var resident = ViewBag.Resident as Resident;
+}
+
+@if (resident == null)
+{
+    <p class="text-muted">Resident not found</p>
+}
+else
+{
+    <div class="mb-3">
+        <h6 class="mb-1">@resident.FullName</h6>
+        <small class="text-muted">Room @resident.RoomNumber | @resident.CareLevel</small>
+    </div>
+
+    @if (Model.Any())
+    {
+        <ul class="list-group list-group-flush">
+            @foreach (var schedule in Model.OrderBy(s => s.ScheduledTime))
+            {
+                <li class="list-group-item px-0">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>@schedule.Medication?.Name</strong>
+                            <br />
+                            <small class="text-muted">
+                                @schedule.Medication?.Dosage - @schedule.ScheduledTime.ToString("h:mm tt")
+                            </small>
+                        </div>
+                        @* ALIS Feature: Quick action from sidebar *@
+                        <button type="button"
+                                class="btn btn-sm btn-outline-success"
+                                data-alis-post="/Medications/QuickGive"
+                                data-alis-collect="self"
+                                data-alis-target="#medications-dashboard"
+                                data-alis-swap="innerHTML"
+                                data-alis-confirm-message="Give @schedule.Medication?.Name now?"
+                                data-alis-on-after="initMedicationControls"
+                                data-alis-indicator="is-loading">
+                            <input type="hidden" name="scheduleId" value="@schedule.Id" />
+                            Give
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(schedule.Medication?.Instructions))
+                    {
+                        <div class="text-warning small mt-1">
+                            <em>@schedule.Medication.Instructions</em>
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+
+        <div class="mt-3">
+            @* ALIS Feature: Load history with outerHTML swap *@
+            <a href="#"
+               class="btn btn-sm btn-outline-info w-100"
+               data-alis-get="/Medications/History?residentId=@resident.Id"
+               data-alis-target="#resident-details"
+               data-alis-swap="outerHTML"
+               data-alis-indicator="is-loading">
+                View History
+            </a>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">No scheduled medications</p>
+    }
+}

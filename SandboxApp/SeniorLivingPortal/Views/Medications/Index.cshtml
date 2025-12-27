@@ -1,0 +1,395 @@
+@model IEnumerable<MedicationAdministrationViewModel>
+@{
+    ViewData["Title"] = "Medications";
+    var residents = ViewBag.Residents as IEnumerable<Resident> ?? Enumerable.Empty<Resident>();
+}
+
+@*
+    MEDICATIONS MODULE - Demonstrates ALL ALIS Features
+
+    This view showcases every ALIS attribute in a real-world scenario:
+
+    1. HTTP Methods: data-alis-get, data-alis-post
+    2. Targeting: data-alis-target with selectors
+    3. Triggers: data-alis-trigger with events, delay, throttle
+    4. Collection: data-alis-collect (self, closest, form, selector)
+    5. Indicators: data-alis-indicator for loading states
+    6. Swap: data-alis-swap (innerHTML, outerHTML, none)
+    7. Confirm: data-alis-confirm, data-alis-confirm-message
+    8. Retry: data-alis-retry for resilience
+    9. Hooks: data-alis-on-before, data-alis-on-after
+    10. Validation: data-alis-validate
+    11. Duplicate Handling: data-alis-duplicate-request
+*@
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="mb-0">
+            Medication Administration
+            @* ALIS Feature: Auto-polling for alert badge with retry *@
+            <span id="alert-badge"
+                  data-alis-get="/Medications/AlertCount"
+                  data-alis-trigger="load, timer:60000ms"
+                  data-alis-target="self"
+                  data-alis-swap="innerHTML"
+                  data-alis-retry='{"maxAttempts": 3, "baseDelay": 2000}'>
+            </span>
+        </h2>
+        <p class="text-muted">Administer medications to residents</p>
+    </div>
+    <div class="col-md-4 text-end">
+        @* ALIS Feature: Bulk action button with confirm *@
+        <ejs-button id="bulkAdminBtn"
+                    cssClass="e-warning"
+                    iconCss="e-icons e-check-box"
+                    content="Bulk Administer"
+                    disabled="true">
+        </ejs-button>
+    </div>
+</div>
+
+@* Search and Filter Section *@
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-5">
+                @* ALIS Feature: Debounced search with data-alis-trigger="input delay:300ms" *@
+                <div class="search-container">
+                    <ejs-textbox id="searchMeds"
+                                 name="query"
+                                 placeholder="Search medications or residents..."
+                                 showClearButton="true"
+                                 data-alis-get="/Medications/Search"
+                                 data-alis-trigger="input delay:300ms"
+                                 data-alis-target="#medications-list"
+                                 data-alis-collect="closest .card-body"
+                                 data-alis-indicator="is-loading, #search-spinner">
+                    </ejs-textbox>
+                    <span class="spinner" id="search-spinner"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                @* ALIS Feature: Filter with data-alis-trigger="change" and data-alis-collect *@
+                @{
+                    var residentOptions = new[] { new { Text = "All Residents", Value = "" } }
+                        .Concat(residents.Select(r => new { Text = r.FullName, Value = r.Id.ToString() }))
+                        .ToArray();
+                }
+                <ejs-dropdownlist id="residentFilter"
+                                  name="residentId"
+                                  placeholder="Filter by Resident"
+                                  index="0"
+                                  data-alis-get="/Medications/Search"
+                                  data-alis-trigger="change"
+                                  data-alis-target="#medications-list"
+                                  data-alis-collect="closest .card-body"
+                                  data-alis-indicator="is-loading">
+                    <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                    <e-data-manager json="@residentOptions"></e-data-manager>
+                </ejs-dropdownlist>
+            </div>
+            <div class="col-md-3">
+                @* ALIS Feature: Refresh with duplicate-request handling *@
+                <ejs-button id="refreshBtn"
+                            cssClass="e-outline w-100"
+                            iconCss="e-icons e-refresh"
+                            content="Refresh"
+                            data-alis-get="/Medications/Dashboard"
+                            data-alis-target="#medications-dashboard"
+                            data-alis-indicator="is-loading"
+                            data-alis-duplicate-request="ignore">
+                </ejs-button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Dashboard Section with Auto-Refresh *@
+<div class="row">
+    <div class="col-md-8">
+        @* ALIS Feature: Auto-refresh dashboard with polling *@
+        <div id="medications-dashboard"
+             data-alis-get="/Medications/Dashboard"
+             data-alis-trigger="load"
+             data-alis-target="self"
+             data-alis-swap="innerHTML"
+             data-alis-on-after="initMedicationControls">
+            @await Html.PartialAsync("_MedicationsDashboard", Model)
+        </div>
+    </div>
+    <div class="col-md-4">
+        @* ALIS Feature: Resident quick view with throttled updates *@
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Resident Details</h6>
+            </div>
+            <div class="card-body" id="resident-details">
+                <p class="text-muted">Select a resident to view details</p>
+            </div>
+        </div>
+
+        @* Quick Stats Card *@
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Today's Stats</h6>
+            </div>
+            <div class="card-body" id="stats-container">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h4 class="text-success mb-0">@Model.Count()</h4>
+                        <small class="text-muted">Pending</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-info mb-0">0</h4>
+                        <small class="text-muted">Given</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-warning mb-0">0</h4>
+                        <small class="text-muted">Missed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Medications List Section *@
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Pending Medications</h5>
+        <span class="badge bg-primary" id="pending-count">@Model.Count() items</span>
+    </div>
+    <div class="card-body" id="medications-list">
+        @await Html.PartialAsync("_MedicationsList", Model)
+    </div>
+</div>
+
+@* Modal for Administration Form *@
+<div class="modal fade" id="administerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Administer Medication</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="administerModalBody">
+                <!-- Content loaded via ALIS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Bulk Administration Modal *@
+<div class="modal fade" id="bulkModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Bulk Administration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bulkForm"
+                      data-alis-post="/Medications/BulkAdminister"
+                      data-alis-validate="true"
+                      data-alis-swap="none"
+                      data-alis-confirm="bulkConfirm"
+                      data-alis-on-after="handleBulkResult"
+                      data-alis-duplicate-request="abort">
+                    <div id="selected-meds-list" class="mb-3">
+                        <!-- Selected medications will be listed here -->
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <ejs-dropdownlist id="bulkStatus"
+                                          name="Status"
+                                          value="Given">
+                            <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+                            <e-data-manager json="@(new[] {
+                                new { Text = "Given", Value = "Given" },
+                                new { Text = "Refused", Value = "Refused" },
+                                new { Text = "Held", Value = "Held" }
+                            })"></e-data-manager>
+                        </ejs-dropdownlist>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <ejs-textbox id="bulkNotes"
+                                     name="Notes"
+                                     placeholder="Add notes for all selected..."
+                                     multiline="true">
+                        </ejs-textbox>
+                    </div>
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <ejs-button id="bulkSubmitBtn" type="submit" cssClass="e-warning" content="Apply to Selected">
+                        </ejs-button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ejs-scripts></ejs-scripts>
+
+@section Scripts {
+<script>
+    // Initialize medication-specific controls
+    window.initMedicationControls = function(ctx) {
+        // Reinitialize Syncfusion controls after ALIS swap
+        if (typeof initSyncfusionControls === 'function') {
+            initSyncfusionControls({ target: '#medications-dashboard' });
+        }
+
+        // Update pending count
+        const list = document.querySelectorAll('.medication-item');
+        document.getElementById('pending-count').textContent = list.length + ' items';
+    };
+
+    // Show administer modal
+    window.showAdministerModal = function(ctx) {
+        if (typeof initSyncfusionControls === 'function') {
+            initSyncfusionControls({ target: '#administerModalBody' });
+        }
+
+        const modalEl = document.getElementById('administerModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    };
+
+    // Handle administer form result
+    window.handleAdministerResult = function(ctx) {
+        if (ctx.error) return;
+
+        showToast(ctx.body?.message || 'Medication administered', 'success');
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('administerModal'));
+        if (modal) modal.hide();
+
+        // Refresh dashboard
+        refreshMedicationsDashboard();
+    };
+
+    // Handle bulk result
+    window.handleBulkResult = function(ctx) {
+        if (ctx.error) return;
+
+        showToast(ctx.body?.message || 'Bulk action completed', 'success');
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('bulkModal'));
+        if (modal) modal.hide();
+
+        // Clear selections
+        document.querySelectorAll('.med-checkbox:checked').forEach(cb => cb.checked = false);
+        updateBulkButton();
+
+        // Refresh dashboard
+        refreshMedicationsDashboard();
+    };
+
+    // Quick give handler - shows confirmation
+    window.confirmQuickGive = function(ctx) {
+        return confirm('Mark this medication as given?');
+    };
+
+    // Handle quick give result
+    window.handleQuickGiveResult = function(ctx) {
+        if (ctx.error) return;
+        showToast('Medication marked as given', 'success');
+    };
+
+    // Load resident details
+    window.loadResidentDetails = function(residentId) {
+        if (typeof ALIS !== 'undefined') {
+            ALIS.request({
+                url: '/Medications/ByResident?residentId=' + residentId,
+                method: 'GET',
+                target: '#resident-details',
+                swap: 'innerHTML',
+                onAfter: function() {
+                    if (typeof initSyncfusionControls === 'function') {
+                        initSyncfusionControls({ target: '#resident-details' });
+                    }
+                }
+            });
+        }
+    };
+
+    // Refresh medications dashboard
+    function refreshMedicationsDashboard() {
+        if (typeof ALIS !== 'undefined') {
+            ALIS.request({
+                url: '/Medications/Dashboard',
+                method: 'GET',
+                target: '#medications-dashboard',
+                swap: 'innerHTML',
+                onAfter: initMedicationControls
+            });
+        }
+    }
+
+    // Register bulk confirm handler
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof ALIS !== 'undefined' && ALIS.confirm) {
+            ALIS.confirm.register('bulkConfirm', function(ctx) {
+                const count = document.querySelectorAll('.med-checkbox:checked').length;
+                return confirm('Apply action to ' + count + ' selected medications?');
+            });
+
+            ALIS.confirm.register('administerConfirm', function(ctx) {
+                return new Promise((resolve) => {
+                    // Custom confirmation with status check
+                    const status = document.getElementById('adminStatus')?.value || 'Given';
+                    const message = status === 'Given'
+                        ? 'Confirm medication administration?'
+                        : 'Record medication as ' + status + '?';
+                    resolve(confirm(message));
+                });
+            });
+        }
+    });
+
+    // Update bulk button state based on selections
+    function updateBulkButton() {
+        const checked = document.querySelectorAll('.med-checkbox:checked').length;
+        const btn = document.getElementById('bulkAdminBtn');
+        if (btn && btn.ej2_instances) {
+            btn.ej2_instances[0].disabled = checked === 0;
+        }
+    }
+
+    // Event delegation for checkboxes
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('med-checkbox')) {
+            updateBulkButton();
+        }
+    });
+
+    // Show bulk modal with selected medications
+    document.getElementById('bulkAdminBtn')?.addEventListener('click', function() {
+        const checked = document.querySelectorAll('.med-checkbox:checked');
+        if (checked.length === 0) return;
+
+        // Build selected list
+        let html = '<ul class="list-group list-group-flush">';
+        checked.forEach(cb => {
+            const item = cb.closest('.medication-item');
+            const name = item?.querySelector('.med-name')?.textContent || 'Unknown';
+            const resident = item?.querySelector('.med-resident')?.textContent || '';
+            html += `<li class="list-group-item d-flex justify-content-between">
+                <span>${name}</span>
+                <small class="text-muted">${resident}</small>
+                <input type="hidden" name="ScheduleIds" value="${cb.value}" />
+            </li>`;
+        });
+        html += '</ul>';
+
+        document.getElementById('selected-meds-list').innerHTML = html;
+
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('bulkModal'));
+        modal.show();
+    });
+</script>
+}

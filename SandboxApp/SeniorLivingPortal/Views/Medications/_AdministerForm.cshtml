@@ -1,0 +1,101 @@
+@model MedicationAdministrationViewModel
+
+@*
+    ADMINISTER FORM - Demonstrates ALIS Form Features:
+    - data-alis-post for form submission
+    - data-alis-validate="true" for client-side validation
+    - data-alis-swap="none" for JSON response (no DOM update)
+    - data-alis-confirm="administerConfirm" for custom confirmation
+    - data-alis-on-after for result handling
+    - data-alis-duplicate-request="abort" to prevent double-submit
+*@
+
+<form id="administerForm"
+      data-alis-post="/Medications/Administer"
+      data-alis-validate="true"
+      data-alis-swap="none"
+      data-alis-confirm="administerConfirm"
+      data-alis-on-after="handleAdministerResult"
+      data-alis-duplicate-request="abort">
+
+    <input type="hidden" name="ScheduleId" value="@Model.ScheduleId" />
+
+    @* Medication Info (Read-only) *@
+    <div class="alert alert-info mb-3">
+        <div class="d-flex justify-content-between">
+            <div>
+                <strong>@Model.MedicationName</strong>
+                <br />
+                <small>@Model.Dosage</small>
+            </div>
+            <div class="text-end">
+                <strong>@Model.ResidentName</strong>
+                <br />
+                <small>Scheduled: @Model.ScheduledTime.ToString("h:mm tt")</small>
+            </div>
+        </div>
+    </div>
+
+    @* Status Selection *@
+    <div class="mb-3">
+        <label class="form-label">Administration Status <span class="text-danger">*</span></label>
+        <ejs-dropdownlist id="adminStatus"
+                          name="Status"
+                          placeholder="Select status"
+                          value="Given"
+                          data-val="true"
+                          data-val-required="Status is required">
+            <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
+            <e-data-manager json="@(new[] {
+                new { Text = "Given - Medication administered", Value = "Given" },
+                new { Text = "Refused - Resident refused", Value = "Refused" },
+                new { Text = "Held - Medication held (clinical reason)", Value = "Held" },
+                new { Text = "Not Available - Medication unavailable", Value = "NotAvailable" }
+            })"></e-data-manager>
+        </ejs-dropdownlist>
+        <span data-valmsg-for="Status" class="field-validation-valid text-danger"></span>
+    </div>
+
+    @* Notes *@
+    <div class="mb-3">
+        <label class="form-label">Notes</label>
+        <ejs-textbox id="adminNotes"
+                     name="Notes"
+                     placeholder="Add administration notes..."
+                     multiline="true"
+                     data-val="true"
+                     data-val-maxlength="Maximum 500 characters"
+                     data-val-maxlength-max="500">
+        </ejs-textbox>
+        <span data-valmsg-for="Notes" class="field-validation-valid text-danger"></span>
+        <small class="text-muted">Required if status is Refused, Held, or Not Available</small>
+    </div>
+
+    @* Administered By (read-only for demo) *@
+    <div class="mb-3">
+        <label class="form-label">Administered By</label>
+        <input type="text" class="form-control" name="AdministeredBy" value="Current User" readonly />
+        <small class="text-muted">Auto-populated from logged-in user</small>
+    </div>
+
+    @* Timestamp *@
+    <div class="mb-3">
+        <label class="form-label">Time</label>
+        <input type="text" class="form-control" value="@DateTime.Now.ToString("g")" readonly />
+        <small class="text-muted">Current time will be recorded</small>
+    </div>
+
+    <div class="modal-footer px-0 pb-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        @* ALIS Feature: Submit with indicator on button *@
+        <ejs-button id="adminSubmitBtn"
+                    type="submit"
+                    cssClass="e-primary"
+                    isPrimary="true"
+                    content="Record Administration"
+                    data-alis-indicator="is-loading">
+        </ejs-button>
+    </div>
+</form>
+
+<ejs-scripts></ejs-scripts>

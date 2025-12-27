@@ -1,0 +1,70 @@
+@model IEnumerable<MedicationSchedule>
+@{
+    var resident = ViewBag.Resident as Resident;
+    var days = ViewBag.Days as int? ?? 7;
+}
+
+<div id="resident-details" class="card-body">
+    @if (resident == null)
+    {
+        <p class="text-muted">Resident not found</p>
+    }
+    else
+    {
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h6 class="mb-1">@resident.FullName - History</h6>
+                <small class="text-muted">Last @days days</small>
+            </div>
+            @* ALIS Feature: Back button with swap *@
+            <a href="#"
+               class="btn btn-sm btn-outline-secondary"
+               data-alis-get="/Medications/ByResident?residentId=@resident.Id"
+               data-alis-target="#resident-details"
+               data-alis-swap="outerHTML"
+               data-alis-indicator="is-loading">
+                Back
+            </a>
+        </div>
+
+        @* Days filter using ALIS *@
+        <div class="mb-3">
+            <div class="btn-group btn-group-sm w-100">
+                @foreach (var d in new[] { 1, 7, 14, 30 })
+                {
+                    <button type="button"
+                            class="btn @(d == days ? "btn-primary" : "btn-outline-primary")"
+                            data-alis-get="/Medications/History?residentId=@resident.Id&days=@d"
+                            data-alis-target="#resident-details"
+                            data-alis-swap="outerHTML"
+                            data-alis-indicator="is-loading">
+                        @d @(d == 1 ? "Day" : "Days")
+                    </button>
+                }
+            </div>
+        </div>
+
+        @if (Model.Any())
+        {
+            <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                @foreach (var schedule in Model)
+                {
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between">
+                            <strong>@schedule.Medication?.Name</strong>
+                            <small>@schedule.ScheduledTime.ToString("h:mm tt")</small>
+                        </div>
+                        <small class="text-muted">@schedule.Medication?.Dosage</small>
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">Scheduled</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">No medication records for this period</p>
+        }
+    }
+</div>
