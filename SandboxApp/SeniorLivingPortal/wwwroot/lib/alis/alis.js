@@ -840,57 +840,12 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Get the field name for an element, handling Syncfusion special cases.
-   * Syncfusion may move the name attribute to a hidden element.
-   *
+   * Get field name from element - checks name attribute and data-alis-sf-name (set by bridge)
    * @param {Element} element
    * @returns {string | null}
    */
   function getFieldName(element) {
-    // Direct name attribute (most common)
-    const directName = element.getAttribute('name');
-    if (directName) {
-      return directName;
-    }
-
-    // For Syncfusion elements, check instance properties and hidden elements
-    if (hasSyncfusionInstance(element)) {
-      const instance = getSyncfusionInstance(element);
-      if (instance) {
-        // Check instance.name property (some SF controls expose this)
-        if (instance.name) {
-          return instance.name;
-        }
-        // Check the base element if different
-        if (instance.element && instance.element !== element) {
-          const baseName = instance.element.getAttribute?.('name');
-          if (baseName) {
-            return baseName;
-          }
-        }
-        // Check hidden element (DropDownList creates id_hidden for form submission)
-        if (instance.hiddenElement) {
-          const hiddenName = instance.hiddenElement.getAttribute?.('name');
-          if (hiddenName) {
-            return hiddenName;
-          }
-        }
-      }
-
-      // Fallback: look for hidden element by convention (id + '_hidden')
-      const id = element.getAttribute('id');
-      if (id) {
-        const hidden = document.getElementById(id + '_hidden');
-        if (hidden) {
-          const hiddenName = hidden.getAttribute('name');
-          if (hiddenName) {
-            return hiddenName;
-          }
-        }
-      }
-    }
-
-    return null;
+    return element.getAttribute('name') || element.getAttribute('data-alis-sf-name');
   }
 
   /**
@@ -1137,23 +1092,12 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Check if element should be treated as a single field for collection.
-   * This includes elements with name attributes and Syncfusion components.
-   *
+   * Check if element has a field name (via name attribute or data-alis-sf-name from bridge)
    * @param {Element} element
    * @returns {boolean}
    */
-  function isSingleFieldElement(element) {
-    // Direct name attribute
-    if (element.getAttribute('name')) {
-      return true;
-    }
-    // Syncfusion components might not have name directly on element
-    // but readValue handles finding the name from hidden elements
-    if (hasSyncfusionInstance(element)) {
-      return true;
-    }
-    return false;
+  function hasFieldName(element) {
+    return !!(element.getAttribute('name') || element.getAttribute('data-alis-sf-name'));
   }
 
   /**
@@ -1173,8 +1117,8 @@ var ALISBundle = (function (exports) {
       };
     }
 
-    // For self collection, treat element as single field if it has name or is Syncfusion
-    if (source === element && element && isSingleFieldElement(element)) {
+    // For self collection, treat element as single field if it has a name
+    if (source === element && element && hasFieldName(element)) {
       const field = readValue(element);
       return {
         source: element,

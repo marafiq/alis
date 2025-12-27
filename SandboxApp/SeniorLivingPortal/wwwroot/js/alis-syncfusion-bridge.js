@@ -89,6 +89,9 @@
                 return;
             }
 
+            // Set field name on alisElement for ALIS value collection
+            this.setFieldName(alisElement, instance);
+
             const controlType = this.getControlType(instance);
             this.log('Binding control:', element.id, 'Type:', controlType);
 
@@ -196,6 +199,49 @@
                    element.hasAttribute('data-alis-patch') ||
                    element.hasAttribute('data-alis-delete') ||
                    element.hasAttribute('data-alis');
+        },
+
+        /**
+         * Set field name on element for ALIS collection.
+         * Syncfusion may move the name attribute to hidden elements.
+         * This stores the name in data-alis-sf-name for ALIS to read.
+         */
+        setFieldName: function(element, instance) {
+            // Skip if element already has name attribute
+            if (element.getAttribute('name')) {
+                return;
+            }
+
+            // Try to find the field name from various sources
+            let fieldName = null;
+
+            // 1. Check instance.name property
+            if (instance.name) {
+                fieldName = instance.name;
+            }
+            // 2. Check instance's hidden element (DropDownList uses this)
+            else if (instance.hiddenElement && instance.hiddenElement.getAttribute('name')) {
+                fieldName = instance.hiddenElement.getAttribute('name');
+            }
+            // 3. Check instance.element's name attribute
+            else if (instance.element && instance.element.getAttribute('name')) {
+                fieldName = instance.element.getAttribute('name');
+            }
+            // 4. Fallback: look for hidden input by convention (id + '_hidden')
+            else {
+                const id = element.getAttribute('id');
+                if (id) {
+                    const hidden = document.getElementById(id + '_hidden');
+                    if (hidden && hidden.getAttribute('name')) {
+                        fieldName = hidden.getAttribute('name');
+                    }
+                }
+            }
+
+            if (fieldName) {
+                element.setAttribute('data-alis-sf-name', fieldName);
+                this.log('Set field name:', fieldName, 'on', element.id || element.tagName);
+            }
         },
 
         /**

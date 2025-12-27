@@ -1,25 +1,13 @@
 import { readContainerValues, readFormValues, readValue } from './reader.js';
 import { resolveCollectSource } from './resolver.js';
-import { hasSyncfusionInstance } from '../syncfusion/constants.js';
 
 /**
- * Check if element should be treated as a single field for collection.
- * This includes elements with name attributes and Syncfusion components.
- *
+ * Check if element has a field name (via name attribute or data-alis-sf-name from bridge)
  * @param {Element} element
  * @returns {boolean}
  */
-function isSingleFieldElement(element) {
-  // Direct name attribute
-  if (element.getAttribute('name')) {
-    return true;
-  }
-  // Syncfusion components might not have name directly on element
-  // but readValue handles finding the name from hidden elements
-  if (hasSyncfusionInstance(element)) {
-    return true;
-  }
-  return false;
+function hasFieldName(element) {
+  return !!(element.getAttribute('name') || element.getAttribute('data-alis-sf-name'));
 }
 
 /**
@@ -39,8 +27,8 @@ export function collect(element, options = {}) {
     };
   }
 
-  // For self collection, treat element as single field if it has name or is Syncfusion
-  if (source === element && element && isSingleFieldElement(element)) {
+  // For self collection, treat element as single field if it has a name
+  if (source === element && element && hasFieldName(element)) {
     const field = readValue(element);
     return {
       source: element,
@@ -53,4 +41,3 @@ export function collect(element, options = {}) {
     data: readContainerValues(source)
   };
 }
-

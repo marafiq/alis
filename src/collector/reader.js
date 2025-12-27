@@ -1,57 +1,12 @@
-import { getSyncfusionValue, hasSyncfusionInstance, getSyncfusionInstance } from '../syncfusion/constants.js';
+import { getSyncfusionValue, hasSyncfusionInstance } from '../syncfusion/constants.js';
 
 /**
- * Get the field name for an element, handling Syncfusion special cases.
- * Syncfusion may move the name attribute to a hidden element.
- *
+ * Get field name from element - checks name attribute and data-alis-sf-name (set by bridge)
  * @param {Element} element
  * @returns {string | null}
  */
 function getFieldName(element) {
-  // Direct name attribute (most common)
-  const directName = element.getAttribute('name');
-  if (directName) {
-    return directName;
-  }
-
-  // For Syncfusion elements, check instance properties and hidden elements
-  if (hasSyncfusionInstance(element)) {
-    const instance = getSyncfusionInstance(element);
-    if (instance) {
-      // Check instance.name property (some SF controls expose this)
-      if (instance.name) {
-        return instance.name;
-      }
-      // Check the base element if different
-      if (instance.element && instance.element !== element) {
-        const baseName = instance.element.getAttribute?.('name');
-        if (baseName) {
-          return baseName;
-        }
-      }
-      // Check hidden element (DropDownList creates id_hidden for form submission)
-      if (instance.hiddenElement) {
-        const hiddenName = instance.hiddenElement.getAttribute?.('name');
-        if (hiddenName) {
-          return hiddenName;
-        }
-      }
-    }
-
-    // Fallback: look for hidden element by convention (id + '_hidden')
-    const id = element.getAttribute('id');
-    if (id) {
-      const hidden = document.getElementById(id + '_hidden');
-      if (hidden) {
-        const hiddenName = hidden.getAttribute('name');
-        if (hiddenName) {
-          return hiddenName;
-        }
-      }
-    }
-  }
-
-  return null;
+  return element.getAttribute('name') || element.getAttribute('data-alis-sf-name');
 }
 
 /**
