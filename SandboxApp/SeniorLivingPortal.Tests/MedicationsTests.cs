@@ -116,6 +116,72 @@ public class MedicationsTests : PageTest
     }
 
     [Test]
+    public async Task DiagnosticTest_CheckCssApplication()
+    {
+        // Check what CSS classes are applied to Syncfusion controls
+        var cssInfo = await Page.EvaluateAsync<string>(@"() => {
+            const searchBox = document.getElementById('searchMeds');
+            if (!searchBox) return JSON.stringify({error: 'searchMeds not found'});
+
+            const wrapper = searchBox.closest('.e-input-group') || searchBox.parentElement;
+            const computed = getComputedStyle(searchBox);
+            const wrapperComputed = wrapper ? getComputedStyle(wrapper) : null;
+
+            // Check stylesheets
+            const allStyles = Array.from(document.styleSheets).map(s => s.href);
+            const sfStyles = allStyles.filter(h => h && (h.includes('syncfusion') || h.includes('fluent') || h.includes('ej2')));
+
+            // Check if any Syncfusion CSS rules exist
+            let sfRulesCount = 0;
+            let inputGroupRules = [];
+            try {
+                for (const sheet of document.styleSheets) {
+                    try {
+                        for (const rule of sheet.cssRules || []) {
+                            if (rule.selectorText && rule.selectorText.includes('.e-input-group')) {
+                                sfRulesCount++;
+                                if (inputGroupRules.length < 5) {
+                                    inputGroupRules.push({ selector: rule.selectorText, cssText: rule.cssText.substring(0, 200) });
+                                }
+                            }
+                        }
+                    } catch (e) { /* cross-origin stylesheet */ }
+                }
+            } catch (e) {}
+
+            // Get full HTML of the search box and wrapper
+            const searchBoxHtml = searchBox.outerHTML.substring(0, 500);
+            const wrapperHtml = wrapper ? wrapper.outerHTML.substring(0, 1000) : 'no wrapper';
+
+            return JSON.stringify({
+                inputClasses: searchBox.className,
+                inputTagName: searchBox.tagName,
+                wrapperTag: wrapper?.tagName,
+                wrapperClasses: wrapper?.className,
+                inputBorder: computed.border,
+                inputBorderBottom: computed.borderBottom,
+                inputBackground: computed.backgroundColor,
+                inputOutline: computed.outline,
+                wrapperBorder: wrapperComputed?.border,
+                wrapperBorderBottom: wrapperComputed?.borderBottom,
+                hasEj2: !!searchBox.ej2_instances,
+                instanceCount: searchBox.ej2_instances?.length || 0,
+                sfStylesheets: sfStyles,
+                allStylesheets: allStyles.filter(h => h),
+                sfRulesFound: sfRulesCount,
+                sampleInputGroupRules: inputGroupRules,
+                searchBoxHtml: searchBoxHtml,
+                wrapperHtml: wrapperHtml
+            }, null, 2);
+        }");
+
+        // Write to file for inspection
+        File.WriteAllText(Path.Combine(_screenshotDir, "css_diagnostic.json"), cssInfo);
+        await TakeScreenshot("css_diagnostic");
+        Assert.Pass($"CSS Info written to css_diagnostic.json");
+    }
+
+    [Test]
     public async Task MedicationsPage_HasAlisAttributes()
     {
         // Verify ALIS attributes are present

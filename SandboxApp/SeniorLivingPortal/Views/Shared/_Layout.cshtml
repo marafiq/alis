@@ -9,10 +9,13 @@
     <!-- Tailwind CSS (loaded first) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Syncfusion Fluent 2 Theme (after Tailwind to override preflight) -->
-    <link href="https://cdn.syncfusion.com/ej2/27.1.48/fluent2.css" rel="stylesheet" />
+    <!-- Syncfusion Material Theme (local - contains all component styles) -->
+    <link href="~/lib/syncfusion/material.css" rel="stylesheet" />
     <script>
         tailwind.config = {
+            corePlugins: {
+                preflight: false  // Disable Tailwind reset to preserve Syncfusion styles
+            },
             theme: {
                 extend: {
                     colors: {
