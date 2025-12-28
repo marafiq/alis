@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Senior Living Portal</title>
 
-    <!-- Syncfusion Fluent 2 Theme (CDN) - Full bundle for all components -->
-    <link href="https://cdn.syncfusion.com/ej2/27.1.48/fluent2.css" rel="stylesheet" />
-
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS (loaded first) -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Syncfusion Fluent 2 Theme (after Tailwind to override preflight) -->
+    <link href="https://cdn.syncfusion.com/ej2/27.1.48/fluent2.css" rel="stylesheet" />
     <script>
         tailwind.config = {
             theme: {
