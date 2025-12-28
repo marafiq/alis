@@ -14,14 +14,20 @@ export function validate(value, params, _element) {
   if (value === null || value === undefined || value === '') {
     return ValidationResult.valid();
   }
-  
+
   const min = typeof params.min === 'number' ? params.min : parseInt(String(params.min), 10);
+
+  // If min is not a valid number, fail validation (configuration error)
+  if (isNaN(min)) {
+    return ValidationResult.invalid(params.message || 'Invalid minimum length configuration.');
+  }
+
   const message = params.message || `Minimum ${min} characters required.`;
-  
+
   if (typeof value === 'string' && value.length < min) {
     return ValidationResult.invalid(message);
   }
-  
+
   return ValidationResult.valid();
 }
 

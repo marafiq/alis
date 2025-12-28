@@ -28,10 +28,12 @@ export function parseTrigger(value) {
  * Formats:
  *   - "click" -> { event: "click" }
  *   - "input delay:500ms" -> { event: "input", delay: 500 }
+ *   - "input delay:2s" -> { event: "input", delay: 2000 }
  *   - "scroll throttle:200ms" -> { event: "scroll", throttle: 200 }
+ *   - "scroll throttle:1s" -> { event: "scroll", throttle: 1000 }
  *   - "#btn@click" -> { selector: "#btn", event: "click" }
  *   - "change delay:300ms throttle:100ms" -> { event: "change", delay: 300, throttle: 100 }
- * 
+ *
  * @param {string} entry
  * @returns {ParsedTrigger}
  */
@@ -52,16 +54,16 @@ export function parseOne(entry) {
     event = eventPart;
   }
   
-  // Parse modifiers (delay:Xms, throttle:Xms)
+  // Parse modifiers (delay:Xms, delay:Xs, throttle:Xms, throttle:Xs)
   for (let i = 1; i < parts.length; i++) {
     const part = parts[i];
-    const delayMatch = part.match(/^delay:(\d+)(ms)?$/i);
-    const throttleMatch = part.match(/^throttle:(\d+)(ms)?$/i);
-    
+    const delayMatch = part.match(/^delay:(.+)$/i);
+    const throttleMatch = part.match(/^throttle:(.+)$/i);
+
     if (delayMatch) {
-      delay = parseInt(delayMatch[1], 10);
+      delay = parseTime(delayMatch[1]);
     } else if (throttleMatch) {
-      throttle = parseInt(throttleMatch[1], 10);
+      throttle = parseTime(throttleMatch[1]);
     }
   }
   

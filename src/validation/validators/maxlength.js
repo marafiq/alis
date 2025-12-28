@@ -14,14 +14,20 @@ export function validate(value, params, _element) {
   if (value === null || value === undefined || value === '') {
     return ValidationResult.valid();
   }
-  
+
   const max = typeof params.max === 'number' ? params.max : parseInt(String(params.max), 10);
+
+  // If max is not a valid number, fail validation (configuration error)
+  if (isNaN(max)) {
+    return ValidationResult.invalid(params.message || 'Invalid maximum length configuration.');
+  }
+
   const message = params.message || `Maximum ${max} characters allowed.`;
-  
+
   if (typeof value === 'string' && value.length > max) {
     return ValidationResult.invalid(message);
   }
-  
+
   return ValidationResult.valid();
 }
 
