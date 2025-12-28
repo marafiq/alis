@@ -43,25 +43,12 @@ public class MedicationsTests : PageTest
 
     private async Task WaitForSyncfusion()
     {
-        // Wait for Syncfusion CSS to load and controls to initialize
+        // Wait for any Syncfusion control to initialize
         await Page.WaitForFunctionAsync(@"() => {
-            // Check if Syncfusion material CSS is loaded
-            const hasStyles = Array.from(document.styleSheets).some(sheet =>
-                sheet.href && sheet.href.includes('material.css'));
-
-            // Check if ej2 is loaded
-            const hasEj2 = typeof window.ej !== 'undefined' ||
-                          document.querySelector('.e-control') !== null;
-
-            // Check if key controls are initialized
-            const searchMeds = document.getElementById('searchMeds');
-            const hasInstance = searchMeds && searchMeds.ej2_instances && searchMeds.ej2_instances.length > 0;
-
-            return hasStyles && hasInstance;
+            const controls = document.querySelectorAll('.e-control');
+            return controls.length > 0;
         }", new PageWaitForFunctionOptions { Timeout = 10000 });
-
-        // Additional wait for rendering
-        await Page.WaitForTimeoutAsync(300);
+        await Page.WaitForTimeoutAsync(500);
     }
 
     [TearDown]

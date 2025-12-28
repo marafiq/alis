@@ -22,22 +22,22 @@
     <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Personal Information</h3>
     <div class="grid grid-cols-2 gap-4 mb-6">
         <div>
-            <ejs-textbox id="firstName" name="FirstName" value="@Model.FirstName" placeholder="First Name *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-textbox id="firstName" name="FirstName" value="@Model.FirstName" placeholder="First Name *" floatLabelType="Auto" cssClass="e-filled"
                          data-val="true" data-val-required="First name is required" data-val-minlength="Minimum 2 characters" data-val-minlength-min="2"></ejs-textbox>
             <span data-valmsg-for="FirstName" class="text-red-500 text-sm"></span>
         </div>
         <div>
-            <ejs-textbox id="lastName" name="LastName" value="@Model.LastName" placeholder="Last Name *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-textbox id="lastName" name="LastName" value="@Model.LastName" placeholder="Last Name *" floatLabelType="Auto" cssClass="e-filled"
                          data-val="true" data-val-required="Last name is required" data-val-minlength="Minimum 2 characters" data-val-minlength-min="2"></ejs-textbox>
             <span data-valmsg-for="LastName" class="text-red-500 text-sm"></span>
         </div>
         <div>
-            <ejs-datepicker id="dateOfBirth" name="DateOfBirth" value="@Model.DateOfBirth" placeholder="Date of Birth *" format="MM/dd/yyyy" max="DateTime.Today" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-datepicker id="dateOfBirth" name="DateOfBirth" value="@Model.DateOfBirth" placeholder="Date of Birth *" format="MM/dd/yyyy" max="DateTime.Today" floatLabelType="Auto" cssClass="e-filled"
                             data-val="true" data-val-required="Date of birth is required"></ejs-datepicker>
             <span data-valmsg-for="DateOfBirth" class="text-red-500 text-sm"></span>
         </div>
         <div>
-            <ejs-textbox id="roomNumber" name="RoomNumber" value="@Model.RoomNumber" placeholder="Room Number (e.g., A123) *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-textbox id="roomNumber" name="RoomNumber" value="@Model.RoomNumber" placeholder="Room Number (e.g., A123) *" floatLabelType="Auto" cssClass="e-filled"
                          data-val="true" data-val-required="Room number is required" data-val-regex="Format: A123 (letter + 3 digits)" data-val-regex-pattern="^[A-Z]\d{3}$"></ejs-textbox>
             <span data-valmsg-for="RoomNumber" class="text-red-500 text-sm"></span>
         </div>
@@ -46,7 +46,7 @@
     <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Care & Location</h3>
     <div class="grid grid-cols-2 gap-4 mb-6">
         <div class="col-span-2">
-            <ejs-dropdownlist id="careLevel" name="CareLevel" placeholder="Care Level *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-dropdownlist id="careLevel" name="CareLevel" placeholder="Care Level *" floatLabelType="Auto" cssClass="e-filled"
                               value="@(Model.CareLevel.HasValue ? ((int)Model.CareLevel.Value).ToString() : "")"
                               data-val="true" data-val-required="Care level is required">
                 <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
@@ -62,7 +62,7 @@
         </div>
         <div>
             <div id="floorSelectContainer">
-                <ejs-dropdownlist id="buildingSelect" name="BuildingId" placeholder="Building *" floatLabelType="Auto" cssClass="e-outline"
+                <ejs-dropdownlist id="buildingSelect" name="BuildingId" placeholder="Building *" floatLabelType="Auto" cssClass="e-filled"
                                   value="@(Model.BuildingId?.ToString() ?? "")" dataSource="@buildingsList"
                                   data-val="true" data-val-required="Building is required"
                                   data-alis-get="/Facility/Floors" data-alis-trigger="change" data-alis-target="#floorSelectContainer" data-alis-collect="self" data-alis-on-after="clearWings">
@@ -73,7 +73,7 @@
         </div>
         <div>
             <div id="wingSelectContainer">
-                <ejs-dropdownlist id="floorSelect" name="FloorId" placeholder="Floor *" floatLabelType="Auto" cssClass="e-outline"
+                <ejs-dropdownlist id="floorSelect" name="FloorId" placeholder="Floor *" floatLabelType="Auto" cssClass="e-filled"
                                   value="@(Model.FloorId?.ToString() ?? "")" dataSource="@floorsList" enabled="@(floorsList.Any())"
                                   data-val="true" data-val-required="Floor is required"
                                   data-alis-get="/Facility/Wings" data-alis-trigger="change" data-alis-target="#wingSelectContainer" data-alis-collect="self">
@@ -87,15 +87,15 @@
     <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Emergency Contact</h3>
     <div class="grid grid-cols-3 gap-4 mb-6">
         <div>
-            <ejs-textbox id="emergencyContactName" name="EmergencyContactName" value="@Model.EmergencyContactName" placeholder="Contact Name *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-textbox id="emergencyContactName" name="EmergencyContactName" value="@Model.EmergencyContactName" placeholder="Contact Name *" floatLabelType="Auto" cssClass="e-filled"
                          data-val="true" data-val-required="Emergency contact name is required"></ejs-textbox>
             <span data-valmsg-for="EmergencyContactName" class="text-red-500 text-sm"></span>
         </div>
         <div>
-            <ejs-maskedtextbox id="emergencyContactPhone" name="EmergencyContactPhone" value="@Model.EmergencyContactPhone" mask="(000) 000-0000" placeholder="Phone" floatLabelType="Auto" cssClass="e-outline"></ejs-maskedtextbox>
+            <ejs-maskedtextbox id="emergencyContactPhone" name="EmergencyContactPhone" value="@Model.EmergencyContactPhone" mask="(000) 000-0000" placeholder="Phone" floatLabelType="Auto" cssClass="e-filled"></ejs-maskedtextbox>
         </div>
         <div>
-            <ejs-textbox id="emergencyContactEmail" name="EmergencyContactEmail" value="@Model.EmergencyContactEmail" placeholder="Email" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-textbox id="emergencyContactEmail" name="EmergencyContactEmail" value="@Model.EmergencyContactEmail" placeholder="Email" floatLabelType="Auto" cssClass="e-filled"
                          data-val="true" data-val-email="Please enter a valid email address"></ejs-textbox>
             <span data-valmsg-for="EmergencyContactEmail" class="text-red-500 text-sm"></span>
         </div>
@@ -103,7 +103,7 @@
 
     <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Additional Information</h3>
     <div class="mb-4">
-        <ejs-textbox id="medicalNotes" name="MedicalNotes" value="@Model.MedicalNotes" placeholder="Medical Notes" floatLabelType="Auto" cssClass="e-outline" multiline="true"
+        <ejs-textbox id="medicalNotes" name="MedicalNotes" value="@Model.MedicalNotes" placeholder="Medical Notes" floatLabelType="Auto" cssClass="e-filled" multiline="true"
                      data-val="true" data-val-maxlength="Maximum 2000 characters" data-val-maxlength-max="2000"></ejs-textbox>
     </div>
     <div class="mb-6">

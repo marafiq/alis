@@ -14,12 +14,12 @@
     <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Required Measurements</h3>
     <div class="grid grid-cols-2 gap-4 mb-6">
         <div>
-            <ejs-numerictextbox id="systolicBP" name="BloodPressureSystolic" min="60" max="250" step="1" format="n0" placeholder="Systolic (mmHg) *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-numerictextbox id="systolicBP" name="BloodPressureSystolic" min="60" max="250" step="1" format="n0" placeholder="Systolic (mmHg) *" floatLabelType="Auto" cssClass="e-filled"
                                 data-val="true" data-val-required="Systolic is required" data-val-range="Must be between 60 and 250" data-val-range-min="60" data-val-range-max="250"></ejs-numerictextbox>
             <span data-valmsg-for="BloodPressureSystolic" class="text-red-500 text-sm"></span>
         </div>
         <div>
-            <ejs-numerictextbox id="diastolicBP" name="BloodPressureDiastolic" min="40" max="150" step="1" format="n0" placeholder="Diastolic (mmHg) *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-numerictextbox id="diastolicBP" name="BloodPressureDiastolic" min="40" max="150" step="1" format="n0" placeholder="Diastolic (mmHg) *" floatLabelType="Auto" cssClass="e-filled"
                                 data-val="true" data-val-required="Diastolic is required" data-val-range="Must be between 40 and 150" data-val-range-min="40" data-val-range-max="150"></ejs-numerictextbox>
             <span data-valmsg-for="BloodPressureDiastolic" class="text-red-500 text-sm"></span>
         </div>
@@ -27,17 +27,17 @@
 
     <div class="grid grid-cols-3 gap-4 mb-6">
         <div>
-            <ejs-numerictextbox id="heartRate" name="HeartRate" min="30" max="220" step="1" format="n0" placeholder="Heart Rate (bpm) *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-numerictextbox id="heartRate" name="HeartRate" min="30" max="220" step="1" format="n0" placeholder="Heart Rate (bpm) *" floatLabelType="Auto" cssClass="e-filled"
                                 data-val="true" data-val-required="Heart rate is required" data-val-range="Must be between 30 and 220" data-val-range-min="30" data-val-range-max="220"></ejs-numerictextbox>
             <span data-valmsg-for="HeartRate" class="text-red-500 text-sm"></span>
         </div>
         <div>
-            <ejs-numerictextbox id="temperature" name="Temperature" min="95" max="108" step="0.1" format="n1" placeholder="Temperature (°F) *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-numerictextbox id="temperature" name="Temperature" min="95" max="108" step="0.1" format="n1" placeholder="Temperature (°F) *" floatLabelType="Auto" cssClass="e-filled"
                                 data-val="true" data-val-required="Temperature is required" data-val-range="Must be between 95 and 108" data-val-range-min="95" data-val-range-max="108"></ejs-numerictextbox>
             <span data-valmsg-for="Temperature" class="text-red-500 text-sm"></span>
         </div>
         <div>
-            <ejs-numerictextbox id="oxygenSat" name="OxygenSaturation" min="70" max="100" step="1" format="n0" placeholder="SpO2 (%) *" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-numerictextbox id="oxygenSat" name="OxygenSaturation" min="70" max="100" step="1" format="n0" placeholder="SpO2 (%) *" floatLabelType="Auto" cssClass="e-filled"
                                 data-val="true" data-val-required="SpO2 is required" data-val-range="Must be between 70 and 100" data-val-range-min="70" data-val-range-max="100"></ejs-numerictextbox>
             <span data-valmsg-for="OxygenSaturation" class="text-red-500 text-sm"></span>
         </div>
@@ -46,21 +46,21 @@
     <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Optional Measurements</h3>
     <div class="grid grid-cols-3 gap-4 mb-6">
         <div>
-            <ejs-numerictextbox id="respiratoryRate" name="RespiratoryRate" min="8" max="40" step="1" format="n0" placeholder="Respiratory Rate" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-numerictextbox id="respiratoryRate" name="RespiratoryRate" min="8" max="40" step="1" format="n0" placeholder="Respiratory Rate" floatLabelType="Auto" cssClass="e-filled"
                                 data-val="true" data-val-range="Must be between 8 and 40" data-val-range-min="8" data-val-range-max="40"></ejs-numerictextbox>
         </div>
         <div>
-            <ejs-numerictextbox id="painLevel" name="PainLevel" min="0" max="10" step="1" format="n0" placeholder="Pain Level (0-10)" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-numerictextbox id="painLevel" name="PainLevel" min="0" max="10" step="1" format="n0" placeholder="Pain Level (0-10)" floatLabelType="Auto" cssClass="e-filled"
                                 data-val="true" data-val-range="Must be between 0 and 10" data-val-range-min="0" data-val-range-max="10"></ejs-numerictextbox>
         </div>
         <div>
-            <ejs-numerictextbox id="weight" name="Weight" min="50" max="500" step="0.1" format="n1" placeholder="Weight (lbs)" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-numerictextbox id="weight" name="Weight" min="50" max="500" step="0.1" format="n1" placeholder="Weight (lbs)" floatLabelType="Auto" cssClass="e-filled"
                                 data-val="true" data-val-range="Must be between 50 and 500" data-val-range-min="50" data-val-range-max="500"></ejs-numerictextbox>
         </div>
     </div>
 
     <div class="mb-6">
-        <ejs-textbox id="notes" name="Notes" multiline="true" placeholder="Notes (observations, concerns...)" floatLabelType="Auto" cssClass="e-outline"
+        <ejs-textbox id="notes" name="Notes" multiline="true" placeholder="Notes (observations, concerns...)" floatLabelType="Auto" cssClass="e-filled"
                      data-val="true" data-val-maxlength="Maximum 500 characters" data-val-maxlength-max="500"></ejs-textbox>
     </div>
 

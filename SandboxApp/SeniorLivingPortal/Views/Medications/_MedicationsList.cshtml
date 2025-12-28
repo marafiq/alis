@@ -50,10 +50,10 @@ else
                                             data-alis-swap="innerHTML" data-alis-confirm-message="Mark @med.MedicationName as given?"
                                             data-alis-on-after="initMedicationControls" data-alis-indicator="is-loading"></ejs-button>
                                 <input type="hidden" name="scheduleId" value="@med.ScheduleId" />
-                                <ejs-button id="listOtherBtn-@med.ScheduleId" cssClass="e-outline e-small" content="Other"
+                                <ejs-button id="listOtherBtn-@med.ScheduleId" cssClass="e-filled e-small" content="Other"
                                             data-alis-get="/Medications/Administer?scheduleId=@med.ScheduleId" data-alis-target="#administerModalBody"
                                             data-alis-on-after="showAdministerModal" data-alis-indicator="is-loading"></ejs-button>
-                                <ejs-button id="listHistoryBtn-@med.ScheduleId" cssClass="e-outline e-info e-small" content="History"
+                                <ejs-button id="listHistoryBtn-@med.ScheduleId" cssClass="e-filled e-info e-small" content="History"
                                             data-alis-get="/Medications/History?residentId=@med.ResidentId" data-alis-target="#resident-details"
                                             data-alis-swap="innerHTML" data-alis-indicator="is-loading"></ejs-button>
                             </div>

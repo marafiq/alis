@@ -23,12 +23,12 @@
 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
     <div class="grid grid-cols-12 gap-4 items-end">
         <div class="col-span-4">
-            <ejs-textbox id="searchTextBox" name="query" placeholder="Search by name or room..." showClearButton="true" floatLabelType="Auto" cssClass="e-outline"
+            <ejs-textbox id="searchTextBox" name="query" placeholder="Search by name or room..." showClearButton="true" floatLabelType="Auto" cssClass="e-filled"
                          data-alis-get="/Residents/Search" data-alis-trigger="input delay:300ms" data-alis-target="#residents-list"
                          data-alis-collect="self" data-alis-indicator="is-loading"></ejs-textbox>
         </div>
         <div class="col-span-3">
-            <ejs-dropdownlist id="careLevelFilter" name="careLevel" placeholder="All Care Levels" floatLabelType="Auto" cssClass="e-outline" index="0"
+            <ejs-dropdownlist id="careLevelFilter" name="careLevel" placeholder="All Care Levels" floatLabelType="Auto" cssClass="e-filled" index="0"
                               data-alis-get="/Residents/Search" data-alis-trigger="change" data-alis-target="#residents-list" data-alis-collect="closest .bg-white">
                 <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
                 <e-data-manager json="@(new[] {
@@ -42,14 +42,14 @@
             </ejs-dropdownlist>
         </div>
         <div class="col-span-3">
-            <ejs-dropdownlist id="buildingFilter" name="buildingId" placeholder="All Buildings" floatLabelType="Auto" cssClass="e-outline" index="0"
+            <ejs-dropdownlist id="buildingFilter" name="buildingId" placeholder="All Buildings" floatLabelType="Auto" cssClass="e-filled" index="0"
                               data-alis-get="/Residents/Search" data-alis-trigger="change" data-alis-target="#residents-list" data-alis-collect="closest .bg-white">
                 <e-dropdownlist-fields text="Text" value="Value"></e-dropdownlist-fields>
                 <e-data-manager json="@buildingOptions"></e-data-manager>
             </ejs-dropdownlist>
         </div>
         <div class="col-span-2">
-            <ejs-button id="refreshBtn" cssClass="e-outline e-info w-full" iconCss="e-icons e-refresh" content="Refresh"
+            <ejs-button id="refreshBtn" cssClass="e-filled e-info w-full" iconCss="e-icons e-refresh" content="Refresh"
                         data-alis-get="/Residents/Search" data-alis-target="#residents-list" data-alis-indicator="is-loading"></ejs-button>
         </div>
     </div>

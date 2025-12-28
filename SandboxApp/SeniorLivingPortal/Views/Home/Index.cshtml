@@ -70,10 +70,10 @@
             <h2 class="text-lg font-semibold text-slate-800">Quick Actions</h2>
         </div>
         <div class="p-6 space-y-3">
-            <ejs-button id="manageResidentsBtn" cssClass="e-outline e-primary w-full" iconCss="e-icons e-people" content="Manage Residents" onclick="window.location.href='/Residents'"></ejs-button>
-            <ejs-button id="recordVitalsBtn" cssClass="e-outline e-info w-full" iconCss="e-icons e-chart" content="Record Vitals" onclick="window.location.href='/Vitals'"></ejs-button>
-            <ejs-button id="manageMedsBtn" cssClass="e-outline e-success w-full" iconCss="e-icons e-paste-special" content="Medications" onclick="window.location.href='/Medications'"></ejs-button>
-            <ejs-button id="viewDemosBtn" cssClass="e-outline w-full" iconCss="e-icons e-code" content="ALIS Demos" onclick="window.location.href='/Home/Demos'"></ejs-button>
+            <ejs-button id="manageResidentsBtn" cssClass="e-filled e-primary w-full" iconCss="e-icons e-people" content="Manage Residents" onclick="window.location.href='/Residents'"></ejs-button>
+            <ejs-button id="recordVitalsBtn" cssClass="e-filled e-info w-full" iconCss="e-icons e-chart" content="Record Vitals" onclick="window.location.href='/Vitals'"></ejs-button>
+            <ejs-button id="manageMedsBtn" cssClass="e-filled e-success w-full" iconCss="e-icons e-paste-special" content="Medications" onclick="window.location.href='/Medications'"></ejs-button>
+            <ejs-button id="viewDemosBtn" cssClass="e-filled w-full" iconCss="e-icons e-code" content="ALIS Demos" onclick="window.location.href='/Home/Demos'"></ejs-button>
         </div>
     </div>
 
@@ -81,7 +81,7 @@
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
             <h2 class="text-lg font-semibold text-slate-800">Recent Alerts</h2>
-            <ejs-button id="refreshAlertsBtn" cssClass="e-small e-outline" iconCss="e-icons e-refresh" content="Refresh"
+            <ejs-button id="refreshAlertsBtn" cssClass="e-small e-filled" iconCss="e-icons e-refresh" content="Refresh"
                         data-alis-get="/Vitals/Alerts" data-alis-target="#alerts-container" data-alis-indicator="is-loading"></ejs-button>
         </div>
         <div class="p-6" id="alerts-container">

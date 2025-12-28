@@ -52,11 +52,11 @@ else
                         </div>
                     </div>
                     <div class="flex gap-2 mt-4 pt-4 border-t border-slate-100">
-                        <ejs-button id="viewBtn-@resident.Id" cssClass="e-small e-outline flex-1" iconCss="e-icons e-eye" content="View"
+                        <ejs-button id="viewBtn-@resident.Id" cssClass="e-small e-filled flex-1" iconCss="e-icons e-eye" content="View"
                                     data-alis-get="/Residents/Details/@resident.Id" data-alis-target="#modalBody" data-alis-on-after="showResidentModal"></ejs-button>
-                        <ejs-button id="editBtn-@resident.Id" cssClass="e-small e-outline flex-1" iconCss="e-icons e-edit" content="Edit"
+                        <ejs-button id="editBtn-@resident.Id" cssClass="e-small e-filled flex-1" iconCss="e-icons e-edit" content="Edit"
                                     data-alis-get="/Residents/Edit/@resident.Id" data-alis-target="#modalBody" data-alis-on-after="showResidentModal"></ejs-button>
-                        <ejs-button id="deleteBtn-@resident.Id" cssClass="e-small e-outline e-danger" iconCss="e-icons e-trash"
+                        <ejs-button id="deleteBtn-@resident.Id" cssClass="e-small e-filled e-danger" iconCss="e-icons e-trash"
                                     data-alis-delete="/Residents/Delete/@resident.Id" data-alis-confirm="deleteConfirm"
                                     data-alis-confirm-message="Are you sure you want to remove @resident.FullName?" data-alis-target="#residents-list"></ejs-button>
                     </div>

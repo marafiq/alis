@@ -21,7 +21,7 @@
                     <h3 class="font-semibold text-slate-800">@resident.FullName - History</h3>
                     <p class="text-sm text-slate-500">Last @days days</p>
                 </div>
-                <ejs-button id="backBtn" cssClass="e-outline e-small" content="Back"
+                <ejs-button id="backBtn" cssClass="e-filled e-small" content="Back"
                             data-alis-get="/Medications/ByResident?residentId=@resident.Id" data-alis-target="#resident-details"
                             data-alis-swap="outerHTML" data-alis-indicator="is-loading"></ejs-button>
             </div>
@@ -32,7 +32,7 @@
                 {
                     var btnId = $"daysBtn-{d}";
                     var isActive = d == days;
-                    <ejs-button id="@btnId" cssClass="@(isActive ? "e-primary e-small" : "e-outline e-small")" content="@(d == 1 ? "1 Day" : $"{d} Days")"
+                    <ejs-button id="@btnId" cssClass="@(isActive ? "e-primary e-small" : "e-filled e-small")" content="@(d == 1 ? "1 Day" : $"{d} Days")"
                                 data-alis-get="/Medications/History?residentId=@resident.Id&days=@d" data-alis-target="#resident-details"
                                 data-alis-swap="outerHTML" data-alis-indicator="is-loading"></ejs-button>
                 }
