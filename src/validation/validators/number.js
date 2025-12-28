@@ -2,8 +2,8 @@ import { ValidationResult } from '../ValidationResult.js';
 
 export const name = 'number';
 
-// Matches integers and decimals, including negative
-const NUMBER_REGEX = /^-?\d+(\.\d+)?$/;
+// Matches integers, decimals, and scientific notation (e.g., 1e10, 3.14E-5, -2.5e+3)
+const NUMBER_REGEX = /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/;
 
 /**
  * Numeric value validator.
