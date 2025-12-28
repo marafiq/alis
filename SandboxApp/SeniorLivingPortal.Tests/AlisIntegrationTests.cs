@@ -729,9 +729,29 @@ public class AlisIntegrationTests : PageTest
     [Test]
     public async Task FormValidation_EmptySubmit_ShowsErrors()
     {
-        // Use JS to click submit button
-        await JsClick("#valSubmit");
+        // Take full page screenshot showing all sections including validation form
+        await Page.ScreenshotAsync(new() { Path = "evidence/validation_fullpage_before.png", FullPage = true });
+
+        // Scroll validation form into view and click submit
+        await Page.EvaluateAsync("() => document.getElementById('validationForm').scrollIntoView({ block: 'center' })");
         await Page.WaitForTimeoutAsync(300);
+
+        // Use JS to click submit button to trigger validation
+        await JsClick("#valSubmit");
+        await Page.WaitForTimeoutAsync(500);
+
+        // Take full page screenshot showing validation errors
+        await Page.ScreenshotAsync(new() { Path = "evidence/validation_fullpage_after.png", FullPage = true });
+
+        // Get the validation form card including header
+        var cardBox = await Page.Locator("#validationForm").Locator("..").Locator("..").BoundingBoxAsync();
+        if (cardBox != null)
+        {
+            await Page.ScreenshotAsync(new() {
+                Path = "evidence/validation_form_with_errors.png",
+                Clip = new() { X = cardBox.X - 10, Y = cardBox.Y - 10, Width = cardBox.Width + 20, Height = cardBox.Height + 20 }
+            });
+        }
 
         var nameError = Page.Locator("[data-valmsg-for='Name']");
         var nameErrorText = await nameError.TextContentAsync();
