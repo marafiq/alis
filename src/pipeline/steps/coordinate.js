@@ -9,33 +9,21 @@ export function coordinateStep(ctx) {
     return ctx;
   }
 
-  const key = element;
   const strategy = ctx.config.duplicateRequest || 'ignore';
-  // keep silent in production – telemetry can be wired via hooks
 
-  if (!ACTIVE_REQUESTS.has(key)) {
-    ACTIVE_REQUESTS.set(key, { id: ctx.id, controller: ctx.abortController });
+  if (!ACTIVE_REQUESTS.has(element)) {
+    ACTIVE_REQUESTS.set(element, { id: ctx.id, controller: ctx.abortController });
     return ctx;
   }
 
-  switch (strategy) {
-    case 'ignore':
-      ctx.state.aborted = true;
-      break;
-    case 'abort-previous':
-      {
-        const prev = ACTIVE_REQUESTS.get(key);
-        if (prev && prev.controller) {
-          prev.controller.abort();
-        }
-        ACTIVE_REQUESTS.set(key, { id: ctx.id, controller: ctx.abortController });
-      }
-      break;
-    case 'queue':
-      // future enhancement
-      break;
-    default:
-      ctx.state.aborted = true;
+  if (strategy === 'abort-previous') {
+    const prev = ACTIVE_REQUESTS.get(element);
+    if (prev?.controller) {
+      prev.controller.abort();
+    }
+    ACTIVE_REQUESTS.set(element, { id: ctx.id, controller: ctx.abortController });
+  } else {
+    ctx.state.aborted = true;
   }
 
   return ctx;

@@ -12,21 +12,33 @@ export const LEVELS = Object.freeze({
 
 export const EVENT_LEVELS = /** @type {Record<string, TelemetryLevel>} */ (
   Object.freeze({
-  error: 'error',
-  'validate:error': 'error',
-  'request:timeout': 'error',
-  'request:abort': 'warn',
-  'request:retry': 'warn',
-  'coordinate:duplicate': 'warn',
-  'validation:display': 'warn',
-  'hooks:error': 'error',
-  'hooks:success': 'info',
-  'swap:start': 'info',
-  'swap:complete': 'info',
-  trigger: 'debug',
-  collect: 'debug',
-  complete: 'info'
-})
+    // Errors
+    'pipeline:error': 'error',
+    'request:error': 'error',
+    'validate:error': 'error',
+    'hooks:error': 'error',
+
+    // Warnings
+    'pipeline:aborted': 'warn',
+    'request:abort': 'warn',
+    'request:retry': 'warn',
+    'coordinate:duplicate': 'warn',
+    'swap:target-missing': 'warn',
+
+    // Info - lifecycle events
+    'pipeline:start': 'info',
+    'pipeline:end': 'info',
+    'request:start': 'info',
+    'request:end': 'info',
+    'swap:start': 'info',
+    'swap:complete': 'info',
+    'hooks:success': 'info',
+    'validation:display': 'info',
+
+    // Debug - verbose tracking
+    trigger: 'debug',
+    collect: 'debug'
+  })
 );
 
 /**

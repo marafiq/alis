@@ -1,63 +1,70 @@
+import { getAdapterFieldName, getAdapterValue, hasAdapter } from '../adapters/registry.js';
+
 /**
+ * Get field name from element.
+ * Uses registered adapters for UI framework controls.
+ * @param {Element} element
+ * @returns {string | null}
+ */
+function getFieldName(element) {
+  // Standard HTML name attribute
+  const name = element.getAttribute('name');
+  if (name) return name;
+
+  // Check registered adapters (Syncfusion, etc.)
+  return getAdapterFieldName(element);
+}
+
+/**
+ * Read value from a form field element.
+ * Supports native HTML elements, Syncfusion components, and custom value attributes.
+ *
  * @param {Element} element
  * @returns {{ name: string; value: unknown } | null}
  */
 export function readValue(element) {
-  if (!element || !element.getAttribute) {
+  const name = getFieldName(element);
+  if (!name) {
     return null;
   }
 
-  const name = element.getAttribute('name');
-  if (!name || ('disabled' in element && /** @type {any} */ (element).disabled)) {
+  if ('disabled' in element && /** @type {HTMLInputElement} */ (element).disabled) {
     return null;
   }
 
-  // Check for custom value selector: data-alis-value="#selector@attribute"
-  const customValueAttr = element.getAttribute('data-alis-value');
-  if (customValueAttr) {
-    const value = readCustomValue(customValueAttr);
-    return { name, value };
+  // Custom value via selector
+  const customSelector = element.getAttribute('data-alis-value');
+  if (customSelector) {
+    return { name, value: readValueFromSelector(customSelector) };
   }
 
-  // Check for custom value function: data-alis-value-fn="functionName"
-  const customValueFn = element.getAttribute('data-alis-value-fn');
-  if (customValueFn && typeof window !== 'undefined') {
-    const fn = /** @type {Record<string, unknown>} */ (window)[customValueFn];
+  // Custom value via function
+  const customFn = element.getAttribute('data-alis-value-fn');
+  if (customFn) {
+    const fn = /** @type {Record<string, unknown>} */ (window)[customFn];
     if (typeof fn === 'function') {
       return { name, value: fn(element) };
     }
   }
 
-  // Check for Syncfusion component (ej2_instances array)
-  const ej2Instances = /** @type {any} */ (element)['ej2_instances'];
-  if (Array.isArray(ej2Instances) && ej2Instances.length > 0) {
-    const instance = ej2Instances[0];
-    // CheckBox uses 'checked' property
-    if ('checked' in instance) {
-      return instance.checked ? { name, value: 'true' } : null;
-    }
-    // Most components use 'value' property
-    if ('value' in instance) {
-      return { name, value: instance.value };
+  // UI framework adapters (Syncfusion, etc.) - check BEFORE native elements
+  if (hasAdapter(element)) {
+    const adapterValue = getAdapterValue(element);
+    if (adapterValue) {
+      if (adapterValue.isCheckbox) {
+        return adapterValue.value ? { name, value: 'true' } : null;
+      }
+      return { name, value: adapterValue.value };
     }
   }
 
+  // Native HTML elements
   if (element instanceof HTMLInputElement) {
-    if (element.type === 'checkbox') {
-      return element.checked ? { name, value: element.value || 'on' } : null;
-    }
-    if (element.type === 'radio') {
-      return element.checked ? { name, value: element.value } : null;
-    }
-    return { name, value: element.value };
+    return readInputValue(name, element);
   }
 
   if (element instanceof HTMLSelectElement) {
-    if (element.multiple) {
-      const values = Array.from(element.selectedOptions).map(option => option.value);
-      return { name, value: values };
-    }
-    return { name, value: element.value };
+    return readSelectValue(name, element);
   }
 
   if (element instanceof HTMLTextAreaElement) {
@@ -72,93 +79,139 @@ export function readValue(element) {
 }
 
 /**
- * Read value from custom selector
- * Format: "#selector@attribute" or "#selector .child@attribute"
- * If no @attribute, uses textContent
- * 
- * @param {string} selectorAttr
- * @returns {string}
+ * @param {string} name
+ * @param {HTMLInputElement} input
+ * @returns {{ name: string; value: unknown } | null}
  */
-function readCustomValue(selectorAttr) {
-  if (!selectorAttr) return '';
-  
-  let selector = selectorAttr;
-  let attribute = 'value'; // default
-  
-  // Check for @attribute suffix
-  const atIndex = selectorAttr.lastIndexOf('@');
-  if (atIndex > 0) {
-    selector = selectorAttr.substring(0, atIndex);
-    attribute = selectorAttr.substring(atIndex + 1);
+function readInputValue(name, input) {
+  switch (input.type) {
+    case 'checkbox':
+      return input.checked ? { name, value: input.value || 'on' } : null;
+
+    case 'radio':
+      return input.checked ? { name, value: input.value } : null;
+
+    case 'file': {
+      const files = input.files;
+      if (!files || files.length === 0) {
+        return null;
+      }
+      return { name, value: input.multiple ? Array.from(files) : files[0] };
+    }
+
+    default:
+      return { name, value: input.value };
   }
-  
-  const targetEl = document.querySelector(selector);
-  if (!targetEl) return '';
-  
-  // Special handling for common attributes
-  if (attribute === 'value' && 'value' in targetEl) {
-    return /** @type {HTMLInputElement} */ (targetEl).value;
-  }
-  if (attribute === 'textContent') {
-    return targetEl.textContent || '';
-  }
-  if (attribute === 'innerHTML') {
-    return targetEl.innerHTML || '';
-  }
-  
-  // Check for data-* attribute
-  if (attribute.startsWith('data-')) {
-    return targetEl.getAttribute(attribute) || '';
-  }
-  
-  // Generic attribute
-  return targetEl.getAttribute(attribute) || '';
 }
 
 /**
+ * @param {string} name
+ * @param {HTMLSelectElement} select
+ * @returns {{ name: string; value: string | string[] }}
+ */
+function readSelectValue(name, select) {
+  if (select.multiple) {
+    /** @type {string[]} */
+    const values = [];
+    for (const option of select.options) {
+      if (option.selected) {
+        values.push(option.value);
+      }
+    }
+    return { name, value: values };
+  }
+  return { name, value: select.value };
+}
+
+/**
+ * Read value from a custom selector.
+ * Format: "#selector" or "#selector@attribute"
+ *
+ * @param {string} selectorAttr
+ * @returns {string}
+ */
+function readValueFromSelector(selectorAttr) {
+  const atIndex = selectorAttr.lastIndexOf('@');
+  const selector = atIndex > 0 ? selectorAttr.substring(0, atIndex) : selectorAttr;
+  const attribute = atIndex > 0 ? selectorAttr.substring(atIndex + 1) : 'value';
+
+  const target = document.querySelector(selector);
+  if (!target) {
+    return '';
+  }
+
+  if (attribute === 'value' && 'value' in target) {
+    return /** @type {HTMLInputElement} */ (target).value;
+  }
+
+  if (attribute === 'textContent') {
+    return target.textContent || '';
+  }
+
+  return target.getAttribute(attribute) || '';
+}
+
+/**
+ * Accumulate a value into entries. Handles duplicate names by creating arrays.
+ *
+ * @param {Record<string, unknown>} entries
+ * @param {string} name
+ * @param {unknown} value
+ */
+function accumulateValue(entries, name, value) {
+  const existing = entries[name];
+
+  if (existing === undefined) {
+    entries[name] = value;
+    return;
+  }
+
+  // Convert to array and append
+  const asArray = Array.isArray(existing) ? existing : [existing];
+  if (Array.isArray(value)) {
+    asArray.push(...value);
+  } else {
+    asArray.push(value);
+  }
+  entries[name] = asArray;
+}
+
+/**
+ * Read all values from a form.
+ *
  * @param {HTMLFormElement} form
  * @returns {Record<string, unknown>}
  */
 export function readFormValues(form) {
-  if (!(form instanceof HTMLFormElement)) {
-    throw new TypeError('readFormValues expects a form element');
-  }
-  /** @type {Record<string, any>} */
+  /** @type {Record<string, unknown>} */
   const entries = {};
-  Array.from(form.elements).forEach(element => {
+
+  for (const element of form.elements) {
     const reading = readValue(element);
-    if (!reading) {
-      return;
+    if (reading) {
+      accumulateValue(entries, reading.name, reading.value);
     }
-    const { name, value } = reading;
-    if (entries[name] === undefined) {
-      entries[name] = value;
-    } else if (Array.isArray(entries[name])) {
-      entries[name].push(value);
-    } else {
-      entries[name] = [entries[name], value];
-    }
-  });
+  }
+
   return entries;
 }
 
 /**
+ * Read all values from a container element.
+ *
  * @param {Element} container
  * @returns {Record<string, unknown>}
  */
 export function readContainerValues(container) {
-  if (!(container instanceof Element)) {
-    throw new TypeError('readContainerValues expects an Element');
-  }
-  /** @type {Record<string, any>} */
+  /** @type {Record<string, unknown>} */
   const entries = {};
-  const fields = container.querySelectorAll('[name]');
-  fields.forEach(field => {
+
+  for (const field of container.querySelectorAll('[name]')) {
     const reading = readValue(field);
     if (reading) {
-      entries[reading.name] = reading.value;
+      accumulateValue(entries, reading.name, reading.value);
     }
-  });
+  }
+
   return entries;
 }
-

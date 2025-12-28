@@ -1,10 +1,12 @@
 /**
- * @param {Record<string, unknown> | undefined} data
+ * Serialize data as JSON.
+ *
+ * @param {Record<string, unknown>} data
+ * @returns {{ body: string; contentType: string }}
  */
 export function serialize(data) {
   return {
-    body: data ? JSON.stringify(data) : undefined,
+    body: JSON.stringify(data),
     contentType: 'application/json'
   };
 }
-

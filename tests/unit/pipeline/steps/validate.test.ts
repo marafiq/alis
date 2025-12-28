@@ -9,9 +9,11 @@ describe('pipeline/steps/validate', () => {
     expect(() => validateStep(ctx)).not.toThrow();
   });
 
-  it('throws when url missing', () => {
+  it('sets error when url missing', () => {
     const ctx = createContext(document.createElement('form'));
-    expect(() => validateStep(ctx)).toThrow(ConfigError);
+    const result = validateStep(ctx);
+    expect(result.error).toBeInstanceOf(ConfigError);
+    expect(result.error?.message).toBe('Missing URL in configuration');
   });
 });
 

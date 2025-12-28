@@ -1,13 +1,5 @@
 import { findFieldByName, findValidationSpan } from './field-matcher.js';
-
-/**
- * Syncfusion wrapper class names.
- */
-const SYNCFUSION_WRAPPER_CLASSES = [
-  'e-input-group',
-  'e-control-wrapper',
-  'e-checkbox-wrapper'
-];
+import { findSyncfusionWrapper } from '../syncfusion/constants.js';
 
 /**
  * Handles displaying and clearing validation errors in the DOM.
@@ -99,44 +91,21 @@ export class ErrorDisplay {
    * @param {Element} input
    */
   #addSyncfusionErrorClass(input) {
-    const wrapper = this.#findSyncfusionWrapper(input);
+    const wrapper = findSyncfusionWrapper(input);
     if (wrapper) {
       wrapper.classList.add('e-error');
     }
   }
-  
+
   /**
    * Remove error class from Syncfusion wrapper if present.
    * @param {Element} input
    */
   #removeSyncfusionErrorClass(input) {
-    const wrapper = this.#findSyncfusionWrapper(input);
+    const wrapper = findSyncfusionWrapper(input);
     if (wrapper) {
       wrapper.classList.remove('e-error');
     }
-  }
-  
-  /**
-   * Find Syncfusion wrapper for an input.
-   * @param {Element} input
-   * @returns {Element | null}
-   */
-  #findSyncfusionWrapper(input) {
-    let parent = input.parentElement;
-    
-    while (parent) {
-      const hasWrapperClass = SYNCFUSION_WRAPPER_CLASSES.some(cls => 
-        parent?.classList.contains(cls)
-      );
-      
-      if (hasWrapperClass) {
-        return parent;
-      }
-      
-      parent = parent.parentElement;
-    }
-    
-    return null;
   }
 }
 

@@ -93,18 +93,33 @@ describe('ErrorDisplay', () => {
   });
 
   it('handles Syncfusion wrapper - adds class to visible element', () => {
-    form.innerHTML = `
-      <div class="e-input-group">
-        <input type="hidden" name="dropdown" />
-        <input class="e-input" />
-      </div>
-      <span data-valmsg-for="dropdown"></span>
-    `;
-    
+    const wrapper = document.createElement('div');
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'dropdown';
+
+    const visibleInput = document.createElement('input');
+
+    wrapper.appendChild(hiddenInput);
+    wrapper.appendChild(visibleInput);
+    form.appendChild(wrapper);
+
+    const span = document.createElement('span');
+    span.setAttribute('data-valmsg-for', 'dropdown');
+    form.appendChild(span);
+
+    // Mock Syncfusion instance with proper structure
+    const instance = {
+      value: 'test',
+      element: hiddenInput,
+      inputElement: visibleInput,
+      inputWrapper: { container: wrapper }
+    };
+    (hiddenInput as any).ej2_instances = [instance];
+
     display.showError(form, 'dropdown', 'Required');
-    
-    const wrapper = form.querySelector('.e-input-group');
-    expect(wrapper?.classList.contains('e-error')).toBe(true);
+
+    expect(wrapper.classList.contains('e-error')).toBe(true);
   });
 
   it('handles multiple errors per field', () => {

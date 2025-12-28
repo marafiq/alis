@@ -31,10 +31,6 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
 
     /// <summary>
     /// ALIS Demos index page - showcases all ALIS features
@@ -54,39 +50,209 @@ public class HomeController : Controller
 
     #region Test Endpoints for SyncfusionTest Page
 
-    /// <summary>
-    /// Test endpoint for debounced search
-    /// </summary>
+    // === Text Input Controls ===
+
     [HttpGet]
-    public IActionResult TestSearch(string? query)
+    public IActionResult TestSearch(string? query, string? textboxValue)
     {
-        return Content($"<div class='alert alert-success'>Search result for: <strong>{query ?? "(empty)"}</strong> at {DateTime.Now:HH:mm:ss}</div>", "text/html");
+        var value = query ?? textboxValue ?? "(empty)";
+        return Content($"Searched: {value}", "text/html");
     }
 
-    /// <summary>
-    /// Test endpoint for dropdown change
-    /// </summary>
     [HttpGet]
-    public IActionResult TestDropdownChange(string? buildingId)
+    public IActionResult TestNumericChange(decimal? numericValue)
     {
-        return Content($"<div class='alert alert-info'>Selected Building ID: <strong>{buildingId ?? "(none)"}</strong> at {DateTime.Now:HH:mm:ss}</div>", "text/html");
+        return Content($"Numeric: {numericValue?.ToString("C2") ?? "(empty)"}", "text/html");
     }
 
-    /// <summary>
-    /// Test endpoint for form submit
-    /// </summary>
+    [HttpGet]
+    public IActionResult TestMaskedChange(string? maskedValue)
+    {
+        return Content($"Phone: {maskedValue ?? "(empty)"}", "text/html");
+    }
+
+    // === Selection Controls ===
+
+    [HttpGet]
+    public IActionResult TestDropdownChange(string? buildingId, string? dropdownValue)
+    {
+        var value = buildingId ?? dropdownValue ?? "(none)";
+        return Content($"Selected: {value}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestComboChange(string? comboboxValue)
+    {
+        return Content($"Combo: {comboboxValue ?? "(empty)"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestAutocomplete(string? autocompleteValue)
+    {
+        return Content($"Autocomplete: {autocompleteValue ?? "(empty)"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestMultiselect(string? multiselectValue)
+    {
+        return Content($"Multi: {multiselectValue ?? "(empty)"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestListbox(string? listboxValue)
+    {
+        return Content($"List: {listboxValue ?? "(empty)"}", "text/html");
+    }
+
+    // === Date/Time Controls ===
+
+    [HttpGet]
+    public IActionResult TestDateChange(string? datepickerValue)
+    {
+        return Content($"Date: {datepickerValue ?? "(empty)"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestTimeChange(string? timepickerValue)
+    {
+        return Content($"Time: {timepickerValue ?? "(empty)"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestDateTimeChange(string? datetimepickerValue)
+    {
+        return Content($"DateTime: {datetimepickerValue ?? "(empty)"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestDateRangeChange(string? daterangepickerValue)
+    {
+        return Content($"Range: {daterangepickerValue ?? "(empty)"}", "text/html");
+    }
+
+    // === Toggle/Boolean Controls ===
+
+    [HttpGet]
+    public IActionResult TestCheckboxChange(string? checkboxValue)
+    {
+        return Content($"Checkbox: {checkboxValue ?? "false"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestSwitchChange(string? switchValue)
+    {
+        return Content($"Switch: {switchValue ?? "false"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestRadioChange(string? radioValue)
+    {
+        return Content($"Radio: {radioValue ?? "(none)"}", "text/html");
+    }
+
+    // === Range/Slider Controls ===
+
+    [HttpGet]
+    public IActionResult TestSliderChange(string? sliderValue)
+    {
+        return Content($"Slider: {sliderValue ?? "0"}", "text/html");
+    }
+
+    [HttpGet]
+    public IActionResult TestRangeSliderChange(string? rangeSliderValue)
+    {
+        return Content($"Range Slider: {rangeSliderValue ?? "0-0"}", "text/html");
+    }
+
+    // === Color/Special Controls ===
+
+    [HttpGet]
+    public IActionResult TestColorChange(string? colorpickerValue)
+    {
+        return Content($"Color: {colorpickerValue ?? "#000000"}", "text/html");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> TestButtonClick()
+    {
+        await Task.Delay(300);
+        return Content($"Loaded at {DateTime.Now:HH:mm:ss}", "text/html");
+    }
+
+    [HttpPost]
+    public IActionResult TestUpload()
+    {
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public IActionResult TestRemove()
+    {
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public IActionResult TestRichtextSubmit(string? richtextValue)
+    {
+        return Content($"Rich text received: {(richtextValue?.Length ?? 0)} chars", "text/html");
+    }
+
+    // === Cascading Dropdowns ===
+
+    [HttpGet]
+    public IActionResult GetStates(string? country)
+    {
+        var states = country switch
+        {
+            "usa" => new[] {
+                new { Text = "California", Value = "ca" },
+                new { Text = "Texas", Value = "tx" },
+                new { Text = "New York", Value = "ny" }
+            },
+            "canada" => new[] {
+                new { Text = "Ontario", Value = "on" },
+                new { Text = "Quebec", Value = "qc" },
+                new { Text = "British Columbia", Value = "bc" }
+            },
+            "uk" => new[] {
+                new { Text = "England", Value = "eng" },
+                new { Text = "Scotland", Value = "sco" },
+                new { Text = "Wales", Value = "wal" }
+            },
+            _ => Array.Empty<object>()
+        };
+        return Json(states);
+    }
+
+    [HttpGet]
+    public IActionResult GetCities(string? state)
+    {
+        var cities = state switch
+        {
+            "ca" => new[] {
+                new { Text = "Los Angeles", Value = "la" },
+                new { Text = "San Francisco", Value = "sf" }
+            },
+            "tx" => new[] {
+                new { Text = "Houston", Value = "hou" },
+                new { Text = "Austin", Value = "aus" }
+            },
+            "ny" => new[] {
+                new { Text = "New York City", Value = "nyc" },
+                new { Text = "Buffalo", Value = "buf" }
+            },
+            _ => Array.Empty<object>()
+        };
+        return Json(cities);
+    }
+
+    // === Form Validation ===
+
     [HttpPost]
     public IActionResult TestFormSubmit([FromForm] TestFormModel model)
     {
         if (!ModelState.IsValid)
         {
-            var errors = ModelState
-                .Where(x => x.Value?.Errors.Count > 0)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
-                );
-            
             return ValidationProblem(new ValidationProblemDetails(ModelState)
             {
                 Type = "https://tools.ietf.org/html/rfc7807",
@@ -95,22 +261,75 @@ public class HomeController : Controller
             });
         }
 
-        return Content($"<div class='alert alert-success'>Form submitted successfully!<br/>Name: {model.FirstName}<br/>Email: {model.Email}<br/>Age: {model.Age}<br/>Category: {model.Category}</div>", "text/html");
+        return Content($"Form submitted: {model.FirstName}, {model.Email}", "text/html");
     }
 
     /// <summary>
-    /// Test endpoint for button click
+    /// Complex form submission - tests collecting multiple Syncfusion controls
+    /// </summary>
+    [HttpPost]
+    public IActionResult SubmitResidentForm([FromForm] ResidentFormModel model)
+    {
+        var result = new
+        {
+            success = true,
+            data = new
+            {
+                name = $"{model.FirstName} {model.LastName}",
+                email = model.Email,
+                phone = model.Phone,
+                birthDate = model.BirthDate?.ToString("yyyy-MM-dd"),
+                moveInDate = model.MoveInDate?.ToString("yyyy-MM-dd"),
+                careLevel = model.CareLevel,
+                roomType = model.RoomType,
+                dietaryNeeds = model.DietaryNeeds,
+                emergencyContact = model.EmergencyContact,
+                medications = model.Medications,
+                monthlyBudget = model.MonthlyBudget,
+                mobilityScore = model.MobilityScore,
+                requiresAssistance = model.RequiresAssistance,
+                hasInsurance = model.HasInsurance,
+                preferredColor = model.PreferredColor,
+                notes = model.Notes
+            }
+        };
+        return Json(result);
+    }
+
+    /// <summary>
+    /// Dynamic field update based on care level
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> TestButtonClick()
+    public IActionResult GetCareLevelDetails(string careLevel)
     {
-        await Task.Delay(500); // Simulate network delay
-        return Content($"<div class='alert alert-primary'>Data loaded at {DateTime.Now:HH:mm:ss}</div>", "text/html");
+        var details = careLevel switch
+        {
+            "independent" => new {
+                description = "Independent Living - Minimal assistance",
+                services = new[] { "Meals", "Housekeeping" },
+                priceRange = "$2,000 - $3,500/month"
+            },
+            "assisted" => new {
+                description = "Assisted Living - Daily assistance available",
+                services = new[] { "Meals", "Housekeeping", "Medication Management", "Personal Care" },
+                priceRange = "$3,500 - $5,500/month"
+            },
+            "memory" => new {
+                description = "Memory Care - Specialized dementia care",
+                services = new[] { "24/7 Supervision", "Meals", "Medication", "Therapy", "Security" },
+                priceRange = "$5,500 - $8,000/month"
+            },
+            "skilled" => new {
+                description = "Skilled Nursing - Medical care required",
+                services = new[] { "Nursing Care", "Physical Therapy", "Medical Monitoring" },
+                priceRange = "$7,000 - $12,000/month"
+            },
+            _ => new { description = "Select a care level", services = Array.Empty<string>(), priceRange = "" }
+        };
+
+        return PartialView("_CareLevelDetails", details);
     }
 
-    /// <summary>
-    /// Test endpoint for partial view with Syncfusion controls
-    /// </summary>
     [HttpGet]
     public IActionResult TestPartialView()
     {
@@ -132,9 +351,56 @@ public class HomeController : Controller
 public class TestFormModel
 {
     public string? FirstName { get; set; }
+    public string? Name { get; set; }
     public string? Email { get; set; }
     public int? Age { get; set; }
     public string? Category { get; set; }
     public DateTime? BirthDate { get; set; }
+    public DateTime? Date { get; set; }
     public bool Agree { get; set; }
+}
+
+/// <summary>
+/// Complex resident form model - tests multiple Syncfusion control types
+/// </summary>
+public class ResidentFormModel
+{
+    // TextBox
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? Email { get; set; }
+
+    // MaskedTextBox
+    public string? Phone { get; set; }
+
+    // DatePicker
+    public DateTime? BirthDate { get; set; }
+    public DateTime? MoveInDate { get; set; }
+
+    // DropDownList
+    public string? CareLevel { get; set; }
+    public string? RoomType { get; set; }
+
+    // MultiSelect
+    public string? DietaryNeeds { get; set; }
+    public string? Medications { get; set; }
+
+    // NumericTextBox
+    public decimal? MonthlyBudget { get; set; }
+
+    // Slider
+    public int? MobilityScore { get; set; }
+
+    // Checkbox/Switch
+    public bool RequiresAssistance { get; set; }
+    public bool HasInsurance { get; set; }
+
+    // ColorPicker
+    public string? PreferredColor { get; set; }
+
+    // TextArea/RichText
+    public string? Notes { get; set; }
+
+    // Contact info
+    public string? EmergencyContact { get; set; }
 }

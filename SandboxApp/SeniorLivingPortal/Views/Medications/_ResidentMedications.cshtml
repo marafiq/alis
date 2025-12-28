@@ -1,0 +1,66 @@
+@model IEnumerable<MedicationSchedule>
+@{
+    var resident = ViewBag.Resident as Resident;
+}
+
+@if (resident == null)
+{
+    <div class="text-center py-4 text-slate-400">
+        <span class="e-icons e-warning text-2xl mb-2 block"></span>
+        <p>Resident not found</p>
+    </div>
+}
+else
+{
+    <div class="space-y-4">
+        <!-- Resident Info -->
+        <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+            <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white font-bold">
+                @resident.FullName.Substring(0, 1)
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800">@resident.FullName</div>
+                <div class="text-sm text-slate-500">Room @resident.RoomNumber • @resident.CareLevel</div>
+            </div>
+        </div>
+
+        @if (Model.Any())
+        {
+            <!-- Medications List -->
+            <div class="divide-y divide-slate-100">
+                @foreach (var schedule in Model.OrderBy(s => s.ScheduledTime))
+                {
+                    <div class="py-3 flex justify-between items-center">
+                        <div>
+                            <div class="font-medium text-slate-800">@schedule.Medication?.Name</div>
+                            <div class="text-sm text-slate-500">@schedule.Medication?.Dosage - @schedule.ScheduledTime.ToString("h:mm tt")</div>
+                            @if (!string.IsNullOrEmpty(schedule.Medication?.Instructions))
+                            {
+                                <div class="text-xs text-amber-600 mt-1 italic">@schedule.Medication.Instructions</div>
+                            }
+                        </div>
+                        <ejs-button id="sidebarGive-@schedule.Id" cssClass="e-success e-small" content="Give"
+                                    data-alis-post="/Medications/QuickGive" data-alis-collect="self" data-alis-target="#medications-dashboard"
+                                    data-alis-swap="innerHTML" data-alis-confirm-message="Give @schedule.Medication?.Name now?"
+                                    data-alis-on-after="initMedicationControls" data-alis-indicator="is-loading"></ejs-button>
+                        <input type="hidden" name="scheduleId" value="@schedule.Id" />
+                    </div>
+                }
+            </div>
+
+            <!-- View History Button -->
+            <div class="pt-2">
+                <ejs-button id="viewHistoryBtn" cssClass="e-filled e-info w-full" content="View History"
+                            data-alis-get="/Medications/History?residentId=@resident.Id" data-alis-target="#resident-details"
+                            data-alis-swap="outerHTML" data-alis-indicator="is-loading"></ejs-button>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-slate-400">
+                <p>No scheduled medications</p>
+            </div>
+        }
+    </div>
+}
+<ejs-scripts></ejs-scripts>

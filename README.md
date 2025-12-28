@@ -3,7 +3,7 @@
 <div align="center">
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/marafiq/alis)
-[![Tests](https://img.shields.io/badge/tests-446%20passing-brightgreen)](https://github.com/marafiq/alis)
+[![Tests](https://img.shields.io/badge/tests-447%20passing-brightgreen)](https://github.com/marafiq/alis)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue)](https://www.typescriptlang.org/)
 
@@ -546,6 +546,58 @@ ALIS.init({
 });
 ```
 
+### Telemetry & Debugging
+
+ALIS provides a powerful telemetry system for debugging and monitoring:
+
+```javascript
+import {
+  setLevel,
+  addAdapter,
+  createConsoleAdapter,
+  createCallbackAdapter,
+  createBufferAdapter,
+  startSpan,
+  endSpan
+} from 'alis-fetch/telemetry';
+
+// Enable debug logging to console
+setLevel('debug');
+addAdapter(createConsoleAdapter());
+
+// Or capture events programmatically
+const buffer = createBufferAdapter(100);
+addAdapter(buffer);
+
+// Later, inspect captured events
+console.log(buffer.getEvents());
+buffer.clear();
+
+// Custom adapter for your logging service
+addAdapter(createCallbackAdapter((event, payload) => {
+  myLoggingService.log(event, payload);
+}));
+```
+
+**Telemetry Levels:**
+- `none` - No events emitted (default)
+- `error` - Errors only
+- `warn` - Warnings and errors
+- `info` - Lifecycle events (request start/end, swap)
+- `debug` - All events including triggers and data collection
+
+**Key Events:**
+| Event | Level | Description |
+|-------|-------|-------------|
+| `pipeline:start` | info | Request pipeline started |
+| `pipeline:end` | info | Pipeline completed with timing |
+| `request:start` | info | HTTP request initiated |
+| `request:end` | info | Response received with status |
+| `request:error` | error | Request failed |
+| `request:abort` | warn | Request was aborted |
+| `swap:target-missing` | warn | Target element not found |
+| `pipeline:aborted` | warn | Pipeline stopped early |
+
 ---
 
 ## 🌐 Live Demos
@@ -603,7 +655,7 @@ npm test
 ```
 
 **Test Coverage:**
-- 335 unit tests
+- 447 unit tests
 - 111 E2E integration tests
 - All happy paths covered
 - Edge cases and regressions tested

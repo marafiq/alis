@@ -1,23 +1,21 @@
 import { ConfigError } from '../../errors/types.js';
 
 /**
+ * Validates pipeline configuration.
+ * Sets ctx.error if validation fails.
+ *
  * @param {import('../context.js').PipelineContext} ctx
  */
 export function validateStep(ctx) {
-  const { config } = ctx;
-
-  if (!config || typeof config !== 'object') {
-    throw new ConfigError('Missing configuration', { ctx });
+  if (!ctx.config || typeof ctx.config !== 'object') {
+    ctx.error = new ConfigError('Missing configuration');
+    return ctx;
   }
 
-  // URL is required for any request
-  if (!config.url) {
-    throw new ConfigError('Missing URL in configuration', { id: ctx.id });
+  if (!ctx.config.url) {
+    ctx.error = new ConfigError('Missing URL in configuration');
+    return ctx;
   }
-
-  // Element is optional for programmatic API (ALIS.request)
-  // but required for declarative (data-alis) usage
 
   return ctx;
 }
-

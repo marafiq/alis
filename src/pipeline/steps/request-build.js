@@ -1,27 +1,30 @@
 import { getMethodAndUrl } from '../../utils/attribute-reader.js';
 import { getSerializer } from '../../registry/serialize.js';
+import { ConfigError } from '../../errors/types.js';
 
 /**
+ * Builds the HTTP request from context.
+ * Skips if there's already an error.
+ *
  * @param {import('../context.js').PipelineContext} ctx
  */
 export function requestBuildStep(ctx) {
-  // Skip if there's already an error (e.g., from validation)
   if (ctx.error) {
     return ctx;
   }
-  
+
   const methodAndUrl = ctx.config.url
     ? { method: ctx.config.method, url: ctx.config.url }
     : ctx.element
-    ? getMethodAndUrl(ctx.element)
-    : null;
+      ? getMethodAndUrl(ctx.element)
+      : null;
 
-  const resolvedMethod = toMethod(methodAndUrl?.method) || toMethod(ctx.config.method) || 'GET';
-  const method = resolvedMethod.toUpperCase();
-  const url = typeof methodAndUrl?.url === 'string' ? methodAndUrl.url : typeof ctx.config.url === 'string' ? ctx.config.url : undefined;
+  const method = (methodAndUrl?.method || ctx.config.method || 'GET').toUpperCase();
+  const url = methodAndUrl?.url || ctx.config.url;
 
   if (!url) {
-    throw new Error('requestBuildStep: URL is required');
+    ctx.error = new ConfigError('URL is required');
+    return ctx;
   }
 
   /** @type {Record<string, string>} */
@@ -32,17 +35,15 @@ export function requestBuildStep(ctx) {
   const data = ctx.collect?.data;
   if (data && typeof data === 'object') {
     const payload = /** @type {Record<string, unknown>} */ (data);
+
     if (method === 'GET') {
       const query = buildQueryString(payload);
       if (query) {
-        finalUrl = appendQuery(finalUrl, query);
+        finalUrl = url.includes('?') ? `${url}&${query}` : `${url}?${query}`;
       }
     } else {
-      // Form elements default to FormData (matches jQuery Unobtrusive, works with ASP.NET model binding)
-      // Non-form elements default to JSON (API-style requests)
       const isFormElement = ctx.element instanceof HTMLFormElement;
-      const defaultSerializer = isFormElement ? 'formdata' : 'json';
-      const serializerName = typeof ctx.config.serialize === 'string' ? ctx.config.serialize : defaultSerializer;
+      const serializerName = ctx.config.serialize || (isFormElement ? 'formdata' : 'json');
       const serializer = getSerializer(serializerName);
       const serialized = serializer(payload);
       body = serialized.body;
@@ -52,13 +53,7 @@ export function requestBuildStep(ctx) {
     }
   }
 
-  ctx.request = {
-    url: finalUrl,
-    method,
-    headers,
-    body
-  };
-
+  ctx.request = { url: finalUrl, method, headers, body };
   return ctx;
 }
 
@@ -67,47 +62,19 @@ export function requestBuildStep(ctx) {
  */
 function buildQueryString(data) {
   const params = new URLSearchParams();
-  Object.entries(data).forEach(([key, value]) => {
+
+  for (const [key, value] of Object.entries(data)) {
     if (value == null) {
-      return;
+      continue;
     }
     if (Array.isArray(value)) {
-      value.forEach(item => params.append(key, String(item)));
-    } else if (isLegacyField(value)) {
-      params.append(value.name, String(value.value));
+      for (const item of value) {
+        params.append(key, String(item));
+      }
     } else {
       params.append(key, String(value));
     }
-  });
+  }
+
   return params.toString();
-}
-
-/**
- * @param {string} url
- * @param {string} query
- */
-function appendQuery(url, query) {
-  if (!query) return url;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}${query}`;
-}
-
-/**
- * @param {unknown} value
- */
-function toMethod(value) {
-  return typeof value === 'string' ? value : undefined;
-}
-
-/**
- * @param {unknown} value
- * @returns {value is { name: string; value: unknown }}
- */
-function isLegacyField(value) {
-  return Boolean(
-    value &&
-    typeof value === 'object' &&
-    'name' in value &&
-    'value' in value
-  );
 }

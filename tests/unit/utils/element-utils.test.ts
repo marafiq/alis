@@ -1,17 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { isFormField, isInteractiveElement, resolveElement } from '../../../src/utils/element-utils.js';
+import { canBeDisabled, resolveElement } from '../../../src/utils/element-utils.js';
 
 describe('utils/element-utils', () => {
-  it('identifies interactive elements', () => {
-    const button = document.createElement('button');
-    expect(isInteractiveElement(button)).toBe(true);
-    expect(isInteractiveElement(document.createElement('div'))).toBe(false);
-  });
-
-  it('identifies form fields', () => {
-    expect(isFormField(document.createElement('input'))).toBe(true);
-    expect(isFormField(document.createElement('select'))).toBe(true);
-    expect(isFormField(document.createElement('div'))).toBe(false);
+  it('identifies elements that can be disabled', () => {
+    expect(canBeDisabled(document.createElement('button'))).toBe(true);
+    expect(canBeDisabled(document.createElement('input'))).toBe(true);
+    expect(canBeDisabled(document.createElement('select'))).toBe(true);
+    expect(canBeDisabled(document.createElement('textarea'))).toBe(true);
+    expect(canBeDisabled(document.createElement('div'))).toBe(false);
+    expect(canBeDisabled(document.createElement('span'))).toBe(false);
+    expect(canBeDisabled(null)).toBe(false);
   });
 
   it('resolves selector strings', () => {
@@ -22,4 +20,3 @@ describe('utils/element-utils', () => {
     document.body.removeChild(el);
   });
 });
-

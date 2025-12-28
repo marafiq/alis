@@ -107,6 +107,7 @@ var ALISBundle = (function (exports) {
    * @property {Element | null} element
    * @property {Record<string, unknown>} config
    * @property {string} trigger
+   * @property {AbortController} abortController
    * @property {{ attempts: number; aborted: boolean; startTime: number | null; endTime: number | null; duration: number | null }} state
    * @property {{ url: string; method: string; headers: Record<string, string>; body: any } | null} request
    * @property {Response | null} response
@@ -182,21 +183,33 @@ var ALISBundle = (function (exports) {
 
   const EVENT_LEVELS = /** @type {Record<string, TelemetryLevel>} */ (
     Object.freeze({
-    error: 'error',
-    'validate:error': 'error',
-    'request:timeout': 'error',
-    'request:abort': 'warn',
-    'request:retry': 'warn',
-    'coordinate:duplicate': 'warn',
-    'validation:display': 'warn',
-    'hooks:error': 'error',
-    'hooks:success': 'info',
-    'swap:start': 'info',
-    'swap:complete': 'info',
-    trigger: 'debug',
-    collect: 'debug',
-    complete: 'info'
-  })
+      // Errors
+      'pipeline:error': 'error',
+      'request:error': 'error',
+      'validate:error': 'error',
+      'hooks:error': 'error',
+
+      // Warnings
+      'pipeline:aborted': 'warn',
+      'request:abort': 'warn',
+      'request:retry': 'warn',
+      'coordinate:duplicate': 'warn',
+      'swap:target-missing': 'warn',
+
+      // Info - lifecycle events
+      'pipeline:start': 'info',
+      'pipeline:end': 'info',
+      'request:start': 'info',
+      'request:end': 'info',
+      'swap:start': 'info',
+      'swap:complete': 'info',
+      'hooks:success': 'info',
+      'validation:display': 'info',
+
+      // Debug - verbose tracking
+      trigger: 'debug',
+      collect: 'debug'
+    })
   );
 
   /**
@@ -254,34 +267,27 @@ var ALISBundle = (function (exports) {
    * @typedef {import('./levels.js').TelemetryLevel} TelemetryLevel
    * @typedef {{ event: string; level: TelemetryLevel; timestamp: number; data: unknown }} TelemetryPayload
    * @typedef {{ emit(event: string, payload: TelemetryPayload): void }} TelemetryAdapter
+   * @typedef {{ name: string; startTime: number; attributes: Record<string, unknown> }} Span
    */
-
-  const consoleAdapter = /** @type {TelemetryAdapter} */ ({
-    emit(event, payload) {
-      const method = levelToConsole(payload.level);
-      if (typeof console[method] === 'function') {
-        console[method](`[ALIS:${event}]`, payload);
-      }
-    }
-  });
 
   /** @type {TelemetryLevel} */
   let currentLevel = 'none';
-  /** @type {TelemetryAdapter} */
-  let adapter = consoleAdapter;
+
+  /** @type {TelemetryAdapter[]} */
+  let adapters$1 = [];
 
   /**
    * @param {string} eventName
    * @param {unknown} data
-   * @param {{ level?: TelemetryLevel; levels?: Record<string, TelemetryLevel> }} options
+   * @param {{ level?: TelemetryLevel }} options
    * @returns {false | TelemetryPayload}
    */
   function emit(eventName, data = {}, options = {}) {
     if (typeof eventName !== 'string' || eventName.length === 0) {
-      throw new TypeError('eventName must be a non-empty string');
+      return false;
     }
 
-    const level = options.level ?? getEventLevel(eventName, options.levels);
+    const level = options.level ?? getEventLevel(eventName);
     if (!shouldLog(currentLevel, level)) {
       return false;
     }
@@ -293,24 +299,42 @@ var ALISBundle = (function (exports) {
       data
     };
 
-    adapter.emit(eventName, payload);
+    for (const adapter of adapters$1) {
+      adapter.emit(eventName, payload);
+    }
+
     return payload;
   }
 
   /**
-   * @param {TelemetryLevel} level
+   * Start a span for timing an operation.
+   * @param {string} name
+   * @param {Record<string, unknown>} attributes
+   * @returns {Span}
    */
-  function levelToConsole(level) {
-    switch (level) {
-      case 'error':
-        return 'error';
-      case 'warn':
-        return 'warn';
-      case 'info':
-        return 'info';
-      default:
-        return 'debug';
-    }
+  function startSpan(name, attributes = {}) {
+    const span = {
+      name,
+      startTime: performance.now(),
+      attributes
+    };
+
+    emit(`${name}:start`, { ...attributes });
+    return span;
+  }
+
+  /**
+   * End a span and emit timing data.
+   * @param {Span} span
+   * @param {Record<string, unknown>} attributes
+   */
+  function endSpan(span, attributes = {}) {
+    const duration = performance.now() - span.startTime;
+    emit(`${span.name}:end`, {
+      ...span.attributes,
+      ...attributes,
+      durationMs: Math.round(duration * 100) / 100
+    });
   }
 
   /**
@@ -324,6 +348,11 @@ var ALISBundle = (function (exports) {
    */
   async function runPipeline(context, steps = []) {
     let currentContext = context;
+    const pipelineSpan = startSpan('pipeline', {
+      id: currentContext.id,
+      url: currentContext.config?.url,
+      method: currentContext.config?.method
+    });
 
     for (const step of steps) {
       if (currentContext.state.aborted) {
@@ -336,13 +365,21 @@ var ALISBundle = (function (exports) {
         currentContext = await step(currentContext);
       } catch (error) {
         currentContext.error = error instanceof Error ? error : new Error(String(error));
-        emit('pipeline:error', { id: currentContext.id, error });
+        emit('pipeline:error', {
+          id: currentContext.id,
+          error: currentContext.error.message,
+          stack: currentContext.error.stack
+        });
         // Do not throw; continue to allow cleanup steps to run.
         // Steps should guard themselves against existing errors if they require success.
       }
     }
 
-    emit('pipeline:complete', { id: currentContext.id });
+    endSpan(pipelineSpan, {
+      success: !currentContext.error,
+      aborted: currentContext.state.aborted,
+      status: currentContext.response?.status
+    });
     return currentContext;
   }
 
@@ -367,22 +404,21 @@ var ALISBundle = (function (exports) {
   }
 
   /**
+   * Validates pipeline configuration.
+   * Sets ctx.error if validation fails.
+   *
    * @param {import('../context.js').PipelineContext} ctx
    */
   function validateStep(ctx) {
-    const { config } = ctx;
-
-    if (!config || typeof config !== 'object') {
-      throw new ConfigError('Missing configuration', { ctx });
+    if (!ctx.config || typeof ctx.config !== 'object') {
+      ctx.error = new ConfigError('Missing configuration');
+      return ctx;
     }
 
-    // URL is required for any request
-    if (!config.url) {
-      throw new ConfigError('Missing URL in configuration', { id: ctx.id });
+    if (!ctx.config.url) {
+      ctx.error = new ConfigError('Missing URL in configuration');
+      return ctx;
     }
-
-    // Element is optional for programmatic API (ALIS.request)
-    // but required for declarative (data-alis) usage
 
     return ctx;
   }
@@ -414,33 +450,21 @@ var ALISBundle = (function (exports) {
       return ctx;
     }
 
-    const key = element;
     const strategy = ctx.config.duplicateRequest || 'ignore';
-    // keep silent in production – telemetry can be wired via hooks
 
-    if (!ACTIVE_REQUESTS.has(key)) {
-      ACTIVE_REQUESTS.set(key, { id: ctx.id, controller: ctx.abortController });
+    if (!ACTIVE_REQUESTS.has(element)) {
+      ACTIVE_REQUESTS.set(element, { id: ctx.id, controller: ctx.abortController });
       return ctx;
     }
 
-    switch (strategy) {
-      case 'ignore':
-        ctx.state.aborted = true;
-        break;
-      case 'abort-previous':
-        {
-          const prev = ACTIVE_REQUESTS.get(key);
-          if (prev && prev.controller) {
-            prev.controller.abort();
-          }
-          ACTIVE_REQUESTS.set(key, { id: ctx.id, controller: ctx.abortController });
-        }
-        break;
-      case 'queue':
-        // future enhancement
-        break;
-      default:
-        ctx.state.aborted = true;
+    if (strategy === 'abort-previous') {
+      const prev = ACTIVE_REQUESTS.get(element);
+      if (prev?.controller) {
+        prev.controller.abort();
+      }
+      ACTIVE_REQUESTS.set(element, { id: ctx.id, controller: ctx.abortController });
+    } else {
+      ctx.state.aborted = true;
     }
 
     return ctx;
@@ -457,23 +481,50 @@ var ALISBundle = (function (exports) {
     return ctx;
   }
 
+  const DISABLEABLE_TAGS = new Set(['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA']);
+
   /**
-   * @param {Element} element
+   * @param {Element | null} element
+   * @returns {element is HTMLButtonElement | HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement}
    */
+  function canBeDisabled(element) {
+    return !!element && DISABLEABLE_TAGS.has(element.tagName);
+  }
+
+  /**
+   * @param {string | Element} target
+   * @param {Document | Element} root
+   */
+  function resolveElement(target, root = document) {
+    if (!target) {
+      throw new Error('resolveElement: target is required');
+    }
+    if (target instanceof Element) {
+      return target;
+    }
+    if (typeof target === 'string') {
+      const resolved = root.querySelector(target);
+      if (!resolved) {
+        throw new Error(`Element not found for selector "${target}"`);
+      }
+      return resolved;
+    }
+    throw new TypeError('resolveElement: unsupported target type');
+  }
+
   /**
    * @param {Element} element
    */
   function captureState(element) {
-    const state = {
-      disabled: element instanceof HTMLButtonElement || element instanceof HTMLInputElement
-        ? element.disabled
-        : false,
+    const form = element.closest('form');
+
+    return {
+      disabled: canBeDisabled(element) ? element.disabled : false,
       ariaBusy: element.getAttribute('aria-busy'),
+      formAriaBusy: (form && form !== element) ? form.getAttribute('aria-busy') : null,
       classList: Array.from(element.classList),
       textContent: element instanceof HTMLElement ? element.textContent ?? '' : ''
     };
-
-    return state;
   }
 
   /**
@@ -481,21 +532,12 @@ var ALISBundle = (function (exports) {
    * @param {{ indicator?: string; disabled?: boolean; debounced?: boolean }} config
    */
   function applyEffects(element, config = {}) {
-    // Don't disable anything if the request is debounced - user is still interacting
-    const shouldDisable = !config.debounced;
-    
-    if (shouldDisable) {
-      if (element instanceof HTMLButtonElement || 
-          element instanceof HTMLInputElement ||
-          element instanceof HTMLSelectElement ||
-          element instanceof HTMLTextAreaElement) {
-        element.disabled = true;
-      }
+    if (!config.debounced && canBeDisabled(element)) {
+      element.disabled = true;
     }
-    
+
     element.setAttribute('aria-busy', 'true');
-    
-    // Also set aria-busy on parent form if element is within a form
+
     const form = element.closest('form');
     if (form && form !== element) {
       form.setAttribute('aria-busy', 'true');
@@ -544,34 +586,32 @@ var ALISBundle = (function (exports) {
 
   /**
    * @param {Element} element
-   * @param {ReturnType<import('./capture.js').captureState>} state
-   */
-  /**
-   * @param {Element} element
-   * @param {{ disabled: boolean; ariaBusy: string | null; classList: string[]; textContent: string } | null} state
+   * @param {{ disabled: boolean; ariaBusy: string | null; formAriaBusy?: string | null; classList: string[]; textContent: string } | null} state
    */
   function restoreState(element, state) {
     if (!state) return;
 
-    if (element instanceof HTMLButtonElement || element instanceof HTMLInputElement) {
+    if (canBeDisabled(element)) {
       element.disabled = state.disabled;
     }
+
     if (state.ariaBusy == null) {
       element.removeAttribute('aria-busy');
     } else {
       element.setAttribute('aria-busy', state.ariaBusy);
     }
-    
-    // Also restore aria-busy on parent form
+
     const form = element.closest('form');
     if (form && form !== element) {
-      form.removeAttribute('aria-busy');
+      if (state.formAriaBusy == null) {
+        form.removeAttribute('aria-busy');
+      } else {
+        form.setAttribute('aria-busy', state.formAriaBusy);
+      }
     }
 
     element.className = state.classList.join(' ');
 
-    // Only restore textContent for button elements, NOT for selects/inputs
-    // Setting textContent on a <select> would destroy all its options!
     if (element instanceof HTMLButtonElement) {
       element.textContent = state.textContent || '';
     }
@@ -664,65 +704,142 @@ var ALISBundle = (function (exports) {
   }
 
   /**
+   * ALIS Adapter Registry
+   *
+   * Adapters provide integration with UI frameworks (Syncfusion, Telerik, etc.)
+   * without polluting ALIS core code.
+   *
+   * Each adapter implements:
+   * - canHandle(element): boolean - does this adapter handle this element?
+   * - getFieldName(element): string | null - get field name for the element
+   * - getValue(element): unknown - get current value from the element
+   * - isCheckbox(element): boolean - is this a checkbox-like control?
+   */
+
+  /** @type {Array<import('./types').Adapter>} */
+  const adapters = [];
+
+  /**
+   * Register an adapter for a UI framework
+   * @param {import('./types').Adapter} adapter
+   */
+  function registerAdapter(adapter) {
+    adapters.push(adapter);
+  }
+
+  /**
+   * Find adapter that can handle this element
+   * @param {Element} element
+   * @returns {import('./types').Adapter | null}
+   */
+  function findAdapter(element) {
+    for (const adapter of adapters) {
+      if (adapter.canHandle(element)) {
+        return adapter;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get field name using registered adapters
+   * @param {Element} element
+   * @returns {string | null}
+   */
+  function getAdapterFieldName(element) {
+    const adapter = findAdapter(element);
+    return adapter?.getFieldName(element) ?? null;
+  }
+
+  /**
+   * Get value using registered adapters
+   * @param {Element} element
+   * @returns {{ value: unknown; isCheckbox: boolean } | null}
+   */
+  function getAdapterValue(element) {
+    const adapter = findAdapter(element);
+    if (!adapter) return null;
+
+    return {
+      value: adapter.getValue(element),
+      isCheckbox: adapter.isCheckbox?.(element) ?? false
+    };
+  }
+
+  /**
+   * Check if any adapter handles this element
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function hasAdapter(element) {
+    return findAdapter(element) !== null;
+  }
+
+  /**
+   * Get field name from element.
+   * Uses registered adapters for UI framework controls.
+   * @param {Element} element
+   * @returns {string | null}
+   */
+  function getFieldName(element) {
+    // Standard HTML name attribute
+    const name = element.getAttribute('name');
+    if (name) return name;
+
+    // Check registered adapters (Syncfusion, etc.)
+    return getAdapterFieldName(element);
+  }
+
+  /**
+   * Read value from a form field element.
+   * Supports native HTML elements, Syncfusion components, and custom value attributes.
+   *
    * @param {Element} element
    * @returns {{ name: string; value: unknown } | null}
    */
   function readValue(element) {
-    if (!element || !element.getAttribute) {
+    const name = getFieldName(element);
+    if (!name) {
       return null;
     }
 
-    const name = element.getAttribute('name');
-    if (!name || ('disabled' in element && /** @type {any} */ (element).disabled)) {
+    if ('disabled' in element && /** @type {HTMLInputElement} */ (element).disabled) {
       return null;
     }
 
-    // Check for custom value selector: data-alis-value="#selector@attribute"
-    const customValueAttr = element.getAttribute('data-alis-value');
-    if (customValueAttr) {
-      const value = readCustomValue(customValueAttr);
-      return { name, value };
+    // Custom value via selector
+    const customSelector = element.getAttribute('data-alis-value');
+    if (customSelector) {
+      return { name, value: readValueFromSelector(customSelector) };
     }
 
-    // Check for custom value function: data-alis-value-fn="functionName"
-    const customValueFn = element.getAttribute('data-alis-value-fn');
-    if (customValueFn && typeof window !== 'undefined') {
-      const fn = /** @type {Record<string, unknown>} */ (window)[customValueFn];
+    // Custom value via function
+    const customFn = element.getAttribute('data-alis-value-fn');
+    if (customFn) {
+      const fn = /** @type {Record<string, unknown>} */ (window)[customFn];
       if (typeof fn === 'function') {
         return { name, value: fn(element) };
       }
     }
 
-    // Check for Syncfusion component (ej2_instances array)
-    const ej2Instances = /** @type {any} */ (element)['ej2_instances'];
-    if (Array.isArray(ej2Instances) && ej2Instances.length > 0) {
-      const instance = ej2Instances[0];
-      // CheckBox uses 'checked' property
-      if ('checked' in instance) {
-        return instance.checked ? { name, value: 'true' } : null;
-      }
-      // Most components use 'value' property
-      if ('value' in instance) {
-        return { name, value: instance.value };
+    // UI framework adapters (Syncfusion, etc.) - check BEFORE native elements
+    if (hasAdapter(element)) {
+      const adapterValue = getAdapterValue(element);
+      if (adapterValue) {
+        if (adapterValue.isCheckbox) {
+          return adapterValue.value ? { name, value: 'true' } : null;
+        }
+        return { name, value: adapterValue.value };
       }
     }
 
+    // Native HTML elements
     if (element instanceof HTMLInputElement) {
-      if (element.type === 'checkbox') {
-        return element.checked ? { name, value: element.value || 'on' } : null;
-      }
-      if (element.type === 'radio') {
-        return element.checked ? { name, value: element.value } : null;
-      }
-      return { name, value: element.value };
+      return readInputValue(name, element);
     }
 
     if (element instanceof HTMLSelectElement) {
-      if (element.multiple) {
-        const values = Array.from(element.selectedOptions).map(option => option.value);
-        return { name, value: values };
-      }
-      return { name, value: element.value };
+      return readSelectValue(name, element);
     }
 
     if (element instanceof HTMLTextAreaElement) {
@@ -737,119 +854,141 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Read value from custom selector
-   * Format: "#selector@attribute" or "#selector .child@attribute"
-   * If no @attribute, uses textContent
-   * 
-   * @param {string} selectorAttr
-   * @returns {string}
+   * @param {string} name
+   * @param {HTMLInputElement} input
+   * @returns {{ name: string; value: unknown } | null}
    */
-  function readCustomValue(selectorAttr) {
-    if (!selectorAttr) return '';
-    
-    let selector = selectorAttr;
-    let attribute = 'value'; // default
-    
-    // Check for @attribute suffix
-    const atIndex = selectorAttr.lastIndexOf('@');
-    if (atIndex > 0) {
-      selector = selectorAttr.substring(0, atIndex);
-      attribute = selectorAttr.substring(atIndex + 1);
+  function readInputValue(name, input) {
+    switch (input.type) {
+      case 'checkbox':
+        return input.checked ? { name, value: input.value || 'on' } : null;
+
+      case 'radio':
+        return input.checked ? { name, value: input.value } : null;
+
+      case 'file': {
+        const files = input.files;
+        if (!files || files.length === 0) {
+          return null;
+        }
+        return { name, value: input.multiple ? Array.from(files) : files[0] };
+      }
+
+      default:
+        return { name, value: input.value };
     }
-    
-    const targetEl = document.querySelector(selector);
-    if (!targetEl) return '';
-    
-    // Special handling for common attributes
-    if (attribute === 'value' && 'value' in targetEl) {
-      return /** @type {HTMLInputElement} */ (targetEl).value;
-    }
-    if (attribute === 'textContent') {
-      return targetEl.textContent || '';
-    }
-    if (attribute === 'innerHTML') {
-      return targetEl.innerHTML || '';
-    }
-    
-    // Check for data-* attribute
-    if (attribute.startsWith('data-')) {
-      return targetEl.getAttribute(attribute) || '';
-    }
-    
-    // Generic attribute
-    return targetEl.getAttribute(attribute) || '';
   }
 
   /**
+   * @param {string} name
+   * @param {HTMLSelectElement} select
+   * @returns {{ name: string; value: string | string[] }}
+   */
+  function readSelectValue(name, select) {
+    if (select.multiple) {
+      /** @type {string[]} */
+      const values = [];
+      for (const option of select.options) {
+        if (option.selected) {
+          values.push(option.value);
+        }
+      }
+      return { name, value: values };
+    }
+    return { name, value: select.value };
+  }
+
+  /**
+   * Read value from a custom selector.
+   * Format: "#selector" or "#selector@attribute"
+   *
+   * @param {string} selectorAttr
+   * @returns {string}
+   */
+  function readValueFromSelector(selectorAttr) {
+    const atIndex = selectorAttr.lastIndexOf('@');
+    const selector = atIndex > 0 ? selectorAttr.substring(0, atIndex) : selectorAttr;
+    const attribute = atIndex > 0 ? selectorAttr.substring(atIndex + 1) : 'value';
+
+    const target = document.querySelector(selector);
+    if (!target) {
+      return '';
+    }
+
+    if (attribute === 'value' && 'value' in target) {
+      return /** @type {HTMLInputElement} */ (target).value;
+    }
+
+    if (attribute === 'textContent') {
+      return target.textContent || '';
+    }
+
+    return target.getAttribute(attribute) || '';
+  }
+
+  /**
+   * Accumulate a value into entries. Handles duplicate names by creating arrays.
+   *
+   * @param {Record<string, unknown>} entries
+   * @param {string} name
+   * @param {unknown} value
+   */
+  function accumulateValue(entries, name, value) {
+    const existing = entries[name];
+
+    if (existing === undefined) {
+      entries[name] = value;
+      return;
+    }
+
+    // Convert to array and append
+    const asArray = Array.isArray(existing) ? existing : [existing];
+    if (Array.isArray(value)) {
+      asArray.push(...value);
+    } else {
+      asArray.push(value);
+    }
+    entries[name] = asArray;
+  }
+
+  /**
+   * Read all values from a form.
+   *
    * @param {HTMLFormElement} form
    * @returns {Record<string, unknown>}
    */
   function readFormValues(form) {
-    if (!(form instanceof HTMLFormElement)) {
-      throw new TypeError('readFormValues expects a form element');
-    }
-    /** @type {Record<string, any>} */
+    /** @type {Record<string, unknown>} */
     const entries = {};
-    Array.from(form.elements).forEach(element => {
+
+    for (const element of form.elements) {
       const reading = readValue(element);
-      if (!reading) {
-        return;
+      if (reading) {
+        accumulateValue(entries, reading.name, reading.value);
       }
-      const { name, value } = reading;
-      if (entries[name] === undefined) {
-        entries[name] = value;
-      } else if (Array.isArray(entries[name])) {
-        entries[name].push(value);
-      } else {
-        entries[name] = [entries[name], value];
-      }
-    });
+    }
+
     return entries;
   }
 
   /**
+   * Read all values from a container element.
+   *
    * @param {Element} container
    * @returns {Record<string, unknown>}
    */
   function readContainerValues(container) {
-    if (!(container instanceof Element)) {
-      throw new TypeError('readContainerValues expects an Element');
-    }
-    /** @type {Record<string, any>} */
+    /** @type {Record<string, unknown>} */
     const entries = {};
-    const fields = container.querySelectorAll('[name]');
-    fields.forEach(field => {
+
+    for (const field of container.querySelectorAll('[name]')) {
       const reading = readValue(field);
       if (reading) {
-        entries[reading.name] = reading.value;
+        accumulateValue(entries, reading.name, reading.value);
       }
-    });
+    }
+
     return entries;
-  }
-
-  /**
-   * @param {Element | null} element
-   */
-
-  /**
-   * @param {string | Element} target
-   * @param {Document | Element} root
-   */
-  function resolveElement(target, root = document) {
-    if (!target) {
-      throw new Error('resolveElement: target is required');
-    }
-    if (target instanceof Element) {
-      return target;
-    }
-    if (typeof target === 'string') {
-      const resolved = root.querySelector(target);
-      if (!resolved) {
-        throw new Error(`Element not found for selector "${target}"`);
-      }
-      return resolved;
-    }
-    throw new TypeError('resolveElement: unsupported target type');
   }
 
   /**
@@ -894,6 +1033,15 @@ var ALISBundle = (function (exports) {
   }
 
   /**
+   * Check if element is a collectable field (has name or handled by adapter)
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function isCollectableField(element) {
+    return !!element.getAttribute('name') || hasAdapter(element);
+  }
+
+  /**
    * @param {Element | null} element
    * @param {{ collect?: string }} options
    */
@@ -910,7 +1058,8 @@ var ALISBundle = (function (exports) {
       };
     }
 
-    if (source === element && element && element.getAttribute('name')) {
+    // For self collection, treat as single field if collectable
+    if (source === element && element && isCollectableField(element)) {
       const field = readValue(element);
       return {
         source: element,
@@ -928,9 +1077,12 @@ var ALISBundle = (function (exports) {
    * @param {import('../context.js').PipelineContext} ctx
    */
   function collectStep(ctx) {
+    if (ctx.error) {
+      return ctx;
+    }
+
     const collectOption = typeof ctx.config.collect === 'string' ? ctx.config.collect : undefined;
-    const result = collect(ctx.element, { collect: collectOption });
-    ctx.collect = result;
+    ctx.collect = collect(ctx.element, { collect: collectOption });
     return ctx;
   }
 
@@ -1164,24 +1316,150 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Syncfusion wrapper class names that indicate a component wrapper.
+   * Syncfusion Integration Utilities
+   *
+   * This module provides utilities for integrating with Syncfusion EJ2 components.
+   * All detection and value access is done through the Syncfusion instance (ej2_instances)
+   * rather than CSS class detection, which is fragile and can break with updates.
    */
-  const SYNCFUSION_WRAPPER_CLASSES$2 = [
-    'e-input-group',
-    'e-control-wrapper',
-    'e-checkbox-wrapper',
-    'e-radio-wrapper'
-  ];
+
+  /**
+   * Check if element has Syncfusion ej2_instances.
+   * This is the authoritative way to detect Syncfusion components.
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function hasSyncfusionInstance(element) {
+    const instances = /** @type {any} */ (element)['ej2_instances'];
+    return Array.isArray(instances) && instances.length > 0;
+  }
+
+  /**
+   * Get the Syncfusion component instance for an element.
+   * @param {Element} element
+   * @returns {any | null}
+   */
+  function getSyncfusionInstance(element) {
+    const instances = /** @type {any} */ (element)['ej2_instances'];
+    if (!Array.isArray(instances) || instances.length === 0) {
+      return null;
+    }
+    return instances[0];
+  }
+
+  /**
+   * Get value from a Syncfusion component.
+   * Returns the raw value from the component instance.
+   * - CheckBox/Switch: returns boolean (checked state)
+   * - Other components: returns the value property
+   *
+   * @param {Element} element
+   * @returns {{ value: unknown; isCheckbox: boolean } | null}
+   */
+  function getSyncfusionValue(element) {
+    const instance = getSyncfusionInstance(element);
+    if (!instance) {
+      return null;
+    }
+
+    // CheckBox and Switch use 'checked' property
+    if ('checked' in instance) {
+      return { value: instance.checked, isCheckbox: true };
+    }
+
+    // Most components use 'value' property
+    if ('value' in instance) {
+      return { value: instance.value, isCheckbox: false };
+    }
+
+    return null;
+  }
+
+  /**
+   * Get the visible wrapper element for a Syncfusion component.
+   * Uses instance properties (inputWrapper, wrapper) instead of class detection.
+   * @param {Element} element
+   * @returns {Element}
+   */
+  function getSyncfusionVisibleElement(element) {
+    const instance = getSyncfusionInstance(element);
+    if (!instance) {
+      return element;
+    }
+
+    // Syncfusion components expose their wrapper through instance properties:
+    // - inputWrapper: { container } for input-based controls (TextBox, NumericTextBox, etc.)
+    // - wrapper: for other controls (CheckBox, etc.)
+    if (instance.inputWrapper?.container instanceof Element) {
+      return instance.inputWrapper.container;
+    }
+    if (instance.wrapper instanceof Element) {
+      return instance.wrapper;
+    }
+
+    // Fallback to the element itself
+    return element;
+  }
+
+  /**
+   * Check if element is a visible Syncfusion input (not the hidden original).
+   * Uses instance properties to find the visible input element.
+   * @param {Element} element
+   * @returns {boolean}
+   */
+  function isSyncfusionInput(element) {
+    // Check if this element is a Syncfusion component directly
+    if (hasSyncfusionInstance(element)) {
+      return true;
+    }
+
+    // Check if this is the visible input within a Syncfusion wrapper
+    // by looking for a parent/sibling with ej2_instances
+    const parent = element.closest('[id]');
+    if (parent && hasSyncfusionInstance(parent)) {
+      const instance = getSyncfusionInstance(parent);
+      // Check if this element is the visible input from the instance
+      if (instance?.element === element || instance?.inputElement === element) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Find Syncfusion wrapper for an element using instance properties.
+   * @param {Element} element
+   * @returns {Element | null}
+   */
+  function findSyncfusionWrapper(element) {
+    // First check if element itself has an instance
+    if (hasSyncfusionInstance(element)) {
+      const visible = getSyncfusionVisibleElement(element);
+      return visible !== element ? visible : null;
+    }
+
+    // Walk up to find a parent with Syncfusion instance
+    let parent = element.parentElement;
+    while (parent) {
+      if (hasSyncfusionInstance(parent)) {
+        return getSyncfusionVisibleElement(parent);
+      }
+      parent = parent.parentElement;
+    }
+
+    return null;
+  }
 
   /**
    * Determines if an element should be validated.
-   * 
+   *
    * Checks:
    * 1. data-val="true" must be present
    * 2. Element must be visible (unless data-val-always="true")
    * 3. Element must not be disabled
    * 4. For hidden inputs, checks if Syncfusion wrapper is visible
-   * 
+   *
    * @param {Element} element - The element to check
    * @returns {boolean} - Whether the element should be validated
    */
@@ -1190,29 +1468,23 @@ var ALISBundle = (function (exports) {
     if (element.getAttribute('data-val') !== 'true') {
       return false;
     }
-    
+
     // Disabled elements are skipped
-    if (element instanceof HTMLInputElement && element.disabled) {
+    if ('disabled' in element && /** @type {HTMLInputElement} */ (element).disabled) {
       return false;
     }
-    if (element instanceof HTMLSelectElement && element.disabled) {
-      return false;
-    }
-    if (element instanceof HTMLTextAreaElement && element.disabled) {
-      return false;
-    }
-    
+
     // data-val-always="true" overrides visibility checks
     if (element.getAttribute('data-val-always') === 'true') {
       return true;
     }
-    
+
     // Check if element is a hidden input
     if (element instanceof HTMLInputElement && element.type === 'hidden') {
       // For hidden inputs, check if there's a visible Syncfusion wrapper
       return hasSyncfusionVisibleWrapper(element);
     }
-    
+
     // Check visibility
     return isVisible(element);
   }
@@ -1226,43 +1498,35 @@ var ALISBundle = (function (exports) {
     if (!(element instanceof HTMLElement)) {
       return true;
     }
-    
+
     // Check computed style
     const style = window.getComputedStyle(element);
-    
+
     if (style.display === 'none') {
       return false;
     }
-    
+
     if (style.visibility === 'hidden') {
       return false;
     }
-    
+
     return true;
   }
 
   /**
    * Check if a hidden input has a visible Syncfusion wrapper.
+   * Uses instance properties to find the visible wrapper element.
    * @param {Element} element
    * @returns {boolean}
    */
   function hasSyncfusionVisibleWrapper(element) {
-    // Look for parent with Syncfusion wrapper class
-    let parent = element.parentElement;
-    
-    while (parent) {
-      const hasSyncfusionClass = SYNCFUSION_WRAPPER_CLASSES$2.some(cls => 
-        parent?.classList.contains(cls)
-      );
-      
-      if (hasSyncfusionClass) {
-        return isVisible(parent);
-      }
-      
-      parent = parent.parentElement;
+    // Check if this element has a Syncfusion instance
+    if (hasSyncfusionInstance(element)) {
+      const visibleElement = getSyncfusionVisibleElement(element);
+      return isVisible(visibleElement);
     }
-    
-    // No Syncfusion wrapper found, hidden input should not validate
+
+    // No Syncfusion instance found, hidden input should not validate
     return false;
   }
 
@@ -1329,15 +1593,6 @@ var ALISBundle = (function (exports) {
 
     return null;
   }
-
-  /**
-   * Syncfusion wrapper class names.
-   */
-  const SYNCFUSION_WRAPPER_CLASSES$1 = [
-    'e-input-group',
-    'e-control-wrapper',
-    'e-checkbox-wrapper'
-  ];
 
   /**
    * Handles displaying and clearing validation errors in the DOM.
@@ -1429,44 +1684,21 @@ var ALISBundle = (function (exports) {
      * @param {Element} input
      */
     #addSyncfusionErrorClass(input) {
-      const wrapper = this.#findSyncfusionWrapper(input);
+      const wrapper = findSyncfusionWrapper(input);
       if (wrapper) {
         wrapper.classList.add('e-error');
       }
     }
-    
+
     /**
      * Remove error class from Syncfusion wrapper if present.
      * @param {Element} input
      */
     #removeSyncfusionErrorClass(input) {
-      const wrapper = this.#findSyncfusionWrapper(input);
+      const wrapper = findSyncfusionWrapper(input);
       if (wrapper) {
         wrapper.classList.remove('e-error');
       }
-    }
-    
-    /**
-     * Find Syncfusion wrapper for an input.
-     * @param {Element} input
-     * @returns {Element | null}
-     */
-    #findSyncfusionWrapper(input) {
-      let parent = input.parentElement;
-      
-      while (parent) {
-        const hasWrapperClass = SYNCFUSION_WRAPPER_CLASSES$1.some(cls => 
-          parent?.classList.contains(cls)
-        );
-        
-        if (hasWrapperClass) {
-          return parent;
-        }
-        
-        parent = parent.parentElement;
-      }
-      
-      return null;
     }
   }
 
@@ -1597,96 +1829,65 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * Syncfusion wrapper class names.
-   */
-  const WRAPPER_CLASSES = [
-    'e-input-group',
-    'e-control-wrapper',
-    'e-checkbox-wrapper',
-    'e-radio-wrapper'
-  ];
-
-  /**
    * Adapter for Syncfusion Essential JS 2 components.
    * Syncfusion components render hidden inputs with ej2_instances array.
+   * All detection uses instance properties, not CSS classes.
    * @type {import('./types.js').Adapter}
    */
   const SyncfusionAdapter = {
     name: 'syncfusion',
-    
+
     /**
      * Returns true if element has ej2_instances array.
      * @param {Element} element
      * @returns {boolean}
      */
     matches(element) {
-      const instances = /** @type {unknown} */ (element)['ej2_instances'];
-      return Array.isArray(instances) && instances.length > 0;
+      return hasSyncfusionInstance(element);
     },
-    
+
     /**
      * Gets the value from Syncfusion component instance.
+     * For validation, returns the raw value (boolean for checkboxes).
      * @param {Element} element
      * @returns {unknown}
      */
     getValue(element) {
-      const instances = /** @type {unknown} */ (element)['ej2_instances'];
-      if (!Array.isArray(instances) || instances.length === 0) {
-        return null;
-      }
-      
-      const instance = instances[0];
-      
-      // CheckBox uses 'checked' property
-      if ('checked' in instance) {
-        return instance.checked;
-      }
-      
-      // Most components use 'value' property
-      if ('value' in instance) {
-        return instance.value;
-      }
-      
-      return null;
+      const result = getSyncfusionValue(element);
+      return result ? result.value : null;
     },
-    
+
     /**
      * Returns the visible wrapper element for error styling.
+     * Uses instance.inputWrapper or instance.wrapper properties.
      * @param {Element} element
      * @returns {Element}
      */
     getVisibleElement(element) {
-      // Look for parent with Syncfusion wrapper class
-      let parent = element.parentElement;
-      
-      while (parent) {
-        const hasWrapperClass = WRAPPER_CLASSES.some(cls => 
-          parent?.classList.contains(cls)
-        );
-        
-        if (hasWrapperClass) {
-          return parent;
-        }
-        
-        parent = parent.parentElement;
-      }
-      
-      return element;
+      return getSyncfusionVisibleElement(element);
     },
-    
+
     /**
      * Returns the focusable element for blur events.
+     * Uses instance.inputElement or instance.element properties.
      * @param {Element} element
      * @returns {Element}
      */
     getBlurTarget(element) {
-      // Look for the visible input element within the wrapper
-      const wrapper = SyncfusionAdapter.getVisibleElement(element);
-      
-      // Try common Syncfusion focusable element selectors
-      const focusable = wrapper.querySelector('.e-input, .e-checkbox, .e-radio, input:not([type="hidden"])');
-      
-      return focusable || element;
+      const instance = getSyncfusionInstance(element);
+      if (!instance) {
+        return element;
+      }
+
+      // Syncfusion exposes the input element through instance properties
+      if (instance.inputElement instanceof Element) {
+        return instance.inputElement;
+      }
+      if (instance.element instanceof Element) {
+        return instance.element;
+      }
+
+      return element;
     }
   };
 
@@ -2619,31 +2820,46 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * @param {Record<string, unknown> | undefined} data
+   * Serialize data as JSON.
+   *
+   * @param {Record<string, unknown>} data
+   * @returns {{ body: string; contentType: string }}
    */
   function serialize$2(data) {
     return {
-      body: data ? JSON.stringify(data) : undefined,
+      body: JSON.stringify(data),
       contentType: 'application/json'
     };
   }
 
   /**
-   * @param {Record<string, any> | undefined} data
+   * Serialize data as FormData.
+   * Handles File/Blob objects and arrays.
+   *
+   * @param {Record<string, unknown>} data
+   * @returns {{ body: FormData; contentType: null }}
    */
   function serialize$1(data) {
     const formData = new FormData();
 
-    if (data && typeof data === 'object') {
-      Object.entries(data).forEach(([key, value]) => {
-        if (value instanceof File || value instanceof Blob) {
-          formData.append(key, value);
-        } else if (Array.isArray(value)) {
-          value.forEach(item => formData.append(key, item));
-        } else if (value !== undefined && value !== null) {
-          formData.append(key, String(value));
+    for (const [key, value] of Object.entries(data)) {
+      if (value === undefined || value === null) {
+        continue;
+      }
+
+      if (value instanceof File || value instanceof Blob) {
+        formData.append(key, value);
+      } else if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item instanceof File || item instanceof Blob) {
+            formData.append(key, item);
+          } else {
+            formData.append(key, String(item));
+          }
         }
-      });
+      } else {
+        formData.append(key, String(value));
+      }
     }
 
     return {
@@ -2653,23 +2869,26 @@ var ALISBundle = (function (exports) {
   }
 
   /**
-   * @param {Record<string, any> | undefined} data
+   * Serialize data as URL-encoded form data.
+   *
+   * @param {Record<string, unknown>} data
+   * @returns {{ body: string; contentType: string }}
    */
   function serialize(data) {
     const params = new URLSearchParams();
 
-    if (data && typeof data === 'object') {
-      Object.entries(data).forEach(([key, value]) => {
-        if (value === undefined || value === null) {
-          return;
-        }
+    for (const [key, value] of Object.entries(data)) {
+      if (value === undefined || value === null) {
+        continue;
+      }
 
-        if (Array.isArray(value)) {
-          value.forEach(item => params.append(key, String(item)));
-        } else {
-          params.append(key, String(value));
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          params.append(key, String(item));
         }
-      });
+      } else {
+        params.append(key, String(value));
+      }
     }
 
     return {
@@ -2693,26 +2912,28 @@ var ALISBundle = (function (exports) {
   }
 
   /**
+   * Builds the HTTP request from context.
+   * Skips if there's already an error.
+   *
    * @param {import('../context.js').PipelineContext} ctx
    */
   function requestBuildStep(ctx) {
-    // Skip if there's already an error (e.g., from validation)
     if (ctx.error) {
       return ctx;
     }
-    
+
     const methodAndUrl = ctx.config.url
       ? { method: ctx.config.method, url: ctx.config.url }
       : ctx.element
-      ? getMethodAndUrl(ctx.element)
-      : null;
+        ? getMethodAndUrl(ctx.element)
+        : null;
 
-    const resolvedMethod = toMethod(methodAndUrl?.method) || toMethod(ctx.config.method) || 'GET';
-    const method = resolvedMethod.toUpperCase();
-    const url = typeof methodAndUrl?.url === 'string' ? methodAndUrl.url : typeof ctx.config.url === 'string' ? ctx.config.url : undefined;
+    const method = (methodAndUrl?.method || ctx.config.method || 'GET').toUpperCase();
+    const url = methodAndUrl?.url || ctx.config.url;
 
     if (!url) {
-      throw new Error('requestBuildStep: URL is required');
+      ctx.error = new ConfigError('URL is required');
+      return ctx;
     }
 
     /** @type {Record<string, string>} */
@@ -2723,17 +2944,15 @@ var ALISBundle = (function (exports) {
     const data = ctx.collect?.data;
     if (data && typeof data === 'object') {
       const payload = /** @type {Record<string, unknown>} */ (data);
+
       if (method === 'GET') {
         const query = buildQueryString(payload);
         if (query) {
-          finalUrl = appendQuery(finalUrl, query);
+          finalUrl = url.includes('?') ? `${url}&${query}` : `${url}?${query}`;
         }
       } else {
-        // Form elements default to FormData (matches jQuery Unobtrusive, works with ASP.NET model binding)
-        // Non-form elements default to JSON (API-style requests)
         const isFormElement = ctx.element instanceof HTMLFormElement;
-        const defaultSerializer = isFormElement ? 'formdata' : 'json';
-        const serializerName = typeof ctx.config.serialize === 'string' ? ctx.config.serialize : defaultSerializer;
+        const serializerName = ctx.config.serialize || (isFormElement ? 'formdata' : 'json');
         const serializer = getSerializer(serializerName);
         const serialized = serializer(payload);
         body = serialized.body;
@@ -2743,13 +2962,7 @@ var ALISBundle = (function (exports) {
       }
     }
 
-    ctx.request = {
-      url: finalUrl,
-      method,
-      headers,
-      body
-    };
-
+    ctx.request = { url: finalUrl, method, headers, body };
     return ctx;
   }
 
@@ -2758,49 +2971,21 @@ var ALISBundle = (function (exports) {
    */
   function buildQueryString(data) {
     const params = new URLSearchParams();
-    Object.entries(data).forEach(([key, value]) => {
+
+    for (const [key, value] of Object.entries(data)) {
       if (value == null) {
-        return;
+        continue;
       }
       if (Array.isArray(value)) {
-        value.forEach(item => params.append(key, String(item)));
-      } else if (isLegacyField(value)) {
-        params.append(value.name, String(value.value));
+        for (const item of value) {
+          params.append(key, String(item));
+        }
       } else {
         params.append(key, String(value));
       }
-    });
+    }
+
     return params.toString();
-  }
-
-  /**
-   * @param {string} url
-   * @param {string} query
-   */
-  function appendQuery(url, query) {
-    if (!query) return url;
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}${query}`;
-  }
-
-  /**
-   * @param {unknown} value
-   */
-  function toMethod(value) {
-    return typeof value === 'string' ? value : undefined;
-  }
-
-  /**
-   * @param {unknown} value
-   * @returns {value is { name: string; value: unknown }}
-   */
-  function isLegacyField(value) {
-    return Boolean(
-      value &&
-      typeof value === 'object' &&
-      'name' in value &&
-      'value' in value
-    );
   }
 
   /**
@@ -2896,59 +3081,88 @@ var ALISBundle = (function (exports) {
    * @param {import('../context.js').PipelineContext} ctx
    */
   async function requestExecuteStep(ctx) {
-    // Skip if there's already an error (e.g., from validation)
-    if (ctx.error) {
+    if (ctx.error || !ctx.request) {
+      if (!ctx.request && !ctx.error) {
+        ctx.error = new ConfigError('Request not built');
+      }
       return ctx;
     }
-    
-    if (!ctx.request) {
-      throw new Error('requestExecuteStep: request not built');
+
+    const { request, config, id } = ctx;
+    const span = startSpan('request', { id, url: request.url, method: request.method });
+
+    ctx.state.startTime = ctx.state.startTime ?? Date.now();
+
+    try {
+      ctx.response = await executeFetch(request, config, ctx);
+      finalizeTiming(ctx);
+      endSpan(span, { status: ctx.response.status, ok: ctx.response.ok, attempts: ctx.state.attempts });
+    } catch (error) {
+      finalizeTiming(ctx);
+      handleFetchError(error, ctx, request, span);
+      throw error;
     }
 
-    const request = ctx.request;
-    const fetchOptions = {
+    return ctx;
+  }
+
+  /**
+   * @param {{ url: string; method: string; headers: Record<string, string>; body: any }} request
+   * @param {Record<string, unknown>} config
+   * @param {import('../context.js').PipelineContext} ctx
+   */
+  async function executeFetch(request, config, ctx) {
+    const options = {
       method: request.method,
       headers: request.headers,
       body: request.body,
-      credentials: /** @type {RequestCredentials} */ (ctx.config.credentials ?? 'same-origin'),
+      credentials: /** @type {RequestCredentials} */ (config.credentials ?? 'same-origin'),
       signal: ctx.abortController?.signal
     };
 
-    const requestFn = () => fetch(request.url, fetchOptions);
-    ctx.state.startTime = ctx.state.startTime ?? Date.now();
-
-    const retryPolicy = resolveRetryPolicy(ctx.config.retry);
-    let response;
+    const retryPolicy = resolveRetryPolicy(config.retry);
 
     if (retryPolicy) {
-      response = await executeWithRetry(requestFn, ctx, retryPolicy);
-    } else {
-      ctx.state.attempts = 1;
-      response = await requestFn();
+      return executeWithRetry(() => fetch(request.url, options), ctx, retryPolicy);
     }
 
-    ctx.response = response;
-    ctx.state.endTime = Date.now();
-    ctx.state.duration = ctx.state.endTime - (ctx.state.startTime || ctx.state.endTime);
+    ctx.state.attempts = 1;
+    return fetch(request.url, options);
+  }
 
-    return ctx;
+  /**
+   * @param {import('../context.js').PipelineContext} ctx
+   */
+  function finalizeTiming(ctx) {
+    ctx.state.endTime = Date.now();
+    ctx.state.duration = ctx.state.endTime - (ctx.state.startTime ?? ctx.state.endTime);
+  }
+
+  /**
+   * @param {unknown} error
+   * @param {import('../context.js').PipelineContext} ctx
+   * @param {{ url: string }} request
+   * @param {import('../../telemetry/emitter.js').Span} span
+   */
+  function handleFetchError(error, ctx, request, span) {
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
+    const eventName = isAbort ? 'request:abort' : 'request:error';
+    const eventData = isAbort
+      ? { id: ctx.id, url: request.url }
+      : { id: ctx.id, url: request.url, error: error instanceof Error ? error.message : String(error) };
+
+    emit(eventName, eventData);
+    endSpan(span, { error: true, aborted: isAbort, attempts: ctx.state.attempts });
   }
 
   /**
    * @param {unknown} retryConfig
    */
   function resolveRetryPolicy(retryConfig) {
-    if (retryConfig === false) {
-      return null;
-    }
-    if (typeof retryConfig === 'string') {
-      return getRetryPolicy(retryConfig);
-    }
+    if (retryConfig === false) return null;
+    if (typeof retryConfig === 'string') return getRetryPolicy(retryConfig);
     if (retryConfig && typeof retryConfig === 'object') {
-      return {
-        ...getRetryPolicy('default'),
-        ...retryConfig
-      };
+      return { ...getRetryPolicy('default'), ...retryConfig };
     }
     return getRetryPolicy('default');
   }
@@ -3197,58 +3411,88 @@ var ALISBundle = (function (exports) {
    * @param {import('../context.js').PipelineContext} ctx
    */
   function swapStep(ctx) {
-    if (typeof ctx.config.target !== 'string' || ctx.body == null) {
+    if (ctx.error || !ctx.config.target || ctx.body == null) {
       return ctx;
     }
 
-    const selector = ctx.config.target.startsWith('#') ? ctx.config.target : `#${ctx.config.target}`;
-    const target = document.querySelector(selector);
+    const target = resolveTarget(ctx.config.target);
     if (!target) {
+      emit('swap:target-missing', { id: ctx.id, selector: ctx.config.target });
       return ctx;
     }
 
-    // Capture focus state BEFORE swap (for elements OUTSIDE the target)
-    const activeElement = document.activeElement;
-    const shouldPreserveFocus = activeElement && 
-      activeElement !== document.body && 
-      !target.contains(activeElement);
-    
-    // Get cursor position for text inputs
-    let selectionStart = null;
-    let selectionEnd = null;
-    if (shouldPreserveFocus && (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement)) {
+    const focusState = captureFocus(target);
+    performSwap(target, ctx.body, ctx.config.swap);
+    restoreFocus(focusState);
+
+    return ctx;
+  }
+
+  /**
+   * @param {string} selector
+   */
+  function resolveTarget(selector) {
+    const normalized = selector.startsWith('#') ? selector : `#${selector}`;
+    return document.querySelector(normalized);
+  }
+
+  /**
+   * @param {Element} target
+   * @param {unknown} content
+   * @param {unknown} swapMode
+   */
+  function performSwap(target, content, swapMode) {
+    const strategyName = typeof swapMode === 'string' ? swapMode : 'innerHTML';
+    const strategy = getSwapStrategy(strategyName);
+    const html = typeof content === 'string' ? content : JSON.stringify(content);
+    strategy(target, html);
+  }
+
+  /**
+   * Capture focus state for elements outside the swap target.
+   * @param {Element} target
+   */
+  function captureFocus(target) {
+    const active = document.activeElement;
+    const shouldPreserve = active && active !== document.body && !target.contains(active);
+
+    if (!shouldPreserve) return null;
+
+    /** @type {{ element: HTMLElement; selectionStart?: number | null; selectionEnd?: number | null } | null} */
+    const state = { element: /** @type {HTMLElement} */ (active) };
+
+    if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
       try {
-        selectionStart = activeElement.selectionStart;
-        selectionEnd = activeElement.selectionEnd;
+        state.selectionStart = active.selectionStart;
+        state.selectionEnd = active.selectionEnd;
       } catch {
         // Some input types don't support selection
       }
     }
 
-    const strategyName = typeof ctx.config.swap === 'string' ? ctx.config.swap : 'innerHTML';
-    const strategy = getSwapStrategy(strategyName);
-    strategy(target, typeof ctx.body === 'string' ? ctx.body : JSON.stringify(ctx.body));
+    return state;
+  }
 
-    // Preserve focus for elements OUTSIDE the swap target (e.g., search input)
-    // This prevents focus loss when updating a results container
-    if (shouldPreserveFocus && activeElement instanceof HTMLElement) {
-      if (document.body.contains(activeElement)) {
-        activeElement.focus();
-        // Restore cursor position for text inputs
-        if ((activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) && 
-            selectionStart !== null && selectionEnd !== null) {
-          try {
-            activeElement.setSelectionRange(selectionStart, selectionEnd);
-          } catch {
-            // Some input types don't support setSelectionRange
-          }
+  /**
+   * Restore focus and cursor position after swap.
+   * @param {{ element: HTMLElement; selectionStart?: number | null; selectionEnd?: number | null } | null} state
+   */
+  function restoreFocus(state) {
+    if (!state || !document.body.contains(state.element)) return;
+
+    state.element.focus();
+
+    const { selectionStart, selectionEnd } = state;
+    if (selectionStart != null && selectionEnd != null) {
+      const el = state.element;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        try {
+          el.setSelectionRange(selectionStart, selectionEnd);
+        } catch {
+          // Some input types don't support setSelectionRange
         }
       }
     }
-
-    // Note: Final focus to trigger element is handled by focusStep
-
-    return ctx;
   }
 
   /**
@@ -3593,10 +3837,6 @@ var ALISBundle = (function (exports) {
    */
   function trigger(element, overrides = {}, globalConfig = {}) {
     const ctx = createContextForElement(element, overrides, globalConfig);
-    const data = extractData(overrides);
-    if (data !== undefined) {
-      ctx.collect = { source: element, data };
-    }
     return runDefaultPipeline(ctx);
   }
 
@@ -3608,10 +3848,6 @@ var ALISBundle = (function (exports) {
     return {
       execute(overrides = {}) {
         const ctx = createContextForElement(element, overrides, globalConfig);
-        const data = extractData(overrides);
-        if (data !== undefined) {
-          ctx.collect = { source: element, data };
-        }
         return runDefaultPipeline(ctx);
       }
     };
@@ -3725,76 +3961,23 @@ var ALISBundle = (function (exports) {
   const FORCE_TRIGGER_EVENT = 'alis:trigger';
 
   /**
-   * Syncfusion control class patterns - visible input elements created by Syncfusion
-   */
-  const SYNCFUSION_INPUT_CLASSES = ['e-input', 'e-dropdownlist', 'e-numerictextbox', 'e-datepicker'];
-
-  /**
-   * Syncfusion wrapper class patterns - these wrap actual input elements
-   */
-  const SYNCFUSION_WRAPPER_CLASSES = [
-    'e-input-group',
-    'e-control-wrapper', 
-    'e-ddl',
-    'e-numerictextbox',
-    'e-datepicker',
-    'e-checkbox-wrapper'
-  ];
-
-  /**
-   * Check if element is a Syncfusion wrapper that contains the event target
-   * @param {Element} element
-   * @returns {boolean}
-   */
-  function isSyncfusionWrapper(element) {
-    return SYNCFUSION_WRAPPER_CLASSES.some(cls => element.classList.contains(cls));
-  }
-
-  /**
-   * Check if element is a Syncfusion-created input (the visible one, not the original)
-   * @param {Element} element
-   * @returns {boolean}
-   */
-  function isSyncfusionInput(element) {
-    return SYNCFUSION_INPUT_CLASSES.some(cls => element.classList.contains(cls));
-  }
-
-  /**
-   * Find the original ALIS element for a Syncfusion control.
-   * Syncfusion's appendTo() transforms the original element, but the original
-   * element (with ALIS attributes) can be found via the wrapper's ID or
-   * by looking for elements with ej2_instances.
-   * @param {Element} target - The event target (Syncfusion's visible input)
+   * Find the ALIS element for a Syncfusion control.
+   * @param {Element} target
    * @returns {Element | null}
    */
   function findSyncfusionAlisElement(target) {
-    // Look for the closest Syncfusion wrapper
-    const wrapper = target.closest('.e-input-group, .e-control-wrapper, .e-ddl');
-    if (!wrapper) return null;
-    
-    // The wrapper might have an ID that matches the original element
-    // Or there might be a hidden input with the ID and ALIS attributes
-    const wrapperId = wrapper.id;
-    if (wrapperId) {
-      const original = document.getElementById(wrapperId);
-      if (original && isAlisElement(original)) {
-        return original;
+    let current = target.parentElement;
+    while (current && current !== document.body) {
+      if (hasSyncfusionInstance(current) && isAlisElement(current)) {
+        return current;
       }
-    }
-    
-    // Look for any element with ej2_instances inside the wrapper that has ALIS attrs
-    const elementsWithInstances = wrapper.querySelectorAll('[id]');
-    for (const el of elementsWithInstances) {
-      if (/** @type {any} */ (el).ej2_instances && isAlisElement(el)) {
-        return el;
+      for (const el of current.querySelectorAll('[id]')) {
+        if (hasSyncfusionInstance(el) && isAlisElement(el)) {
+          return el;
+        }
       }
+      current = current.parentElement;
     }
-    
-    // Check if the wrapper itself has ALIS attributes
-    if (isAlisElement(wrapper)) {
-      return wrapper;
-    }
-    
     return null;
   }
 
@@ -3803,52 +3986,18 @@ var ALISBundle = (function (exports) {
    */
   function findTriggerElement(event) {
     let node = /** @type {Element | null} */ (event.target instanceof Element ? event.target : null);
-    
-    // Debug logging for Syncfusion integration troubleshooting
-    const DEBUG = typeof window !== 'undefined' && window.ALIS_DEBUG;
-    if (DEBUG && (event.type === 'input' || event.type === 'change')) {
-      console.log('[ALIS DEBUG] findTriggerElement - eventType:', event.type,
-        'target:', node?.tagName,
-        'targetId:', node?.id,
-        'targetClass:', node?.className,
-        'hasAlisGet:', node?.hasAttribute('data-alis-get'),
-        'hasAlisTrigger:', node?.hasAttribute('data-alis-trigger'));
-    }
-    
-    // Special handling for Syncfusion controls:
-    // When user types in a Syncfusion TextBox, the event fires on the visible e-input,
-    // but ALIS attributes are on the original hidden input that Syncfusion transformed.
+
+    // Syncfusion: event fires on visible input, ALIS attrs are on transformed element
     if (node && isSyncfusionInput(node) && !isAlisElement(node)) {
       const alisElement = findSyncfusionAlisElement(node);
-      if (DEBUG && (event.type === 'input' || event.type === 'change')) {
-        console.log('[ALIS DEBUG] Syncfusion input detected, found ALIS element:', 
-          alisElement?.tagName, alisElement?.id);
-      }
       if (alisElement && shouldHandleEvent(alisElement, event)) {
         return alisElement;
       }
     }
-    
+
     while (node && node !== document.body) {
-      if (isAlisElement(node)) {
-        if (DEBUG && (event.type === 'input' || event.type === 'change')) {
-          console.log('[ALIS DEBUG] Found ALIS element - tagName:', node.tagName,
-            'id:', node.id,
-            'trigger:', node.getAttribute('data-alis-trigger'));
-        }
-        // For Syncfusion wrappers, check if there's an explicit trigger attribute
-        // that matches the event, even if the default trigger wouldn't match
-        if (shouldHandleEvent(node, event)) {
-          if (DEBUG && (event.type === 'input' || event.type === 'change')) {
-            console.log('[ALIS DEBUG] shouldHandleEvent returned true');
-          }
-          return node;
-        }
-        if (DEBUG && (event.type === 'input' || event.type === 'change')) {
-          console.log('[ALIS DEBUG] shouldHandleEvent returned false, continuing...');
-        }
-        // Don't break early - continue looking up the tree for other ALIS elements
-        // This handles cases where a form contains ALIS-enabled inputs
+      if (isAlisElement(node) && shouldHandleEvent(node, event)) {
+        return node;
       }
       node = node.parentElement;
     }
@@ -3872,35 +4021,30 @@ var ALISBundle = (function (exports) {
    * @param {Event} event
    */
   function shouldHandleEvent(element, event) {
-    // Force trigger event always matches - this is used for Syncfusion integration
-    // where Syncfusion's change handler calls ALIS.forceTrigger(element)
     if (event.type === FORCE_TRIGGER_EVENT) {
       return true;
     }
-    
-    // If element has explicit trigger, use that
+
     if (element.hasAttribute('data-alis-trigger')) {
       return matchesTrigger(element, event);
     }
-    
-    // For Syncfusion wrappers, also accept input/change events from inner elements
-    // since the wrapper contains the actual input but ALIS attrs are on the wrapper
-    if (isSyncfusionWrapper(element)) {
-      const eventType = normalizeEvent(event.type);
-      // Accept input, change, blur events for Syncfusion wrappers
-      if (['input', 'change', 'blur', 'focus'].includes(eventType)) {
+
+    if (hasSyncfusionInstance(element)) {
+      const mapped = mapToDefaultTrigger(event.type);
+      if (['input', 'change', 'blur', 'focus'].includes(mapped)) {
         return true;
       }
     }
-    
-    const defaultTrigger = getDefaultTrigger(element);
-    return normalizeEvent(event.type) === defaultTrigger;
+
+    return mapToDefaultTrigger(event.type) === getDefaultTrigger(element);
   }
 
   /**
+   * Map event types to their default trigger equivalents.
+   * For example, keyup is treated as change for input fields.
    * @param {string} type
    */
-  function normalizeEvent(type) {
+  function mapToDefaultTrigger(type) {
     return type === 'keyup' ? 'change' : type;
   }
 
@@ -3940,35 +4084,13 @@ var ALISBundle = (function (exports) {
   function setupDelegation(events = ['click', 'submit', 'change', 'input', 'scroll', FORCE_TRIGGER_EVENT], onTrigger) {
     events.forEach(eventType => {
       if (LISTENERS.has(eventType)) return;
+
       const handler = /** @type {(event: Event) => void} */ (event => {
-        // Debug logging - ALWAYS log for input events to diagnose Syncfusion issues
-        const DEBUG = typeof window !== 'undefined' && window.ALIS_DEBUG;
-        if (eventType === 'input' || eventType === 'change') {
-          const t = event.target;
-          console.log('[ALIS] Event handler called - type:', eventType, 
-            'targetTag:', t instanceof Element ? t.tagName : 'not element',
-            'targetId:', t instanceof Element ? t.id : '',
-            'hasAlisGet:', t instanceof Element ? t.hasAttribute('data-alis-get') : false);
-        }
-        
         const target = findTriggerElement(event);
-        
-        if (DEBUG && (eventType === 'input' || eventType === 'change')) {
-          if (target) {
-            console.log('[ALIS DEBUG] findTriggerElement result - tagName:', target.tagName,
-              'id:', target.id,
-              'hasAlisGet:', target.hasAttribute('data-alis-get'));
-          } else {
-            console.log('[ALIS DEBUG] findTriggerElement result: null');
-          }
-        }
-        
         if (!target) return;
-        
-        // Get trigger config for debounce/throttle
+
         const triggerConfig = getTriggerConfig(target);
-        
-        // Handle debounce
+
         if (triggerConfig.delay > 0) {
           handleDebounce(target, triggerConfig.delay, () => {
             executeHandler(target, event, onTrigger, { debounced: true });
@@ -3976,21 +4098,17 @@ var ALISBundle = (function (exports) {
           if (event.cancelable) event.preventDefault();
           return;
         }
-        
-        // Handle throttle
-        if (triggerConfig.throttle > 0) {
-          if (!handleThrottle(target, triggerConfig.throttle)) {
-            return; // Throttled, skip this event
-          }
+
+        if (triggerConfig.throttle > 0 && !handleThrottle(target, triggerConfig.throttle)) {
+          return;
         }
-        
+
         if (event.cancelable) {
           event.preventDefault();
         }
         executeHandler(target, event, onTrigger, {});
       });
-      // Use capture phase for submit (to intercept before form submission)
-      // and for input/change events (Syncfusion may stop propagation in bubble phase)
+
       const useCapture = eventType === 'submit' || eventType === 'input' || eventType === 'change';
       document.addEventListener(eventType, handler, useCapture);
       LISTENERS.set(eventType, handler);
@@ -4103,6 +4221,144 @@ var ALISBundle = (function (exports) {
     };
   }
 
+  /**
+   * Syncfusion EJ2 Adapter for ALIS
+   *
+   * Handles all Syncfusion-specific value and name extraction.
+   * ALIS core remains framework-agnostic.
+   */
+
+
+  /**
+   * Get Syncfusion instance from element
+   * @param {Element} element
+   * @returns {any | null}
+   */
+  function getInstance(element) {
+    const instances = /** @type {any} */ (element)['ej2_instances'];
+    return Array.isArray(instances) && instances.length > 0 ? instances[0] : null;
+  }
+
+  /** @type {import('./types').Adapter} */
+  const syncfusionAdapter = {
+    name: 'syncfusion',
+
+    canHandle(element) {
+      return getInstance(element) !== null;
+    },
+
+    getFieldName(element) {
+      // First check for explicit data-alis-name attribute (highest priority)
+      const alisName = element.getAttribute('data-alis-name');
+      if (alisName) return alisName;
+
+      const instance = getInstance(element);
+      if (!instance) return null;
+
+      // Syncfusion exposes name via instance.name
+      if (instance.name) return instance.name;
+
+      // Some controls use hiddenElement for form submission
+      if (instance.hiddenElement?.getAttribute?.('name')) {
+        return instance.hiddenElement.getAttribute('name');
+      }
+
+      // Fallback to element's name attribute
+      const elName = element.getAttribute('name');
+      if (elName) return elName;
+
+      // Final fallback: use element id (Syncfusion controls always have IDs)
+      return element.id || null;
+    },
+
+    getValue(element) {
+      const instance = getInstance(element);
+      if (!instance) return null;
+
+      const constructorName = instance.constructor?.name || '';
+
+      // RadioButton: return value only if checked, else null (skip unchecked radios)
+      // Radio buttons have both 'checked' and 'value' properties
+      if (constructorName.includes('Radio') || element.type === 'radio') {
+        // Check if this radio is checked - try multiple sources
+        const internalInput = element.querySelector('input[type="radio"]');
+        const isChecked = instance.checked || (internalInput && internalInput.checked);
+
+        if (isChecked) {
+          // Check for data-alis-value first (explicit override)
+          const alisValue = element.getAttribute('data-alis-value');
+          if (alisValue) return alisValue;
+
+          // Try instance.value (if not null/undefined/empty)
+          if (instance.value !== undefined && instance.value !== null && instance.value !== '') {
+            return instance.value;
+          }
+
+          // Look for internal input element's value
+          if (internalInput) {
+            const inputValue = internalInput.value || internalInput.getAttribute('value');
+            if (inputValue) return inputValue;
+          }
+
+          // Fallback to element's own value attribute
+          return element.getAttribute('value') || 'true';
+        }
+        return null;
+      }
+
+      // ListBox: use getSelectedItems() or selectedItems
+      if (constructorName.includes('ListBox')) {
+        // Try getSelectedItems method first
+        if (typeof instance.getSelectedItems === 'function') {
+          const selected = instance.getSelectedItems();
+          if (selected && selected.length > 0) {
+            // Return the value of the first selected item
+            return selected[0].value || selected[0].text;
+          }
+        }
+        // Fallback to value property (may be an array)
+        if (Array.isArray(instance.value)) {
+          return instance.value[0];
+        }
+        return instance.value;
+      }
+
+      // Slider: handle range slider (array values) before generic 'value' check
+      if (constructorName.includes('Slider')) {
+        if (Array.isArray(instance.value)) {
+          return instance.value.join('-');
+        }
+        return instance.value;
+      }
+
+      // Checkbox/Switch: return checked state (boolean)
+      // Check for 'checked' property before 'value' since these have both
+      if ('checked' in instance && !('text' in instance)) {
+        return instance.checked;
+      }
+
+      // Most controls use 'value' (dropdowns, textboxes, etc.)
+      if ('value' in instance) {
+        return instance.value;
+      }
+
+      return null;
+    },
+
+    isCheckbox(element) {
+      const instance = getInstance(element);
+      if (!instance) return false;
+      const constructorName = instance.constructor?.name || '';
+      // Checkbox/Switch have 'checked' but not 'text' property
+      // RadioButton also has 'checked' but should not be treated as checkbox
+      if (constructorName.includes('Radio')) return false;
+      return 'checked' in instance && !('text' in instance);
+    }
+  };
+
+  // Auto-register when imported
+  registerAdapter(syncfusionAdapter);
+
   const VERSION = '0.0.1';
   /** @type {Record<string, unknown>} */
   let globalConfig = {};
@@ -4176,9 +4432,6 @@ var ALISBundle = (function (exports) {
         config: structuredCloneSafe(globalConfig),
         initializedAt: Date.now()
       };
-    },
-    process() {
-      return 0;
     },
     trigger: handleTrigger,
     request: handleRequest,

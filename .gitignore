@@ -59,3 +59,8 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Local NuGet proxy (self-signed certs and binary)
+SandboxApp/cert.pem
+SandboxApp/key.pem
+SandboxApp/nuget-proxy

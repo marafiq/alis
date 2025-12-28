@@ -1,0 +1,80 @@
+@model IEnumerable<MedicationAdministrationViewModel>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-8 text-slate-400">
+        <span class="e-icons e-search text-3xl mb-2 block"></span>
+        <p>No medications found matching your criteria.</p>
+    </div>
+}
+else
+{
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                    <th class="w-10 px-4 py-3 text-left">
+                        <ejs-checkbox id="selectAll" cssClass="select-all-checkbox"></ejs-checkbox>
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Time</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Resident</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Medication</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Dosage</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @foreach (var med in Model.OrderBy(m => m.ScheduledTime))
+                {
+                    var isPastDue = med.ScheduledTime < TimeOnly.FromDateTime(DateTime.Now);
+                    var checkId = $"listCheck-{med.ScheduleId}";
+                    <tr class="medication-item hover:bg-slate-50 @(isPastDue ? "bg-amber-50" : "")" data-schedule-id="@med.ScheduleId">
+                        <td class="px-4 py-3">
+                            <ejs-checkbox id="@checkId" cssClass="med-checkbox" name="ScheduleIds" value="@med.ScheduleId.ToString()"></ejs-checkbox>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="@(isPastDue ? "text-red-600 font-semibold" : "text-slate-700")">@med.ScheduledTime.ToString("h:mm tt")</span>
+                            @if (isPastDue) { <span class="ml-2 px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs">Past Due</span> }
+                        </td>
+                        <td class="px-4 py-3">
+                            <ejs-button id="residentLink-@med.ScheduleId" cssClass="e-link e-flat med-resident p-0" content="@med.ResidentName"
+                                        data-alis-get="/Medications/ByResident?residentId=@med.ResidentId" data-alis-target="#resident-details"
+                                        data-alis-trigger="click" data-alis-indicator="is-loading"></ejs-button>
+                        </td>
+                        <td class="px-4 py-3"><span class="med-name font-medium text-slate-800">@med.MedicationName</span></td>
+                        <td class="px-4 py-3 text-slate-600">@med.Dosage</td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="inline-flex gap-1">
+                                <ejs-button id="listQuickGive-@med.ScheduleId" cssClass="e-success e-small" content="Given"
+                                            data-alis-post="/Medications/QuickGive" data-alis-collect="self" data-alis-target="#medications-list"
+                                            data-alis-swap="innerHTML" data-alis-confirm-message="Mark @med.MedicationName as given?"
+                                            data-alis-on-after="initMedicationControls" data-alis-indicator="is-loading"></ejs-button>
+                                <input type="hidden" name="scheduleId" value="@med.ScheduleId" />
+                                <ejs-button id="listOtherBtn-@med.ScheduleId" cssClass="e-filled e-small" content="Other"
+                                            data-alis-get="/Medications/Administer?scheduleId=@med.ScheduleId" data-alis-target="#administerModalBody"
+                                            data-alis-on-after="showAdministerModal" data-alis-indicator="is-loading"></ejs-button>
+                                <ejs-button id="listHistoryBtn-@med.ScheduleId" cssClass="e-filled e-info e-small" content="History"
+                                            data-alis-get="/Medications/History?residentId=@med.ResidentId" data-alis-target="#resident-details"
+                                            data-alis-swap="innerHTML" data-alis-indicator="is-loading"></ejs-button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+<ejs-scripts></ejs-scripts>
+<script>
+(function() {
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll?.ej2_instances?.[0]) {
+        selectAll.ej2_instances[0].change = function(args) {
+            document.querySelectorAll('.med-checkbox').forEach(el => {
+                if (el.ej2_instances?.[0]) el.ej2_instances[0].checked = args.checked;
+            });
+            if (typeof updateBulkButton === 'function') updateBulkButton();
+        };
+    }
+})();
+</script>

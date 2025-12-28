@@ -2,89 +2,68 @@
 
 @if (!Model.Any())
 {
-    <div class="empty-state">
-        <div class="empty-state-icon">👥</div>
-        <h5>No Residents Found</h5>
-        <p class="text-muted">Try adjusting your search or filters</p>
+    <div class="p-12 text-center">
+        <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <span class="e-icons e-people text-slate-400 text-3xl"></span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-600 mb-2">No Residents Found</h3>
+        <p class="text-slate-400">Try adjusting your search or filters</p>
     </div>
 }
 else
 {
-    <div class="row">
-        @foreach (var resident in Model)
-        {
-            var careLevelClass = resident.CareLevel switch
+    <div class="p-4">
+        <div class="grid grid-cols-3 gap-4">
+            @foreach (var resident in Model)
             {
-                CareLevel.IndependentLiving => "care-level-independent",
-                CareLevel.AssistedLiving => "care-level-assisted",
-                CareLevel.MemoryCare => "care-level-memory",
-                CareLevel.SkilledNursing => "care-level-skilled",
-                CareLevel.Hospice => "care-level-hospice",
-                _ => ""
-            };
-            
-            var careLevelText = resident.CareLevel switch
-            {
-                CareLevel.IndependentLiving => "Independent",
-                CareLevel.AssistedLiving => "Assisted",
-                CareLevel.MemoryCare => "Memory Care",
-                CareLevel.SkilledNursing => "Skilled Nursing",
-                CareLevel.Hospice => "Hospice",
-                _ => ""
-            };
+                var careLevelColor = resident.CareLevel switch
+                {
+                    CareLevel.IndependentLiving => "bg-green-100 text-green-700",
+                    CareLevel.AssistedLiving => "bg-blue-100 text-blue-700",
+                    CareLevel.MemoryCare => "bg-purple-100 text-purple-700",
+                    CareLevel.SkilledNursing => "bg-amber-100 text-amber-700",
+                    CareLevel.Hospice => "bg-rose-100 text-rose-700",
+                    _ => "bg-slate-100 text-slate-700"
+                };
 
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="resident-card">
-                    <div class="resident-avatar">
-                        @resident.FirstName[0]@resident.LastName[0]
-                    </div>
-                    <div class="resident-info">
-                        <div class="resident-name">@resident.FullName</div>
-                        <div class="resident-meta">
-                            <span class="me-2">🚪 @resident.RoomNumber</span>
-                            <span>🎂 @resident.Age yrs</span>
+                var careLevelText = resident.CareLevel switch
+                {
+                    CareLevel.IndependentLiving => "Independent",
+                    CareLevel.AssistedLiving => "Assisted",
+                    CareLevel.MemoryCare => "Memory Care",
+                    CareLevel.SkilledNursing => "Skilled Nursing",
+                    CareLevel.Hospice => "Hospice",
+                    _ => ""
+                };
+
+                <div class="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-sky-500 flex items-center justify-center text-white font-bold text-lg">
+                            @resident.FirstName[0]@resident.LastName[0]
                         </div>
-                        <span class="care-level @careLevelClass mt-1 d-inline-block">@careLevelText</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-slate-800 truncate">@resident.FullName</div>
+                            <div class="text-sm text-slate-500 mt-0.5">
+                                <span class="e-icons e-home text-xs mr-1"></span>Room @resident.RoomNumber
+                                <span class="mx-2">•</span>
+                                @resident.Age yrs
+                            </div>
+                            <span class="inline-block mt-2 px-2 py-0.5 rounded text-xs font-medium @careLevelColor">@careLevelText</span>
+                        </div>
                     </div>
-                    <div class="resident-actions">
-                        <!-- ALIS-REVIEW: Small icon buttons - using ejs-button for consistency -->
-                        <!-- ALIS-GAP: ejs-button iconCss alone doesn't work well for emoji icons, using content -->
-                        <ejs-button id="viewBtn-@resident.Id"
-                                    cssClass="e-small e-outline"
-                                    content="👁️"
-                                    title="View Details"
-                                    data-alis-get="/Residents/Details/@resident.Id"
-                                    data-alis-target="#modalBody"
-                                    data-alis-on-after="showResidentModal">
-                        </ejs-button>
-                        <ejs-button id="editBtn-@resident.Id"
-                                    cssClass="e-small e-outline"
-                                    content="✏️"
-                                    title="Edit"
-                                    data-alis-get="/Residents/Edit/@resident.Id"
-                                    data-alis-target="#modalBody"
-                                    data-alis-on-after="showResidentModal">
-                        </ejs-button>
-                        <ejs-button id="deleteBtn-@resident.Id"
-                                    cssClass="e-small e-outline e-danger"
-                                    content="🗑️"
-                                    title="Delete"
-                                    data-alis-delete="/Residents/Delete/@resident.Id"
-                                    data-alis-confirm="deleteConfirm"
-                                    data-alis-confirm-message="Are you sure you want to remove @resident.FullName from the system?"
-                                    data-alis-target="#residents-list">
-                        </ejs-button>
+                    <div class="flex gap-2 mt-4 pt-4 border-t border-slate-100">
+                        <ejs-button id="viewBtn-@resident.Id" cssClass="e-small e-filled flex-1" iconCss="e-icons e-eye" content="View"
+                                    data-alis-get="/Residents/Details/@resident.Id" data-alis-target="#modalBody" data-alis-on-after="showResidentModal"></ejs-button>
+                        <ejs-button id="editBtn-@resident.Id" cssClass="e-small e-filled flex-1" iconCss="e-icons e-edit" content="Edit"
+                                    data-alis-get="/Residents/Edit/@resident.Id" data-alis-target="#modalBody" data-alis-on-after="showResidentModal"></ejs-button>
+                        <ejs-button id="deleteBtn-@resident.Id" cssClass="e-small e-filled e-danger" iconCss="e-icons e-trash"
+                                    data-alis-delete="/Residents/Delete/@resident.Id" data-alis-confirm="deleteConfirm"
+                                    data-alis-confirm-message="Are you sure you want to remove @resident.FullName?" data-alis-target="#residents-list"></ejs-button>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-    
-    <div class="text-muted text-center mt-3">
-        Showing @Model.Count() resident(s)
+            }
+        </div>
+        <div class="text-center text-slate-400 text-sm mt-4">Showing @Model.Count() resident(s)</div>
     </div>
 }
-
-<!-- Syncfusion controls initialization for ALIS-loaded partial views -->
-<!-- When ALIS swaps this content, ejs-scripts ensures Syncfusion controls are initialized -->
 <ejs-scripts></ejs-scripts>

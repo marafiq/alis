@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AbortError, ALISError, ConfigError, NetworkError, ValidationError } from '../../../src/errors/types.js';
+import { ALISError, ConfigError, ValidationError } from '../../../src/errors/types.js';
 
 describe('errors/types', () => {
   it('creates a base ALISError with code and context', () => {
@@ -12,8 +12,5 @@ describe('errors/types', () => {
   it('specialized errors use predefined codes', () => {
     expect(new ValidationError().code).toBe('VALIDATION_ERROR');
     expect(new ConfigError().code).toBe('CONFIG_ERROR');
-    expect(new NetworkError().code).toBe('NETWORK_ERROR');
-    expect(new AbortError().code).toBe('ABORT_ERROR');
   });
 });
-

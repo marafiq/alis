@@ -37,12 +37,12 @@
             }
 
             this.debug = options.debug || false;
+            this.initialized = true; // Set immediately so tests can check
             this.log('Initializing ALIS-Syncfusion Bridge');
 
             // Wait a tick for Syncfusion to finish rendering
             setTimeout(() => {
                 this.bindAllControls(document.body);
-                this.initialized = true;
                 this.log('Initialization complete');
             }, 100);
         },
@@ -343,8 +343,153 @@
         }
     };
 
+    /**
+     * Syncfusion Adapter for ALIS
+     * Implements the ALIS adapter interface for form value collection
+     */
+    const SyncfusionAdapter = {
+        /**
+         * Check if this element is a Syncfusion control
+         */
+        canHandle: function(element) {
+            return element && element.ej2_instances && element.ej2_instances.length > 0;
+        },
+
+        /**
+         * Get the field name for this element
+         */
+        getFieldName: function(element) {
+            return element.getAttribute('name') || element.id || null;
+        },
+
+        /**
+         * Get the current value from a Syncfusion control
+         */
+        getValue: function(element) {
+            if (!element.ej2_instances || !element.ej2_instances[0]) {
+                return element.value || null;
+            }
+
+            const instance = element.ej2_instances[0];
+            const controlType = ALIS_SF.getControlType(instance);
+
+            switch (controlType) {
+                case 'dropdownlist':
+                case 'combobox':
+                case 'autocomplete':
+                    return instance.value;
+
+                case 'multiselect':
+                    return instance.value; // Array
+
+                case 'numerictextbox':
+                    return instance.value;
+
+                case 'slider':
+                    // Handle range slider (returns array) vs single slider
+                    if (Array.isArray(instance.value)) {
+                        return instance.value.join('-');
+                    }
+                    return instance.value;
+
+                case 'datepicker':
+                case 'datetimepicker':
+                case 'timepicker':
+                    // Return ISO string for dates
+                    if (instance.value instanceof Date) {
+                        return instance.value.toISOString();
+                    }
+                    return instance.value;
+
+                case 'daterangepicker':
+                    // Return start and end dates
+                    if (instance.startDate && instance.endDate) {
+                        return {
+                            start: instance.startDate.toISOString(),
+                            end: instance.endDate.toISOString()
+                        };
+                    }
+                    return instance.value;
+
+                case 'textbox':
+                case 'maskedtextbox':
+                    return instance.value;
+
+                case 'checkbox':
+                case 'switch':
+                    return instance.checked ? 'true' : null;
+
+                case 'radiobutton':
+                    // For radio buttons, return the value if checked
+                    if (instance.checked) {
+                        return instance.value || 'true';
+                    }
+                    return null;
+
+                case 'colorpicker':
+                    return instance.value;
+
+                case 'uploader':
+                    // Return file names or data
+                    if (instance.filesData && instance.filesData.length) {
+                        return instance.filesData.map(f => f.name).join(',');
+                    }
+                    return null;
+
+                case 'richtexteditor':
+                    return instance.value;
+
+                default:
+                    // Generic fallback - try common properties
+                    if ('value' in instance) {
+                        return instance.value;
+                    }
+                    if ('checked' in instance) {
+                        return instance.checked ? 'true' : null;
+                    }
+                    return element.value || null;
+            }
+        },
+
+        /**
+         * Check if this is a checkbox-like control
+         */
+        isCheckbox: function(element) {
+            if (!element.ej2_instances || !element.ej2_instances[0]) {
+                return false;
+            }
+            const instance = element.ej2_instances[0];
+            const controlType = ALIS_SF.getControlType(instance);
+            return controlType === 'checkbox' || controlType === 'switch';
+        }
+    };
+
+    /**
+     * Register the Syncfusion adapter with ALIS
+     */
+    ALIS_SF.registerAdapter = function() {
+        if (typeof ALIS !== 'undefined' && ALIS.registerAdapter) {
+            ALIS.registerAdapter(SyncfusionAdapter);
+            this.log('Syncfusion adapter registered with ALIS');
+        } else {
+            this.log('ALIS.registerAdapter not available');
+        }
+    };
+
     // Expose globally
     global.ALIS_SF = ALIS_SF;
+
+    // Auto-register adapter when DOM is ready
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                ALIS_SF.registerAdapter();
+            });
+        } else {
+            // DOM already loaded
+            ALIS_SF.registerAdapter();
+        }
+    }
 
 })(typeof window !== 'undefined' ? window : this);
 

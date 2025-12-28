@@ -63,24 +63,37 @@ public class ResidentFormViewModel
     public List<string> DietaryRestrictions { get; set; } = [];
     public bool IsActive { get; set; } = true;
 
-    public Resident ToResident() => new()
+    /// <summary>
+    /// Converts validated form data to domain entity.
+    /// Throws if required fields are null - validation must pass first.
+    /// </summary>
+    public Resident ToResident()
     {
-        Id = Id,
-        FirstName = FirstName,
-        LastName = LastName,
-        DateOfBirth = DateOfBirth ?? DateTime.Today,
-        RoomNumber = RoomNumber,
-        CareLevel = CareLevel ?? Models.CareLevel.IndependentLiving,
-        BuildingId = BuildingId ?? 0,
-        FloorId = FloorId ?? 0,
-        WingId = WingId ?? 0,
-        EmergencyContactPhone = EmergencyContactPhone,
-        EmergencyContactName = EmergencyContactName,
-        EmergencyContactEmail = EmergencyContactEmail,
-        MedicalNotes = MedicalNotes,
-        DietaryRestrictions = DietaryRestrictions,
-        IsActive = IsActive
-    };
+        ArgumentNullException.ThrowIfNull(DateOfBirth, nameof(DateOfBirth));
+        ArgumentNullException.ThrowIfNull(CareLevel, nameof(CareLevel));
+        ArgumentNullException.ThrowIfNull(BuildingId, nameof(BuildingId));
+        ArgumentNullException.ThrowIfNull(FloorId, nameof(FloorId));
+        ArgumentNullException.ThrowIfNull(WingId, nameof(WingId));
+
+        return new Resident
+        {
+            Id = Id,
+            FirstName = FirstName,
+            LastName = LastName,
+            DateOfBirth = DateOfBirth.Value,
+            RoomNumber = RoomNumber,
+            CareLevel = CareLevel.Value,
+            BuildingId = BuildingId.Value,
+            FloorId = FloorId.Value,
+            WingId = WingId.Value,
+            EmergencyContactPhone = EmergencyContactPhone,
+            EmergencyContactName = EmergencyContactName,
+            EmergencyContactEmail = EmergencyContactEmail,
+            MedicalNotes = MedicalNotes,
+            DietaryRestrictions = DietaryRestrictions,
+            IsActive = IsActive
+        };
+    }
 
     public static ResidentFormViewModel FromResident(Resident resident) => new()
     {

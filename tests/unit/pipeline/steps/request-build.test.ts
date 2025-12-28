@@ -35,9 +35,11 @@ describe('pipeline/steps/request-build', () => {
     expect(result.request?.body).toBeUndefined();
   });
 
-  it('throws when url missing', () => {
+  it('sets error when url missing', () => {
     const ctx = createContext(null, { config: {} });
-    expect(() => requestBuildStep(ctx)).toThrow();
+    const result = requestBuildStep(ctx);
+    expect(result.error).toBeDefined();
+    expect(result.error?.message).toBe('URL is required');
   });
 });
 
