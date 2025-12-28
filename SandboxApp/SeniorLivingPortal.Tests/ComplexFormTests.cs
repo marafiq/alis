@@ -19,7 +19,37 @@ public class ComplexFormTests : PageTest
     {
         await Page.GotoAsync($"{BaseUrl}/Home/SyncfusionTest");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Wait for Syncfusion controls to fully initialize
+        await WaitForSyncfusion();
+
         await DismissOverlays();
+    }
+
+    /// <summary>
+    /// Waits for Syncfusion controls to fully initialize with proper styling.
+    /// </summary>
+    private async Task WaitForSyncfusion()
+    {
+        // Wait for Syncfusion CSS to load and controls to initialize
+        await Page.WaitForFunctionAsync(@"() => {
+            // Check if Syncfusion material CSS is loaded
+            const hasStyles = Array.from(document.styleSheets).some(sheet => {
+                try {
+                    return sheet.href && (sheet.href.includes('syncfusion') || sheet.href.includes('ej2'));
+                } catch { return false; }
+            });
+
+            // Check if key controls are initialized with Syncfusion styling
+            const dropdown = document.getElementById('testDropdown');
+            const hasInstance = dropdown && dropdown.ej2_instances && dropdown.ej2_instances.length > 0;
+            const hasStyles2 = dropdown && dropdown.classList.contains('e-control');
+
+            return hasInstance && (hasStyles || hasStyles2);
+        }", new PageWaitForFunctionOptions { Timeout = 15000 });
+
+        // Additional wait for full rendering
+        await Page.WaitForTimeoutAsync(300);
     }
 
     private async Task DismissOverlays()
